@@ -1,15 +1,13 @@
 # CLAUDE.md
 
 ## Project
-<!-- プロジェクト名と簡単な説明 -->
-PROJECT_NAME - 説明
+モンスター対戦アプリ - 読み合い特化の1vs1バトルゲーム（Web）
 
 ## Tech Stack
-<!-- 使用技術を記載 -->
-- Frontend:
-- Backend:
-- Database:
-- API:
+- Frontend: Phaser.js + TypeScript
+- Backend: Node.js + Socket.io + TypeScript
+- Hosting: Vercel（フロント）/ Render（バック）
+- Storage: LocalStorage（ゲーム進捗保存）
 
 ## Key Commands
 ```bash
@@ -23,24 +21,24 @@ npm run lint       # リンター実行
 ## Project Structure
 ```
 src/
-├── components/    #
-├── pages/         #
-├── services/      #
-├── hooks/         #
-├── types/         #
-├── utils/         #
-└── constants/     #
+├── scenes/       # Phaserシーン（タイトル、バトル、リザルト等）
+├── entities/     # モンスター、装備等のゲームオブジェクト
+├── battle/       # バトルロジック（ダメージ計算、AI等）
+├── network/      # Socket.io通信
+├── types/        # 型定義
+├── utils/        # ユーティリティ
+└── constants/    # 定数（パラメータ、魂格データ等）
 ```
 
 ## Important Files
-- `docs/PROJECT.md` - プロジェクト詳細・要件
-- `docs/ARCHITECTURE.md` - 技術設計・データモデル
-- `docs/CONTRIBUTING.md` - コーディング規約・開発フロー
+- `docs/PROJECT.md` - プロジェクト仕様書（ゲーム設計の全詳細）
 
 ## Domain Terms
-<!-- プロジェクト固有の用語を記載 -->
-- **Term1**: 説明
-- **Term2**: 説明
+- **魂格（コンカク）**: モンスターの種カテゴリ（全8種）
+- **TCB（ツインコマンドバトル）**: 毎ターン2コマンド同時実行の戦闘方式
+- **スタンス**: 通常/攻勢/守勢の3段階切替（攻防バランスを変化）
+- **リフレクター**: 特殊攻撃を反射/無効化する防御装備
+- **導き手**: プレイヤーの世界観上の呼称
 
 ## Guidelines
 - 不明点は確認してから実装
