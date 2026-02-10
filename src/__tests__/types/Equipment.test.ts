@@ -1,9 +1,4 @@
-import {
-  Weapon,
-  Reflector,
-  EquipmentSet,
-  EquipmentType,
-} from '../../types/Equipment';
+import { Weapon, Reflector, EquipmentSet, EquipmentType } from '../../types/Equipment';
 
 describe('Equipment Types', () => {
   describe('Weapon', () => {
