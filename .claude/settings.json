@@ -1,4 +1,44 @@
 {
+  "permissions": {
+    "allowedPrompts": [
+      {
+        "tool": "Bash",
+        "prompt": "Push*"
+      },
+      {
+        "tool": "Bash",
+        "prompt": "*git push*"
+      },
+      {
+        "tool": "WebSearch",
+        "prompt": "*"
+      },
+      {
+        "tool": "WebFetch",
+        "prompt": "*"
+      },
+      {
+        "tool": "mcp__tavily__tavily_search",
+        "prompt": "*"
+      },
+      {
+        "tool": "mcp__tavily__tavily_extract",
+        "prompt": "*"
+      },
+      {
+        "tool": "mcp__tavily__tavily_research",
+        "prompt": "*"
+      },
+      {
+        "tool": "mcp__firecrawl__firecrawl_search",
+        "prompt": "*"
+      },
+      {
+        "tool": "mcp__firecrawl__firecrawl_scrape",
+        "prompt": "*"
+      }
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
