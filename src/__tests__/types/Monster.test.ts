@@ -1,8 +1,4 @@
-import {
-  MonsterStats,
-  Monster,
-  MonsterBattleState,
-} from '../../types/Monster';
+import { MonsterStats, Monster, MonsterBattleState } from '../../types/Monster';
 import { StanceType } from '../../types/Stance';
 
 describe('Monster Types', () => {

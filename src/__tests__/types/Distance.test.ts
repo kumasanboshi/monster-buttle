@@ -1,9 +1,4 @@
-import {
-  DistanceType,
-  moveCloser,
-  moveFarther,
-  calculateDistance,
-} from '../../types/Distance';
+import { DistanceType, moveCloser, moveFarther, calculateDistance } from '../../types/Distance';
 import { CommandType } from '../../types/Command';
 
 describe('Distance Types', () => {

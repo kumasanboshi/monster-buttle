@@ -1,9 +1,4 @@
-import {
-  StanceType,
-  StanceModifiers,
-  STANCE_MODIFIERS,
-  calculateNextStance,
-} from '../../types/Stance';
+import { StanceType, STANCE_MODIFIERS, calculateNextStance } from '../../types/Stance';
 import { CommandType } from '../../types/Command';
 
 describe('Stance Types', () => {

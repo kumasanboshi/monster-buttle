@@ -8,20 +8,10 @@
 export { CommandType, Command, TurnCommands } from './Command';
 
 // Distance types
-export {
-  DistanceType,
-  moveCloser,
-  moveFarther,
-  calculateDistance,
-} from './Distance';
+export { DistanceType, moveCloser, moveFarther, calculateDistance } from './Distance';
 
 // Stance types
-export {
-  StanceType,
-  StanceModifiers,
-  STANCE_MODIFIERS,
-  calculateNextStance,
-} from './Stance';
+export { StanceType, StanceModifiers, STANCE_MODIFIERS, calculateNextStance } from './Stance';
 
 // Equipment types
 export { Weapon, Reflector, EquipmentSet, EquipmentType } from './Equipment';
@@ -30,10 +20,4 @@ export { Weapon, Reflector, EquipmentSet, EquipmentType } from './Equipment';
 export { MonsterStats, Monster, MonsterBattleState } from './Monster';
 
 // BattleState types
-export {
-  BattleState,
-  DamageInfo,
-  TurnResult,
-  BattleResultType,
-  BattleResult,
-} from './BattleState';
+export { BattleState, DamageInfo, TurnResult, BattleResultType, BattleResult } from './BattleState';
