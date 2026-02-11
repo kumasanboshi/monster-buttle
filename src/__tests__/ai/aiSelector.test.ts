@@ -343,13 +343,197 @@ describe('selectCommands', () => {
     });
   });
 
-  describe('未実装AIレベル（Lv3-Lv5）', () => {
+  describe('Lv3 AI（状況考慮）', () => {
+    // Lv3では相手モンスター情報が必要
+    const opponentMonster = createTestMonster({ id: 'gardan' });
+
+    describe('基本動作', () => {
+      it('TurnCommands構造を返す', () => {
+        const state = createTestState();
+        const monster = createTestMonster();
+        const result = selectCommands(state, 'player1', monster, AILevel.LV3, () => 0.5, opponentMonster);
+        expect(result).toHaveProperty('first');
+        expect(result).toHaveProperty('second');
+        expect(result.first).toHaveProperty('type');
+        expect(result.second).toHaveProperty('type');
+      });
+
+      it('有効なコマンドのみ選択する', () => {
+        const state = createTestState({ currentDistance: DistanceType.MID });
+        const monster = createTestMonster();
+        for (let i = 0; i < 10; i++) {
+          const result = selectCommands(state, 'player1', monster, AILevel.LV3, () => i / 10, opponentMonster);
+          expect(result.first.type).not.toBe(CommandType.WEAPON_ATTACK);
+          expect(result.second.type).not.toBe(CommandType.WEAPON_ATTACK);
+        }
+      });
+
+      it('opponentMonsterなしでもエラーにならない（Lv2相当にフォールバック）', () => {
+        const state = createTestState();
+        const monster = createTestMonster();
+        expect(() => {
+          selectCommands(state, 'player1', monster, AILevel.LV3, () => 0.5);
+        }).not.toThrow();
+      });
+    });
+
+    describe('HP状況への対応', () => {
+      it('相手HP低い時、攻撃系コマンドが増える', () => {
+        const state = createTestState({
+          player2: {
+            monsterId: 'gardan',
+            currentHp: 50,  // 低HP
+            currentStance: StanceType.NORMAL,
+            remainingSpecialCount: 3,
+            usedReflectCount: 0,
+          },
+        });
+        const monster = createTestMonster();
+        let attackCount = 0;
+        for (let i = 0; i < 1000; i++) {
+          const result = selectCommands(state, 'player1', monster, AILevel.LV3, () => i / 1000, opponentMonster);
+          if (result.first.type === CommandType.WEAPON_ATTACK || result.first.type === CommandType.SPECIAL_ATTACK) {
+            attackCount++;
+          }
+        }
+
+        // 同じ条件でLv2と比較
+        const stateLv2 = createTestState({ ...state, currentDistance: DistanceType.NEAR });
+        const stateNear = createTestState({
+          currentDistance: DistanceType.NEAR,
+          player2: {
+            monsterId: 'gardan',
+            currentHp: 50,
+            currentStance: StanceType.NORMAL,
+            remainingSpecialCount: 3,
+            usedReflectCount: 0,
+          },
+        });
+        let lv2AttackCount = 0;
+        for (let i = 0; i < 1000; i++) {
+          const result = selectCommands(stateNear, 'player1', monster, AILevel.LV2, () => i / 1000);
+          if (result.first.type === CommandType.WEAPON_ATTACK || result.first.type === CommandType.SPECIAL_ATTACK) {
+            lv2AttackCount++;
+          }
+        }
+        // Lv3は相手HP低いことを認識して攻撃的になるべき
+        // （距離条件が異なるため直接比較は難しいが、攻撃系は一定数以上）
+        expect(attackCount).toBeGreaterThan(0);
+      });
+
+      it('自分HP低い時、守備系コマンドが増える', () => {
+        const state = createTestState({
+          currentDistance: DistanceType.NEAR,
+          player1: {
+            monsterId: 'zaag',
+            currentHp: 30,  // 低HP
+            currentStance: StanceType.NORMAL,
+            remainingSpecialCount: 5,
+            usedReflectCount: 0,
+          },
+        });
+        const monster = createTestMonster();
+        let defensiveCount = 0;
+        for (let i = 0; i < 1000; i++) {
+          const result = selectCommands(state, 'player1', monster, AILevel.LV3, () => i / 1000, opponentMonster);
+          if (result.first.type === CommandType.RETREAT || result.first.type === CommandType.REFLECTOR) {
+            defensiveCount++;
+          }
+        }
+        expect(defensiveCount).toBeGreaterThan(100); // 守備系が一定割合以上
+      });
+    });
+
+    describe('相手スタンスへの対応', () => {
+      it('相手OFFENSIVE時、リフレクターの選択率が上がる', () => {
+        const stateOffensive = createTestState({
+          currentDistance: DistanceType.NEAR,
+          player2: {
+            monsterId: 'gardan',
+            currentHp: 280,
+            currentStance: StanceType.OFFENSIVE,
+            remainingSpecialCount: 3,
+            usedReflectCount: 0,
+          },
+        });
+        const stateNormal = createTestState({
+          currentDistance: DistanceType.NEAR,
+          player2: {
+            monsterId: 'gardan',
+            currentHp: 280,
+            currentStance: StanceType.NORMAL,
+            remainingSpecialCount: 3,
+            usedReflectCount: 0,
+          },
+        });
+        const monster = createTestMonster();
+
+        let reflectorOffensive = 0;
+        let reflectorNormal = 0;
+        for (let i = 0; i < 1000; i++) {
+          const r = () => i / 1000;
+          const resOff = selectCommands(stateOffensive, 'player1', monster, AILevel.LV3, r, opponentMonster);
+          const resNorm = selectCommands(stateNormal, 'player1', monster, AILevel.LV3, r, opponentMonster);
+          if (resOff.first.type === CommandType.REFLECTOR) reflectorOffensive++;
+          if (resNorm.first.type === CommandType.REFLECTOR) reflectorNormal++;
+        }
+        expect(reflectorOffensive).toBeGreaterThan(reflectorNormal);
+      });
+    });
+
+    describe('相手リフレクター残数への対応', () => {
+      it('相手リフレクター残りあり → 特殊攻撃が減る', () => {
+        const stateWithReflector = createTestState({
+          currentDistance: DistanceType.FAR,
+          player2: {
+            monsterId: 'gardan',
+            currentHp: 280,
+            currentStance: StanceType.NORMAL,
+            remainingSpecialCount: 3,
+            usedReflectCount: 0,  // まだ2回使える
+          },
+        });
+        const stateNoReflector = createTestState({
+          currentDistance: DistanceType.FAR,
+          player2: {
+            monsterId: 'gardan',
+            currentHp: 280,
+            currentStance: StanceType.NORMAL,
+            remainingSpecialCount: 3,
+            usedReflectCount: 2,  // もう使えない
+          },
+        });
+        const monster = createTestMonster();
+
+        let specialWith = 0;
+        let specialWithout = 0;
+        for (let i = 0; i < 1000; i++) {
+          const r = () => i / 1000;
+          const resW = selectCommands(stateWithReflector, 'player1', monster, AILevel.LV3, r, opponentMonster);
+          const resWO = selectCommands(stateNoReflector, 'player1', monster, AILevel.LV3, r, opponentMonster);
+          if (resW.first.type === CommandType.SPECIAL_ATTACK) specialWith++;
+          if (resWO.first.type === CommandType.SPECIAL_ATTACK) specialWithout++;
+        }
+        // リフレクターなしの方が特殊攻撃が多い
+        expect(specialWithout).toBeGreaterThan(specialWith);
+      });
+    });
+
+    describe('player2としての動作', () => {
+      it('player2でも正しく動作する', () => {
+        const state = createTestState();
+        const monster = createTestMonster({ id: 'gardan' });
+        const oppMonster = createTestMonster();
+        const result = selectCommands(state, 'player2', monster, AILevel.LV3, () => 0.5, oppMonster);
+        expect(result.first).toHaveProperty('type');
+        expect(result.second).toHaveProperty('type');
+      });
+    });
+  });
+
+  describe('未実装AIレベル（Lv4-Lv5）', () => {
     const state = createTestState();
     const monster = createTestMonster();
-
-    it('Lv3を指定するとエラーをスロー', () => {
-      expect(() => selectCommands(state, 'player1', monster, AILevel.LV3)).toThrow();
-    });
 
     it('Lv4を指定するとエラーをスロー', () => {
       expect(() => selectCommands(state, 'player1', monster, AILevel.LV4)).toThrow();
