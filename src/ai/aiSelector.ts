@@ -3,7 +3,7 @@ import { AILevel } from './types';
 import { getValidCommands } from './commandValidator';
 import { getTendencyBySpecies } from './tendencies';
 import { getDistanceWeights } from './distanceWeights';
-import { selectWeightedCommand, CommandWeightMap } from './weightedSelection';
+import { selectWeightedCommand, selectDeterministicCommand, CommandWeightMap } from './weightedSelection';
 import { getHpModifiers, getStanceResponseModifiers, getReflectorModifiers } from './situationModifiers';
 import { analyzePlayerPattern, getMostFrequentCommand } from './patternAnalyzer';
 import { getCounterModifiers } from './counterStrategy';
@@ -58,10 +58,81 @@ export function selectCommands(
     case AILevel.LV4:
       return selectLv4(state, playerId, monster, randomFn, opponentMonster, turnHistory);
     case AILevel.LV5:
-      throw new Error('AI Level LV5 is not implemented yet');
+      return selectLv5(state, playerId, monster, opponentMonster, turnHistory);
     default:
       throw new Error(`Unknown AI level: ${level}`);
   }
+}
+
+/**
+ * Lv5 AI: 最適行動（確定的）
+ *
+ * Lv4と同じ全モディファイア（種族・距離・HP・スタンス・リフレクター・カウンター）を適用し、
+ * ランダム要素を完全に排除して最大重みのコマンドを確定選択する。
+ * - Lv3フォールバックなし（常にパターン読みを試みる）
+ * - 履歴不足時はカウンター無しの5モディファイアで確定選択
+ * - 同率タイブレーク: 攻撃系コマンド優先
+ */
+function selectLv5(
+  state: BattleState,
+  playerId: 'player1' | 'player2',
+  monster: Monster,
+  opponentMonster?: Monster,
+  turnHistory?: TurnResult[]
+): TurnCommands {
+  if (!opponentMonster) {
+    throw new Error('Lv5 AI requires opponentMonster');
+  }
+  if (turnHistory === undefined) {
+    throw new Error('Lv5 AI requires turnHistory');
+  }
+
+  const opponentId = playerId === 'player1' ? 'player2' : 'player1';
+
+  // Lv3ベースのモディファイア計算
+  const validCommands = getValidCommands(state, playerId, monster);
+  const speciesTendency = getTendencyBySpecies(monster.id);
+  const distanceWeights = getDistanceWeights(state.currentDistance);
+
+  const ownState = state[playerId];
+  const oppState = state[opponentId];
+
+  const ownHpRatio = ownState.currentHp / monster.stats.hp;
+  const oppHpRatio = opponentMonster.stats.hp > 0
+    ? oppState.currentHp / opponentMonster.stats.hp
+    : 1.0;
+  const hpMods = getHpModifiers(ownHpRatio, oppHpRatio);
+  const stanceMods = getStanceResponseModifiers(ownState.currentStance, oppState.currentStance);
+  const oppRemainingReflect = Math.max(0, opponentMonster.reflector.maxReflectCount - oppState.usedReflectCount);
+  const reflectorMods = getReflectorModifiers(oppRemainingReflect);
+
+  // パターン分析（履歴不足時はカウンター無し）
+  const pattern = analyzePlayerPattern(turnHistory, opponentId, 3);
+  const mostFrequent = getMostFrequentCommand(pattern, state.currentDistance);
+
+  const hasCounterData = mostFrequent !== null && mostFrequent.length > 0;
+  const counterMods = hasCounterData
+    ? getCounterModifiers(mostFrequent![0], state.currentDistance)
+    : undefined;
+
+  // 全モディファイアを掛け合わせ
+  const combinedWeights: CommandWeightMap = {};
+  for (const cmd of validCommands) {
+    combinedWeights[cmd] =
+      speciesTendency[cmd] *
+      distanceWeights[cmd] *
+      hpMods[cmd] *
+      stanceMods[cmd] *
+      reflectorMods[cmd] *
+      (counterMods ? counterMods[cmd] : 1.0);
+  }
+
+  // 確定選択（ランダムなし）
+  const selected = selectDeterministicCommand(combinedWeights);
+  return {
+    first: { type: selected },
+    second: { type: selected },
+  };
 }
 
 /**
