@@ -4,8 +4,13 @@ import { getValidCommands } from './commandValidator';
 
 /**
  * 有効コマンドリストからランダムに1つ選択する
+ * @internal
+ *
+ * 空リストの場合はADVANCEをフォールバックとして返す。
+ * 通常 getValidCommands は ADVANCE/RETREAT を必ず含むため空にはならないが、
+ * 防御的にフォールバックを用意している。
  */
-function selectSingleCommand(
+export function selectSingleCommand(
   validCommands: CommandType[],
   randomFn: () => number
 ): CommandType {

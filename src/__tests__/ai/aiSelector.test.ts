@@ -1,4 +1,4 @@
-import { selectCommands } from '../../ai/aiSelector';
+import { selectCommands, selectSingleCommand } from '../../ai/aiSelector';
 import { AILevel } from '../../ai/types';
 import { CommandType, DistanceType, StanceType, Monster, BattleState } from '../../types';
 
@@ -149,6 +149,18 @@ describe('selectCommands', () => {
         expect(result.first).toHaveProperty('type');
         expect(result.second).toHaveProperty('type');
       });
+    });
+  });
+
+  describe('selectSingleCommand', () => {
+    it('有効コマンドリストからランダムに1つ選択する', () => {
+      const cmds = [CommandType.ADVANCE, CommandType.RETREAT, CommandType.SPECIAL_ATTACK];
+      expect(selectSingleCommand(cmds, () => 0.0)).toBe(CommandType.ADVANCE);
+      expect(selectSingleCommand(cmds, () => 0.99)).toBe(CommandType.SPECIAL_ATTACK);
+    });
+
+    it('空リストの場合はADVANCEをフォールバックとして返す', () => {
+      expect(selectSingleCommand([], () => 0.5)).toBe(CommandType.ADVANCE);
     });
   });
 
