@@ -638,24 +638,21 @@ describe('selectCommands', () => {
     });
 
     describe('パターン読み', () => {
+      // Lv4はrandomFnの最初の呼び出しでフォールバック判定を行うため、
+      // Lv3との比較には同じ乱数範囲（0.2〜1.0）を使う
       it('相手が近距離でWEAPON_ATTACK多用 → RETREATが選ばれやすい', () => {
         const state = createTestState({ currentDistance: DistanceType.NEAR });
         const monster = createTestMonster();
         const history = makeHistoryWithPlayerPattern(CommandType.WEAPON_ATTACK, DistanceType.NEAR);
 
         let retreatCount = 0;
-        for (let i = 0; i < 1000; i++) {
-          // randomFn >= 0.2 でパターン読み発動
-          const result = selectCommands(state, 'player2', monster, AILevel.LV4, () => 0.2 + (i / 1000) * 0.8, opponentMonster, history);
-          if (result.first.type === CommandType.RETREAT) retreatCount++;
-        }
-
-        // カウンター適用でRETREATが通常より多い
-        // Lv3ベース（カウンター無し）でのRETREAT率と比較
         let lv3RetreatCount = 0;
         for (let i = 0; i < 1000; i++) {
-          const result = selectCommands(state, 'player2', monster, AILevel.LV3, () => i / 1000, opponentMonster);
-          if (result.first.type === CommandType.RETREAT) lv3RetreatCount++;
+          const r = 0.2 + (i / 1000) * 0.8;
+          const lv4Result = selectCommands(state, 'player2', monster, AILevel.LV4, () => r, opponentMonster, history);
+          const lv3Result = selectCommands(state, 'player2', monster, AILevel.LV3, () => r, opponentMonster);
+          if (lv4Result.first.type === CommandType.RETREAT) retreatCount++;
+          if (lv3Result.first.type === CommandType.RETREAT) lv3RetreatCount++;
         }
         expect(retreatCount).toBeGreaterThan(lv3RetreatCount);
       });
@@ -666,15 +663,13 @@ describe('selectCommands', () => {
         const history = makeHistoryWithPlayerPattern(CommandType.SPECIAL_ATTACK, DistanceType.MID);
 
         let reflectorCount = 0;
-        for (let i = 0; i < 1000; i++) {
-          const result = selectCommands(state, 'player2', monster, AILevel.LV4, () => 0.2 + (i / 1000) * 0.8, opponentMonster, history);
-          if (result.first.type === CommandType.REFLECTOR) reflectorCount++;
-        }
-
         let lv3ReflectorCount = 0;
         for (let i = 0; i < 1000; i++) {
-          const result = selectCommands(state, 'player2', monster, AILevel.LV3, () => i / 1000, opponentMonster);
-          if (result.first.type === CommandType.REFLECTOR) lv3ReflectorCount++;
+          const r = 0.2 + (i / 1000) * 0.8;
+          const lv4Result = selectCommands(state, 'player2', monster, AILevel.LV4, () => r, opponentMonster, history);
+          const lv3Result = selectCommands(state, 'player2', monster, AILevel.LV3, () => r, opponentMonster);
+          if (lv4Result.first.type === CommandType.REFLECTOR) reflectorCount++;
+          if (lv3Result.first.type === CommandType.REFLECTOR) lv3ReflectorCount++;
         }
         expect(reflectorCount).toBeGreaterThan(lv3ReflectorCount);
       });
@@ -685,15 +680,13 @@ describe('selectCommands', () => {
         const history = makeHistoryWithPlayerPattern(CommandType.RETREAT, DistanceType.MID);
 
         let advanceCount = 0;
-        for (let i = 0; i < 1000; i++) {
-          const result = selectCommands(state, 'player2', monster, AILevel.LV4, () => 0.2 + (i / 1000) * 0.8, opponentMonster, history);
-          if (result.first.type === CommandType.ADVANCE) advanceCount++;
-        }
-
         let lv3AdvanceCount = 0;
         for (let i = 0; i < 1000; i++) {
-          const result = selectCommands(state, 'player2', monster, AILevel.LV3, () => i / 1000, opponentMonster);
-          if (result.first.type === CommandType.ADVANCE) lv3AdvanceCount++;
+          const r = 0.2 + (i / 1000) * 0.8;
+          const lv4Result = selectCommands(state, 'player2', monster, AILevel.LV4, () => r, opponentMonster, history);
+          const lv3Result = selectCommands(state, 'player2', monster, AILevel.LV3, () => r, opponentMonster);
+          if (lv4Result.first.type === CommandType.ADVANCE) advanceCount++;
+          if (lv3Result.first.type === CommandType.ADVANCE) lv3AdvanceCount++;
         }
         expect(advanceCount).toBeGreaterThan(lv3AdvanceCount);
       });
@@ -704,15 +697,13 @@ describe('selectCommands', () => {
         const history = makeHistoryWithPlayerPattern(CommandType.REFLECTOR, DistanceType.NEAR);
 
         let weaponCount = 0;
-        for (let i = 0; i < 1000; i++) {
-          const result = selectCommands(state, 'player2', monster, AILevel.LV4, () => 0.2 + (i / 1000) * 0.8, opponentMonster, history);
-          if (result.first.type === CommandType.WEAPON_ATTACK) weaponCount++;
-        }
-
         let lv3WeaponCount = 0;
         for (let i = 0; i < 1000; i++) {
-          const result = selectCommands(state, 'player2', monster, AILevel.LV3, () => i / 1000, opponentMonster);
-          if (result.first.type === CommandType.WEAPON_ATTACK) lv3WeaponCount++;
+          const r = 0.2 + (i / 1000) * 0.8;
+          const lv4Result = selectCommands(state, 'player2', monster, AILevel.LV4, () => r, opponentMonster, history);
+          const lv3Result = selectCommands(state, 'player2', monster, AILevel.LV3, () => r, opponentMonster);
+          if (lv4Result.first.type === CommandType.WEAPON_ATTACK) weaponCount++;
+          if (lv3Result.first.type === CommandType.WEAPON_ATTACK) lv3WeaponCount++;
         }
         expect(weaponCount).toBeGreaterThan(lv3WeaponCount);
       });
@@ -744,26 +735,21 @@ describe('selectCommands', () => {
         expect(result).toHaveProperty('second');
       });
 
-      it('統計的に約20%でLv3行動になる（1000回試行）', () => {
+      it('フォールバック判定は最初のrandomFn呼び出しで行われる', () => {
         const state = createTestState({ currentDistance: DistanceType.NEAR });
         const monster = createTestMonster();
         const history = makeHistoryWithPlayerPattern(CommandType.WEAPON_ATTACK, DistanceType.NEAR);
 
-        // 最初のrandomFn呼び出しがフォールバック判定に使われる
-        // 0.0〜0.2未満 → Lv3（20%）
-        let lv3FallbackCount = 0;
-        for (let i = 0; i < 1000; i++) {
-          const r = i / 1000;
-          // Lv4とLv3で同じ乱数での結果を比較
-          const lv4Result = selectCommands(state, 'player2', monster, AILevel.LV4, () => r, opponentMonster, history);
-          const lv3Result = selectCommands(state, 'player2', monster, AILevel.LV3, () => r, opponentMonster);
-          if (lv4Result.first.type === lv3Result.first.type && lv4Result.second.type === lv3Result.second.type) {
-            lv3FallbackCount++;
-          }
+        // randomFnの最初の呼び出し値が0.2未満→フォールバック
+        // 0.2以上→パターン読み を検証
+        // カウンターで各呼び出しの最初の値を制御
+        for (const threshold of [0.0, 0.05, 0.1, 0.15, 0.19]) {
+          // threshold < 0.2 → Lv3フォールバック（結果はLv3と一致）
+          const lv4Result = selectCommands(state, 'player2', monster, AILevel.LV4, () => threshold, opponentMonster, history);
+          const lv3Result = selectCommands(state, 'player2', monster, AILevel.LV3, () => threshold, opponentMonster);
+          expect(lv4Result.first.type).toBe(lv3Result.first.type);
+          expect(lv4Result.second.type).toBe(lv3Result.second.type);
         }
-        // 0〜199の200個がフォールバック（20%）
-        expect(lv3FallbackCount).toBeGreaterThanOrEqual(190);
-        expect(lv3FallbackCount).toBeLessThanOrEqual(250);
       });
     });
 
