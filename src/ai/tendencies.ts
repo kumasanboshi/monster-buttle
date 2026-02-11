@@ -17,7 +17,8 @@ const DEFAULT_TENDENCY: SpeciesTendency = {
 /**
  * 種族別AI傾向データ
  *
- * 全AIレベル共通で適用。各種族の強みを活かした行動に重み付けを行う。
+ * 全AIレベル共通で定義（ただしLv1では使用しない）。
+ * Lv2以降で各種族の強みを活かした行動に重み付けを行う。
  * 重み1.0 = 基準、>1.0 = 選びやすい、<1.0 = 選びにくい
  */
 export const SPECIES_TENDENCIES: Record<string, SpeciesTendency> = {
