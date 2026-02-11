@@ -1,6 +1,9 @@
 import { BattleState, Monster, TurnCommands, CommandType } from '../types';
 import { AILevel } from './types';
 import { getValidCommands } from './commandValidator';
+import { getTendencyBySpecies } from './tendencies';
+import { getDistanceWeights } from './distanceWeights';
+import { selectWeightedCommand, CommandWeightMap } from './weightedSelection';
 
 /**
  * 有効コマンドリストからランダムに1つ選択する
@@ -42,7 +45,7 @@ export function selectCommands(
     case AILevel.LV1:
       return selectLv1(state, playerId, monster, randomFn);
     case AILevel.LV2:
-      throw new Error('AI Level LV2 is not implemented yet');
+      return selectLv2(state, playerId, monster, randomFn);
     case AILevel.LV3:
       throw new Error('AI Level LV3 is not implemented yet');
     case AILevel.LV4:
@@ -52,6 +55,33 @@ export function selectCommands(
     default:
       throw new Error(`Unknown AI level: ${level}`);
   }
+}
+
+/**
+ * Lv2 AI: 距離に応じた基本行動 + 種族傾向
+ *
+ * 種族傾向の重みと距離別モディファイアを掛け合わせて、
+ * 重み付きランダム選択を行う。
+ */
+function selectLv2(
+  state: BattleState,
+  playerId: 'player1' | 'player2',
+  monster: Monster,
+  randomFn: () => number
+): TurnCommands {
+  const validCommands = getValidCommands(state, playerId, monster);
+  const speciesTendency = getTendencyBySpecies(monster.id);
+  const distanceWeights = getDistanceWeights(state.currentDistance);
+
+  const combinedWeights: CommandWeightMap = {};
+  for (const cmd of validCommands) {
+    combinedWeights[cmd] = speciesTendency[cmd] * distanceWeights[cmd];
+  }
+
+  return {
+    first: { type: selectWeightedCommand(combinedWeights, randomFn) },
+    second: { type: selectWeightedCommand(combinedWeights, randomFn) },
+  };
 }
 
 /**
