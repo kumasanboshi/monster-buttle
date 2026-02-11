@@ -88,12 +88,13 @@ function selectLv4(
     throw new Error('Lv4 AI requires turnHistory');
   }
 
-  // 20%でLv3にフォールバック（完全予測防止）
-  if (randomFn() < 0.2) {
+  // 完全予測防止: 20%でLv3にフォールバック
+  const LV4_FALLBACK_RATE = 0.2;
+  if (randomFn() < LV4_FALLBACK_RATE) {
     return selectLv3(state, playerId, monster, randomFn, opponentMonster);
   }
 
-  // パターン分析
+  // パターン分析: 直近3ターンの相手コマンドを距離別に集計
   const opponentId = playerId === 'player1' ? 'player2' : 'player1';
   const pattern = analyzePlayerPattern(turnHistory, opponentId, 3);
   const mostFrequent = getMostFrequentCommand(pattern, state.currentDistance);
@@ -103,8 +104,10 @@ function selectLv4(
     return selectLv3(state, playerId, monster, randomFn, opponentMonster);
   }
 
-  // カウンター戦略（最頻出コマンドの最初のものを対象）
-  const targetCommand = mostFrequent[0];
+  // カウンター戦略（同率の場合はランダムに1つ選択）
+  const targetCommand = mostFrequent.length === 1
+    ? mostFrequent[0]
+    : mostFrequent[Math.floor(randomFn() * mostFrequent.length)];
   const counterMods = getCounterModifiers(targetCommand, state.currentDistance);
 
   // Lv3ベースの重み計算
