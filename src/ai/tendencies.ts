@@ -20,6 +20,11 @@ const DEFAULT_TENDENCY: SpeciesTendency = {
  * 全AIレベル共通で定義（ただしLv1では使用しない）。
  * Lv2以降で各種族の強みを活かした行動に重み付けを行う。
  * 重み1.0 = 基準、>1.0 = 選びやすい、<1.0 = 選びにくい
+ *
+ * 注意: STANCE_A/STANCE_Bの意味は現在のスタンスにより変動する。
+ * （NORMAL時: A→攻勢, B→守勢 / OFFENSIVE時: A→通常, B→守勢 / DEFENSIVE時: A→通常, B→攻勢）
+ * ここでの重みは「スタンス切替コマンドを選ぶ傾向」を表し、
+ * 遷移先のスタンスの適切さはLv2以降のAIロジックで判断する。
  */
 export const SPECIES_TENDENCIES: Record<string, SpeciesTendency> = {
   // 剣士（ザーグ）: バランス型（状況対応）
