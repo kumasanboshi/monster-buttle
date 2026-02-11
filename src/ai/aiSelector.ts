@@ -62,6 +62,9 @@ export function selectCommands(
  *
  * 種族傾向の重みと距離別モディファイアを掛け合わせて、
  * 重み付きランダム選択を行う。
+ *
+ * 制約: STANCE_A/Bの重みは現在のスタンスに関わらず固定。
+ * Lv3以降でスタンス遷移先の適切さを考慮する。
  */
 function selectLv2(
   state: BattleState,

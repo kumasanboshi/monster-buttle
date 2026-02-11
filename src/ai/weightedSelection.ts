@@ -36,11 +36,12 @@ export function selectWeightedCommand(
 
   for (const [command, weight] of entries) {
     randomValue -= weight;
-    if (randomValue <= 0) {
+    if (randomValue < 0) {
       return command;
     }
   }
 
-  // 浮動小数点誤差のフォールバック
+  // 浮動小数点の累積誤差で randomValue が微小な正の値のまま
+  // ループを抜ける場合のフォールバック（最後のコマンドを返す）
   return entries[entries.length - 1][0];
 }

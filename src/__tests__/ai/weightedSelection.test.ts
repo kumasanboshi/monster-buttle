@@ -44,6 +44,17 @@ describe('selectWeightedCommand', () => {
       expect(selectWeightedCommand(weights, () => 0.76)).toBe(CommandType.SPECIAL_ATTACK);
     });
 
+    it('等しい重みの境界値（randomFn=0.5）で2番目のコマンドを返す', () => {
+      const weights = {
+        [CommandType.ADVANCE]: 0.5,
+        [CommandType.RETREAT]: 0.5,
+      };
+      // randomFn(0.5) * totalWeight(1.0) = 0.5
+      // ADVANCE(0.5): 0.5 - 0.5 = 0.0 → 0は負でないので次へ
+      // RETREAT(0.5): 0.0 - 0.5 = -0.5 < 0 → RETREAT
+      expect(selectWeightedCommand(weights, () => 0.5)).toBe(CommandType.RETREAT);
+    });
+
     it('3つのコマンドで累積重みによる選択', () => {
       const weights = {
         [CommandType.ADVANCE]: 2.0,
