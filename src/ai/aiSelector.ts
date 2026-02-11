@@ -85,16 +85,17 @@ function selectLv3(
 
   // HP状況モディファイア
   const ownHpRatio = ownState.currentHp / monster.stats.hp;
-  const oppMaxHp = opponentMonster ? opponentMonster.stats.hp : ownState.currentHp;
-  const oppHpRatio = oppState.currentHp / oppMaxHp;
+  // opponentMonster未定義時は相手HP割合を1.0（満タン）と仮定
+  const oppMaxHp = opponentMonster ? opponentMonster.stats.hp : oppState.currentHp;
+  const oppHpRatio = oppMaxHp > 0 ? oppState.currentHp / oppMaxHp : 1.0;
   const hpMods = getHpModifiers(ownHpRatio, oppHpRatio);
 
   // スタンス対応モディファイア
   const stanceMods = getStanceResponseModifiers(ownState.currentStance, oppState.currentStance);
 
-  // リフレクター対応モディファイア
+  // リフレクター対応モディファイア（未定義時は2回と仮定）
   const oppMaxReflect = opponentMonster ? opponentMonster.reflector.maxReflectCount : 2;
-  const oppRemainingReflect = oppMaxReflect - oppState.usedReflectCount;
+  const oppRemainingReflect = Math.max(0, oppMaxReflect - oppState.usedReflectCount);
   const reflectorMods = getReflectorModifiers(oppRemainingReflect);
 
   // 全モディファイアを掛け合わせ

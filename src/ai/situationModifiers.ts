@@ -22,10 +22,14 @@ const NEUTRAL_MODIFIERS: CommandModifiers = {
  * @param opponentHpRatio 相手のHP割合 (0.0〜1.0)
  */
 export function getHpModifiers(ownHpRatio: number, opponentHpRatio: number): CommandModifiers {
+  // 入力値を[0, 1]にクランプ
+  const safeOwnRatio = Math.max(0, Math.min(1, ownHpRatio));
+  const safeOppRatio = Math.max(0, Math.min(1, opponentHpRatio));
+
   // 自分HPが低いほど守備的（0.0→最大効果、1.0→効果なし）
-  const ownLowFactor = Math.max(0, 1.0 - ownHpRatio);
+  const ownLowFactor = 1.0 - safeOwnRatio;
   // 相手HPが低いほど攻撃的
-  const oppLowFactor = Math.max(0, 1.0 - opponentHpRatio);
+  const oppLowFactor = 1.0 - safeOppRatio;
 
   return {
     [CommandType.ADVANCE]: 1.0 - 0.4 * ownLowFactor + 0.4 * oppLowFactor,
