@@ -1,4 +1,4 @@
-import { selectWeightedCommand } from '../../ai/weightedSelection';
+import { selectWeightedCommand, selectDeterministicCommand } from '../../ai/weightedSelection';
 import { CommandType } from '../../types';
 
 describe('selectWeightedCommand', () => {
@@ -110,6 +110,114 @@ describe('selectWeightedCommand', () => {
       };
       expect(selectWeightedCommand(weights, () => 0.0)).toBe(CommandType.ADVANCE);
       expect(selectWeightedCommand(weights, () => 0.99)).toBe(CommandType.RETREAT);
+    });
+  });
+});
+
+describe('selectDeterministicCommand', () => {
+  describe('基本動作', () => {
+    it('重みが最大のコマンドを返す', () => {
+      const weights = {
+        [CommandType.ADVANCE]: 1.0,
+        [CommandType.RETREAT]: 3.0,
+        [CommandType.SPECIAL_ATTACK]: 2.0,
+      };
+      expect(selectDeterministicCommand(weights)).toBe(CommandType.RETREAT);
+    });
+
+    it('1つのコマンドだけの場合、それを返す', () => {
+      const weights = { [CommandType.WEAPON_ATTACK]: 1.5 };
+      expect(selectDeterministicCommand(weights)).toBe(CommandType.WEAPON_ATTACK);
+    });
+  });
+
+  describe('タイブレーク（同率の場合、攻撃系コマンドを優先）', () => {
+    it('WEAPON_ATTACK と SPECIAL_ATTACK が同率 → WEAPON_ATTACK', () => {
+      const weights = {
+        [CommandType.WEAPON_ATTACK]: 2.0,
+        [CommandType.SPECIAL_ATTACK]: 2.0,
+      };
+      expect(selectDeterministicCommand(weights)).toBe(CommandType.WEAPON_ATTACK);
+    });
+
+    it('SPECIAL_ATTACK と REFLECTOR が同率 → SPECIAL_ATTACK', () => {
+      const weights = {
+        [CommandType.SPECIAL_ATTACK]: 2.0,
+        [CommandType.REFLECTOR]: 2.0,
+      };
+      expect(selectDeterministicCommand(weights)).toBe(CommandType.SPECIAL_ATTACK);
+    });
+
+    it('REFLECTOR と ADVANCE が同率 → REFLECTOR', () => {
+      const weights = {
+        [CommandType.REFLECTOR]: 2.0,
+        [CommandType.ADVANCE]: 2.0,
+      };
+      expect(selectDeterministicCommand(weights)).toBe(CommandType.REFLECTOR);
+    });
+
+    it('ADVANCE と RETREAT が同率 → ADVANCE', () => {
+      const weights = {
+        [CommandType.ADVANCE]: 2.0,
+        [CommandType.RETREAT]: 2.0,
+      };
+      expect(selectDeterministicCommand(weights)).toBe(CommandType.ADVANCE);
+    });
+
+    it('STANCE_A と STANCE_B が同率 → STANCE_A', () => {
+      const weights = {
+        [CommandType.STANCE_A]: 2.0,
+        [CommandType.STANCE_B]: 2.0,
+      };
+      expect(selectDeterministicCommand(weights)).toBe(CommandType.STANCE_A);
+    });
+
+    it('全コマンド同率 → WEAPON_ATTACK（最優先）', () => {
+      const weights = {
+        [CommandType.ADVANCE]: 1.0,
+        [CommandType.RETREAT]: 1.0,
+        [CommandType.WEAPON_ATTACK]: 1.0,
+        [CommandType.SPECIAL_ATTACK]: 1.0,
+        [CommandType.REFLECTOR]: 1.0,
+        [CommandType.STANCE_A]: 1.0,
+        [CommandType.STANCE_B]: 1.0,
+      };
+      expect(selectDeterministicCommand(weights)).toBe(CommandType.WEAPON_ATTACK);
+    });
+  });
+
+  describe('エッジケース', () => {
+    it('重み0のコマンドは選択されない', () => {
+      const weights = {
+        [CommandType.ADVANCE]: 0,
+        [CommandType.RETREAT]: 1.0,
+      };
+      expect(selectDeterministicCommand(weights)).toBe(CommandType.RETREAT);
+    });
+
+    it('空のweightsの場合はエラー', () => {
+      expect(() => selectDeterministicCommand({})).toThrow();
+    });
+
+    it('全コマンドの重みが0以下の場合はエラー', () => {
+      const weights = {
+        [CommandType.ADVANCE]: 0,
+        [CommandType.RETREAT]: -1,
+      };
+      expect(() => selectDeterministicCommand(weights)).toThrow();
+    });
+
+    it('同じ乱数で呼んでも常に同じ結果（確定的）', () => {
+      const weights = {
+        [CommandType.ADVANCE]: 1.0,
+        [CommandType.RETREAT]: 3.0,
+        [CommandType.SPECIAL_ATTACK]: 2.0,
+      };
+      const result1 = selectDeterministicCommand(weights);
+      const result2 = selectDeterministicCommand(weights);
+      const result3 = selectDeterministicCommand(weights);
+      expect(result1).toBe(result2);
+      expect(result2).toBe(result3);
     });
   });
 });
