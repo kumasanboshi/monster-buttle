@@ -1,6 +1,20 @@
 import { CommandType } from '../types';
 
 /**
+ * タイブレーク用の優先順位（攻撃系コマンドを優先）
+ * WEAPON_ATTACK > SPECIAL_ATTACK > REFLECTOR > ADVANCE > RETREAT > STANCE_A > STANCE_B
+ */
+const TIEBREAK_PRIORITY: CommandType[] = [
+  CommandType.WEAPON_ATTACK,
+  CommandType.SPECIAL_ATTACK,
+  CommandType.REFLECTOR,
+  CommandType.ADVANCE,
+  CommandType.RETREAT,
+  CommandType.STANCE_A,
+  CommandType.STANCE_B,
+];
+
+/**
  * コマンドごとの重みマップ
  */
 export type CommandWeightMap = Partial<Record<CommandType, number>>;
@@ -44,4 +58,41 @@ export function selectWeightedCommand(
   // 浮動小数点の累積誤差で randomValue が微小な正の値のまま
   // ループを抜ける場合のフォールバック（最後のコマンドを返す）
   return entries[entries.length - 1][0];
+}
+
+/**
+ * 重みが最大のコマンドを確定的に選ぶ（Lv5 AI用）
+ *
+ * ランダム要素なし。同率の場合は攻撃系コマンドを優先するタイブレーク規則を適用。
+ * 優先順: WEAPON_ATTACK > SPECIAL_ATTACK > REFLECTOR > ADVANCE > RETREAT > STANCE_A > STANCE_B
+ *
+ * @param weights コマンドごとの重み（正の値のみ有効）
+ * @returns 最大重みのコマンド
+ * @throws 有効な候補が存在しない場合
+ */
+export function selectDeterministicCommand(
+  weights: CommandWeightMap
+): CommandType {
+  const entries = (Object.entries(weights) as [CommandType, number][])
+    .filter(([, weight]) => weight > 0);
+
+  if (entries.length === 0) {
+    throw new Error('No valid commands with positive weights');
+  }
+
+  const maxWeight = Math.max(...entries.map(([, weight]) => weight));
+  const maxEntries = entries.filter(([, weight]) => weight === maxWeight);
+
+  if (maxEntries.length === 1) {
+    return maxEntries[0][0];
+  }
+
+  // タイブレーク: 優先順位が高いコマンドを選択
+  for (const cmd of TIEBREAK_PRIORITY) {
+    if (maxEntries.some(([c]) => c === cmd)) {
+      return cmd;
+    }
+  }
+
+  return maxEntries[0][0];
 }
