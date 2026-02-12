@@ -3,7 +3,7 @@ import { AILevel } from './types';
 import { getValidCommands } from './commandValidator';
 import { getTendencyBySpecies } from './tendencies';
 import { getDistanceWeights } from './distanceWeights';
-import { selectWeightedCommand, selectDeterministicCommand, CommandWeightMap } from './weightedSelection';
+import { selectWeightedCommand, selectDeterministicCommand, selectWeightedCommandPair, CommandWeightMap, CommandPairWeightMap } from './weightedSelection';
 import { getHpModifiers, getStanceResponseModifiers, getReflectorModifiers } from './situationModifiers';
 import { analyzePlayerPattern, getMostFrequentCommand } from './patternAnalyzer';
 import { getCounterModifiers } from './counterStrategy';
@@ -137,13 +137,13 @@ function selectLv5(
 }
 
 /**
- * Lv4 AI: Lv3 + パターン読み
+ * Lv4 AI: ペア評価コンボ + パターン読み
  *
- * Lv3の状況考慮に加え、相手の過去の行動パターンを分析してカウンター戦略を適用。
+ * 全(1st, 2nd)ペアをスコア化し、重み付きランダムで選択。
  * - 直近3ターンの相手コマンドを距離別に集計
  * - 最頻出コマンドに対するカウンターモディファイアを適用
  * - 20%の確率でLv3相当の行動（完全予測防止）
- * - 履歴不足時はLv3にフォールバック
+ * - 履歴不足時はカウンター無しのペア評価
  */
 function selectLv4(
   state: BattleState,
@@ -160,61 +160,122 @@ function selectLv4(
     throw new Error('Lv4 AI requires turnHistory');
   }
 
-  // 完全予測防止: 20%でLv3にフォールバック
+  // 完全予測防止: 20%でLv3にフォールバック（順次予測コンボ方式）
   const LV4_FALLBACK_RATE = 0.2;
   if (randomFn() < LV4_FALLBACK_RATE) {
     return selectLv3(state, playerId, monster, randomFn, opponentMonster);
   }
 
-  // パターン分析: 直近3ターンの相手コマンドを距離別に集計
   const opponentId = playerId === 'player1' ? 'player2' : 'player1';
-  const pattern = analyzePlayerPattern(turnHistory, opponentId, 3);
-  const mostFrequent = getMostFrequentCommand(pattern, state.currentDistance);
-
-  // データ不足 → Lv3にフォールバック
-  if (!mostFrequent || mostFrequent.length === 0) {
-    return selectLv3(state, playerId, monster, randomFn, opponentMonster);
-  }
-
-  // カウンター戦略（同率の場合はランダムに1つ選択）
-  const targetCommand = mostFrequent.length === 1
-    ? mostFrequent[0]
-    : mostFrequent[Math.floor(randomFn() * mostFrequent.length)];
-  const counterMods = getCounterModifiers(targetCommand, state.currentDistance);
-
-  // Lv3ベースの重み計算
-  const validCommands = getValidCommands(state, playerId, monster);
-  const speciesTendency = getTendencyBySpecies(monster.id);
-  const distanceWeights = getDistanceWeights(state.currentDistance);
-
   const ownState = state[playerId];
   const oppState = state[opponentId];
 
+  // 共通モディファイア
+  const speciesTendency = getTendencyBySpecies(monster.id);
   const ownHpRatio = ownState.currentHp / monster.stats.hp;
   const oppHpRatio = opponentMonster.stats.hp > 0
     ? oppState.currentHp / opponentMonster.stats.hp
     : 1.0;
   const hpMods = getHpModifiers(ownHpRatio, oppHpRatio);
-  const stanceMods = getStanceResponseModifiers(ownState.currentStance, oppState.currentStance);
   const oppRemainingReflect = Math.max(0, opponentMonster.reflector.maxReflectCount - oppState.usedReflectCount);
   const reflectorMods = getReflectorModifiers(oppRemainingReflect);
 
-  // 全モディファイアを掛け合わせ（Lv3 + カウンター）
-  const combinedWeights: CommandWeightMap = {};
-  for (const cmd of validCommands) {
-    combinedWeights[cmd] =
-      speciesTendency[cmd] *
-      distanceWeights[cmd] *
-      hpMods[cmd] *
-      stanceMods[cmd] *
-      reflectorMods[cmd] *
-      counterMods[cmd];
+  // パターン分析 → カウンターモディファイア（データ不足時は undefined）
+  const pattern = analyzePlayerPattern(turnHistory, opponentId, 3);
+  const mostFrequent = getMostFrequentCommand(pattern, state.currentDistance);
+  const hasCounterData = mostFrequent !== null && mostFrequent.length > 0;
+  let counterMods: CommandWeightMap | undefined;
+  if (hasCounterData) {
+    const targetCommand = mostFrequent!.length === 1
+      ? mostFrequent![0]
+      : mostFrequent![Math.floor(randomFn() * mostFrequent!.length)];
+    counterMods = getCounterModifiers(targetCommand, state.currentDistance);
   }
 
+  // ペア評価
+  const pairScores = buildPairScores(
+    state, playerId, monster, opponentMonster,
+    speciesTendency, hpMods, reflectorMods, counterMods
+  );
+
+  const selected = selectWeightedCommandPair(pairScores, randomFn);
   return {
-    first: { type: selectWeightedCommand(combinedWeights, randomFn) },
-    second: { type: selectWeightedCommand(combinedWeights, randomFn) },
+    first: { type: selected.first },
+    second: { type: selected.second },
   };
+}
+
+/**
+ * 全(1st, 2nd)ペアのスコアマップを構築する
+ *
+ * 1. 有効な1stコマンドを列挙
+ * 2. 各1stについて状態を予測し、予測状態での有効な2ndコマンドを列挙
+ * 3. 各ペアのスコア = 1stの重み × 2ndの重み（予測状態）
+ */
+function buildPairScores(
+  state: BattleState,
+  playerId: 'player1' | 'player2',
+  monster: Monster,
+  opponentMonster: Monster,
+  speciesTendency: CommandWeightMap,
+  hpMods: CommandWeightMap,
+  reflectorMods: CommandWeightMap,
+  counterMods?: CommandWeightMap
+): CommandPairWeightMap {
+  const ownState = state[playerId];
+  const opponentId = playerId === 'player1' ? 'player2' : 'player1';
+  const oppState = state[opponentId];
+
+  const validCommands1st = getValidCommands(state, playerId, monster);
+  const distanceWeights1st = getDistanceWeights(state.currentDistance);
+  const stanceMods1st = getStanceResponseModifiers(ownState.currentStance, oppState.currentStance);
+
+  const pairScores: CommandPairWeightMap = new Map();
+
+  for (const cmd1st of validCommands1st) {
+    // 1stの重みを計算
+    const weight1st =
+      (speciesTendency[cmd1st] ?? 1.0) *
+      (distanceWeights1st[cmd1st] ?? 1.0) *
+      (hpMods[cmd1st] ?? 1.0) *
+      (stanceMods1st[cmd1st] ?? 1.0) *
+      (reflectorMods[cmd1st] ?? 1.0) *
+      (counterMods ? (counterMods[cmd1st] ?? 1.0) : 1.0);
+
+    if (weight1st <= 0) continue;
+
+    // 1st実行後の状態を予測
+    const { predictedDistance, predictedStance } = predictStateAfterCommand(
+      state.currentDistance,
+      ownState.currentStance,
+      cmd1st
+    );
+
+    // 予測状態でのBattleStateを構築
+    const predictedState = buildPredictedState(state, playerId, predictedDistance, cmd1st, monster);
+    const validCommands2nd = getValidCommands(predictedState, playerId, monster);
+
+    const distanceWeights2nd = getDistanceWeights(predictedDistance);
+    const stanceMods2nd = getStanceResponseModifiers(predictedStance, oppState.currentStance);
+
+    for (const cmd2nd of validCommands2nd) {
+      const weight2nd =
+        (speciesTendency[cmd2nd] ?? 1.0) *
+        (distanceWeights2nd[cmd2nd] ?? 1.0) *
+        (hpMods[cmd2nd] ?? 1.0) *
+        (stanceMods2nd[cmd2nd] ?? 1.0) *
+        (reflectorMods[cmd2nd] ?? 1.0) *
+        (counterMods ? (counterMods[cmd2nd] ?? 1.0) : 1.0);
+
+      if (weight2nd <= 0) continue;
+
+      const pairScore = weight1st * weight2nd;
+      const key = `${cmd1st}:${cmd2nd}`;
+      pairScores.set(key, { first: cmd1st, second: cmd2nd, score: pairScore });
+    }
+  }
+
+  return pairScores;
 }
 
 /**
