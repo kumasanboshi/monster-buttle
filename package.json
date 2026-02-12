@@ -7,15 +7,16 @@
     "doc": "docs"
   },
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "build": "tsc || true",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0 || true",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,json}\"",
-    "type-check": "tsc --noEmit --allowJs || true"
+    "type-check": "tsc --noEmit"
   },
   "repository": {
     "type": "git",
@@ -44,6 +45,7 @@
     "prettier": "^3.8.1",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
   }
 }

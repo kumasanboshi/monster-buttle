@@ -8,7 +8,18 @@ module.exports = {
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/**/__tests__/**',
+    '!src/main.ts',
+    '!src/scenes/BaseScene.ts',
+    '!src/scenes/BootScene.ts',
   ],
   coverageDirectory: 'coverage',
   verbose: true,
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.jest.json',
+      },
+    ],
+  },
 };
