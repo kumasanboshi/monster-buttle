@@ -935,11 +935,17 @@ describe('selectCommands', () => {
       it('中距離で前進+武器攻撃のペアが選択可能', () => {
         const state = createTestState({ currentDistance: DistanceType.MID });
         const monster = createTestMonster();
-        const history = makeHistoryWithPlayerPattern(CommandType.ADVANCE, DistanceType.MID);
         let advanceWeaponFound = false;
-        for (let i = 0; i < 1000; i++) {
-          const r = 0.2 + (i / 1000) * 0.8;
-          const result = selectCommands(state, 'player2', monster, AILevel.LV4, () => r, opponentMonster, history);
+        // フォールバック判定(1st call)とペア選択(2nd call)で異なる値を使う
+        for (let i = 0; i < 100; i++) {
+          let callCount = 0;
+          const randomFn = () => {
+            callCount++;
+            // 1st call: フォールバック判定 → 0.5で通過
+            // 2nd call: ペア選択 → 変動値
+            return callCount === 1 ? 0.5 : i / 100;
+          };
+          const result = selectCommands(state, 'player2', monster, AILevel.LV4, randomFn, opponentMonster, []);
           if (result.first.type === CommandType.ADVANCE && result.second.type === CommandType.WEAPON_ATTACK) {
             advanceWeaponFound = true;
             break;
