@@ -1,4 +1,4 @@
-import { BattleState, Monster, TurnCommands, TurnResult, CommandType } from '../types';
+import { BattleState, Monster, TurnCommands, TurnResult, CommandType, DistanceType, StanceType } from '../types';
 import { AILevel } from './types';
 import { getValidCommands } from './commandValidator';
 import { getTendencyBySpecies } from './tendencies';
@@ -7,6 +7,7 @@ import { selectWeightedCommand, selectDeterministicCommand, CommandWeightMap } f
 import { getHpModifiers, getStanceResponseModifiers, getReflectorModifiers } from './situationModifiers';
 import { analyzePlayerPattern, getMostFrequentCommand } from './patternAnalyzer';
 import { getCounterModifiers } from './counterStrategy';
+import { predictStateAfterCommand } from './statePredictor';
 
 /**
  * 有効コマンドリストからランダムに1つ選択する
@@ -217,12 +218,16 @@ function selectLv4(
 }
 
 /**
- * Lv3 AI: Lv2 + 状況考慮
+ * Lv3 AI: Lv2 + 状況考慮 + 順次予測コンボ
  *
  * Lv2の距離＋種族傾向に加え、以下の状況モディファイアを適用:
  * - HP状況（自分/相手のHP割合）
  * - 相手スタンスへの対応（カウンター行動）
  * - 相手リフレクター残数（特殊攻撃の頻度調整）
+ *
+ * 順次予測コンボ:
+ * 1stを選択後、1stコマンドによる距離・スタンス変化を予測し、
+ * 予測状態で2ndの重みを再計算して選択する。
  */
 function selectLv3(
   state: BattleState,
@@ -231,43 +236,94 @@ function selectLv3(
   randomFn: () => number,
   opponentMonster?: Monster
 ): TurnCommands {
-  const validCommands = getValidCommands(state, playerId, monster);
-  const speciesTendency = getTendencyBySpecies(monster.id);
-  const distanceWeights = getDistanceWeights(state.currentDistance);
-
   const ownState = state[playerId];
   const opponentId = playerId === 'player1' ? 'player2' : 'player1';
   const oppState = state[opponentId];
 
-  // HP状況モディファイア
+  // 共通モディファイア（距離・スタンス非依存）
+  const speciesTendency = getTendencyBySpecies(monster.id);
   const ownHpRatio = ownState.currentHp / monster.stats.hp;
-  // opponentMonster未定義時は相手HP割合を1.0（満タン）と仮定
   const oppMaxHp = opponentMonster ? opponentMonster.stats.hp : oppState.currentHp;
   const oppHpRatio = oppMaxHp > 0 ? oppState.currentHp / oppMaxHp : 1.0;
   const hpMods = getHpModifiers(ownHpRatio, oppHpRatio);
-
-  // スタンス対応モディファイア
-  const stanceMods = getStanceResponseModifiers(ownState.currentStance, oppState.currentStance);
-
-  // リフレクター対応モディファイア（未定義時は2回と仮定）
   const oppMaxReflect = opponentMonster ? opponentMonster.reflector.maxReflectCount : 2;
   const oppRemainingReflect = Math.max(0, oppMaxReflect - oppState.usedReflectCount);
   const reflectorMods = getReflectorModifiers(oppRemainingReflect);
 
-  // 全モディファイアを掛け合わせ
-  const combinedWeights: CommandWeightMap = {};
-  for (const cmd of validCommands) {
-    combinedWeights[cmd] =
+  // --- 1st選択（現在状態） ---
+  const validCommands1st = getValidCommands(state, playerId, monster);
+  const distanceWeights1st = getDistanceWeights(state.currentDistance);
+  const stanceMods1st = getStanceResponseModifiers(ownState.currentStance, oppState.currentStance);
+
+  const weights1st: CommandWeightMap = {};
+  for (const cmd of validCommands1st) {
+    weights1st[cmd] =
       speciesTendency[cmd] *
-      distanceWeights[cmd] *
+      distanceWeights1st[cmd] *
       hpMods[cmd] *
-      stanceMods[cmd] *
+      stanceMods1st[cmd] *
       reflectorMods[cmd];
   }
 
+  const firstCmd = selectWeightedCommand(weights1st, randomFn);
+
+  // --- 2nd選択（予測状態） ---
+  const { predictedDistance, predictedStance } = predictStateAfterCommand(
+    state.currentDistance,
+    ownState.currentStance,
+    firstCmd
+  );
+
+  // 予測状態での有効コマンドを計算
+  const predictedState = buildPredictedState(state, playerId, predictedDistance, firstCmd, monster);
+  const validCommands2nd = getValidCommands(predictedState, playerId, monster);
+
+  const distanceWeights2nd = getDistanceWeights(predictedDistance);
+  const stanceMods2nd = getStanceResponseModifiers(predictedStance, oppState.currentStance);
+
+  const weights2nd: CommandWeightMap = {};
+  for (const cmd of validCommands2nd) {
+    weights2nd[cmd] =
+      speciesTendency[cmd] *
+      distanceWeights2nd[cmd] *
+      hpMods[cmd] *
+      stanceMods2nd[cmd] *
+      reflectorMods[cmd];
+  }
+
+  const secondCmd = selectWeightedCommand(weights2nd, randomFn);
+
   return {
-    first: { type: selectWeightedCommand(combinedWeights, randomFn) },
-    second: { type: selectWeightedCommand(combinedWeights, randomFn) },
+    first: { type: firstCmd },
+    second: { type: secondCmd },
+  };
+}
+
+/**
+ * 1stコマンド実行後の予測状態でBattleStateを構築する
+ *
+ * getValidCommands が距離やリフレクター残数を参照するため、
+ * 予測距離と予測リフレクター使用状況を反映したBattleStateを生成する。
+ */
+function buildPredictedState(
+  originalState: BattleState,
+  playerId: 'player1' | 'player2',
+  predictedDistance: DistanceType,
+  firstCmd: CommandType,
+  monster: Monster
+): BattleState {
+  const playerState = originalState[playerId];
+  const predictedUsedReflect = firstCmd === CommandType.REFLECTOR
+    ? playerState.usedReflectCount + 1
+    : playerState.usedReflectCount;
+
+  return {
+    ...originalState,
+    currentDistance: predictedDistance,
+    [playerId]: {
+      ...playerState,
+      usedReflectCount: predictedUsedReflect,
+    },
   };
 }
 

@@ -572,12 +572,21 @@ describe('selectCommands', () => {
         const state = createTestState({ currentDistance: DistanceType.MID });
         const monster = createTestMonster();
         let weaponIn2ndAfterAdvance = false;
-        for (let i = 0; i < 1000; i++) {
-          const result = selectCommands(state, 'player1', monster, AILevel.LV3, () => i / 1000, opponentMonster);
-          if (result.first.type === CommandType.ADVANCE && result.second.type === CommandType.WEAPON_ATTACK) {
-            weaponIn2ndAfterAdvance = true;
-            break;
+        // 1stと2ndで異なるrandomFn値を使うため、カウンタベースで試行
+        for (let i = 0; i < 100; i++) {
+          for (let j = 0; j < 100; j++) {
+            let callCount = 0;
+            const randomFn = () => {
+              callCount++;
+              return callCount === 1 ? i / 100 : j / 100;
+            };
+            const result = selectCommands(state, 'player1', monster, AILevel.LV3, randomFn, opponentMonster);
+            if (result.first.type === CommandType.ADVANCE && result.second.type === CommandType.WEAPON_ATTACK) {
+              weaponIn2ndAfterAdvance = true;
+              break;
+            }
           }
+          if (weaponIn2ndAfterAdvance) break;
         }
         // 中距離→前進→近距離なので2ndでWEAPON_ATTACKが選択可能になる
         expect(weaponIn2ndAfterAdvance).toBe(true);
