@@ -1207,5 +1207,80 @@ describe('selectCommands', () => {
         expect([CommandType.REFLECTOR, CommandType.WEAPON_ATTACK]).toContain(result.first.type);
       });
     });
+
+    describe('コンボ選択（ペア評価・確定）', () => {
+      it('1stと2ndが異なるコマンドになり得る', () => {
+        const state = createTestState({ currentDistance: DistanceType.MID });
+        const monster = createTestMonster();
+        const history = makeHistoryWithPlayerPattern(CommandType.SPECIAL_ATTACK, DistanceType.MID);
+        const result = selectCommands(state, 'player2', monster, AILevel.LV5, () => 0.5, opponentMonster, history);
+        // ペア評価では1stと2ndが独立にスコアリングされるので、異なる値になり得る
+        // （必ず異なるとは限らないが、同値を強制していないことの確認）
+        expect(result.first).toHaveProperty('type');
+        expect(result.second).toHaveProperty('type');
+      });
+
+      it('中距離で前進+武器攻撃のペアが確定選択される', () => {
+        // 中距離で1stにADVANCE → 近距離になり2ndでWEAPON_ATTACKが高スコア
+        // 相手がREFLECTOR多用 → カウンターでWEAPON_ATTACK(1.5)とADVANCE(1.3)が強化
+        // ADVANCE:WEAPON_ATTACK ≈ 1.56 × 3.0 ≈ 4.68 で最高スコアペアになるはず
+        const state = createTestState({ currentDistance: DistanceType.MID });
+        const monster = createTestMonster();
+        const history = makeHistoryWithPlayerPattern(CommandType.REFLECTOR, DistanceType.MID);
+        const result = selectCommands(state, 'player2', monster, AILevel.LV5, () => 0.5, opponentMonster, history);
+        // ペア評価により、1st=ADVANCE（中→近）、2nd=WEAPON_ATTACK（近距離で有効）
+        expect(result.first.type).toBe(CommandType.ADVANCE);
+        expect(result.second.type).toBe(CommandType.WEAPON_ATTACK);
+      });
+
+      it('遠距離で1stが前進の場合、2ndでWEAPON_ATTACKは選ばれない', () => {
+        // FAR→ADVANCE→MID: MIDではWEAPON_ATTACKは無効
+        const state = createTestState({ currentDistance: DistanceType.FAR });
+        const monster = createTestMonster();
+        const history = makeHistoryWithPlayerPattern(CommandType.RETREAT, DistanceType.FAR);
+        const result = selectCommands(state, 'player2', monster, AILevel.LV5, () => 0.5, opponentMonster, history);
+        // ペア内で1st=ADVANCE → 2ndはMIDでWEAPON_ATTACK無効
+        // ただしペア全体の最高スコアがADVANCEペアとは限らないので、
+        // 結果にWEAPON_ATTACKが2ndに来る場合は1stがADVANCE以外のはず
+        if (result.first.type === CommandType.ADVANCE) {
+          expect(result.second.type).not.toBe(CommandType.WEAPON_ATTACK);
+        }
+      });
+
+      it('カウンター戦略がペアスコアに反映される', () => {
+        const state = createTestState({ currentDistance: DistanceType.NEAR });
+        const monster = createTestMonster();
+        // 相手がSPECIAL_ATTACK多用 → REFLECTOR/WEAPONが有力
+        const history = makeHistoryWithPlayerPattern(CommandType.SPECIAL_ATTACK, DistanceType.NEAR);
+        const result = selectCommands(state, 'player2', monster, AILevel.LV5, () => 0.5, opponentMonster, history);
+        // ペア内の1stか2ndにカウンター系（REFLECTOR or WEAPON_ATTACK）が含まれるはず
+        const hasCounter =
+          result.first.type === CommandType.REFLECTOR ||
+          result.first.type === CommandType.WEAPON_ATTACK ||
+          result.second.type === CommandType.REFLECTOR ||
+          result.second.type === CommandType.WEAPON_ATTACK;
+        expect(hasCounter).toBe(true);
+      });
+
+      it('1stでリフレクター使用 → 残数0の場合2ndでリフレクター選択不可', () => {
+        const state = createTestState({
+          currentDistance: DistanceType.NEAR,
+          player2: {
+            monsterId: 'gardan',
+            currentHp: 280,
+            currentStance: StanceType.NORMAL,
+            remainingSpecialCount: 3,
+            usedReflectCount: 1,  // maxReflectCount=2なので残り1
+          },
+        });
+        const monster = createTestMonster();
+        const history = makeHistoryWithPlayerPattern(CommandType.SPECIAL_ATTACK, DistanceType.NEAR);
+        const result = selectCommands(state, 'player2', monster, AILevel.LV5, () => 0.5, opponentMonster, history);
+        // 1stでREFLECTOR使用すると残り0なので、2ndでREFLECTORは不可
+        if (result.first.type === CommandType.REFLECTOR) {
+          expect(result.second.type).not.toBe(CommandType.REFLECTOR);
+        }
+      });
+    });
   });
 });
