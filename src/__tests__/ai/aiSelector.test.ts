@@ -1080,9 +1080,12 @@ describe('selectCommands', () => {
         const monster = createTestMonster();
         const history = makeHistoryWithPlayerPattern(CommandType.SPECIAL_ATTACK, DistanceType.MID);
         const result = selectCommands(state, 'player2', monster, AILevel.LV5, () => 0.5, opponentMonster, history);
-        // MID距離では WEAPON_ATTACK は無効
+        // MID距離では WEAPON_ATTACK は1stに選ばれない
         expect(result.first.type).not.toBe(CommandType.WEAPON_ATTACK);
-        expect(result.second.type).not.toBe(CommandType.WEAPON_ATTACK);
+        // 2ndでWEAPON_ATTACKが来る場合は、1stがADVANCE（MID→NEAR）のはず
+        if (result.second.type === CommandType.WEAPON_ATTACK) {
+          expect(result.first.type).toBe(CommandType.ADVANCE);
+        }
       });
 
       it('turnHistory未定義でエラーをスロー', () => {
