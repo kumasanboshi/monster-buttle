@@ -3,7 +3,7 @@ import { AILevel } from './types';
 import { getValidCommands } from './commandValidator';
 import { getTendencyBySpecies } from './tendencies';
 import { getDistanceWeights } from './distanceWeights';
-import { selectWeightedCommand, selectDeterministicCommand, selectWeightedCommandPair, CommandWeightMap, CommandPairWeightMap } from './weightedSelection';
+import { selectWeightedCommand, selectDeterministicCommand, selectWeightedCommandPair, selectDeterministicCommandPair, CommandWeightMap, CommandPairWeightMap } from './weightedSelection';
 import { getHpModifiers, getStanceResponseModifiers, getReflectorModifiers } from './situationModifiers';
 import { analyzePlayerPattern, getMostFrequentCommand } from './patternAnalyzer';
 import { getCounterModifiers } from './counterStrategy';
@@ -66,13 +66,13 @@ export function selectCommands(
 }
 
 /**
- * Lv5 AI: 最適行動（確定的）
+ * Lv5 AI: ペア評価コンボ（確定的）
  *
- * Lv4と同じ全モディファイア（種族・距離・HP・スタンス・リフレクター・カウンター）を適用し、
- * ランダム要素を完全に排除して最大重みのコマンドを確定選択する。
+ * Lv4と同じ全モディファイア＋ペア評価方式を使用し、
+ * selectDeterministicCommandPairで最高スコアペアを確定選択する。
  * - Lv3フォールバックなし（常にパターン読みを試みる）
- * - 履歴不足時はカウンター無しの5モディファイアで確定選択
- * - 同率タイブレーク: 攻撃系コマンド優先
+ * - 履歴不足時はカウンター無しのペア評価で確定選択
+ * - 同率タイブレーク: 2ndの攻撃系優先 → 1stの攻撃系優先
  */
 function selectLv5(
   state: BattleState,
@@ -90,10 +90,7 @@ function selectLv5(
 
   const opponentId = playerId === 'player1' ? 'player2' : 'player1';
 
-  // Lv3ベースのモディファイア計算
-  const validCommands = getValidCommands(state, playerId, monster);
   const speciesTendency = getTendencyBySpecies(monster.id);
-  const distanceWeights = getDistanceWeights(state.currentDistance);
 
   const ownState = state[playerId];
   const oppState = state[opponentId];
@@ -103,9 +100,9 @@ function selectLv5(
     ? oppState.currentHp / opponentMonster.stats.hp
     : 1.0;
   const hpMods = getHpModifiers(ownHpRatio, oppHpRatio);
-  const stanceMods = getStanceResponseModifiers(ownState.currentStance, oppState.currentStance);
-  const oppRemainingReflect = Math.max(0, opponentMonster.reflector.maxReflectCount - oppState.usedReflectCount);
-  const reflectorMods = getReflectorModifiers(oppRemainingReflect);
+  const reflectorMods = getReflectorModifiers(
+    Math.max(0, opponentMonster.reflector.maxReflectCount - oppState.usedReflectCount)
+  );
 
   // パターン分析（履歴不足時はカウンター無し）
   const pattern = analyzePlayerPattern(turnHistory, opponentId, 3);
@@ -116,23 +113,17 @@ function selectLv5(
     ? getCounterModifiers(mostFrequent![0], state.currentDistance)
     : undefined;
 
-  // 全モディファイアを掛け合わせ
-  const combinedWeights: CommandWeightMap = {};
-  for (const cmd of validCommands) {
-    combinedWeights[cmd] =
-      speciesTendency[cmd] *
-      distanceWeights[cmd] *
-      hpMods[cmd] *
-      stanceMods[cmd] *
-      reflectorMods[cmd] *
-      (counterMods ? counterMods[cmd] : 1.0);
-  }
+  // ペア評価: 全(1st, 2nd)ペアをスコア化
+  const pairScores = buildPairScores(
+    state, playerId, monster, opponentMonster,
+    speciesTendency, hpMods, reflectorMods, counterMods
+  );
 
-  // 確定選択（ランダムなし）
-  const selected = selectDeterministicCommand(combinedWeights);
+  // 確定選択（最高スコアペア）
+  const selected = selectDeterministicCommandPair(pairScores);
   return {
-    first: { type: selected },
-    second: { type: selected },
+    first: { type: selected.first },
+    second: { type: selected.second },
   };
 }
 
