@@ -529,6 +529,115 @@ describe('selectCommands', () => {
         expect(result.second).toHaveProperty('type');
       });
     });
+
+    describe('コンボ選択（順次予測）', () => {
+      it('1stと2ndが異なるコマンドになり得る', () => {
+        const state = createTestState({ currentDistance: DistanceType.FAR });
+        const monster = createTestMonster();
+        // 複数のrandomFn値で試行し、1stと2ndが異なるケースが存在することを確認
+        let hasDifferent = false;
+        for (let i = 0; i < 100; i++) {
+          const result = selectCommands(state, 'player1', monster, AILevel.LV3, () => i / 100, opponentMonster);
+          if (result.first.type !== result.second.type) {
+            hasDifferent = true;
+            break;
+          }
+        }
+        expect(hasDifferent).toBe(true);
+      });
+
+      it('遠距離で1stが前進 → 2ndは中距離の重みで選択される', () => {
+        const state = createTestState({ currentDistance: DistanceType.FAR });
+        const monster = createTestMonster();
+        // 1stがADVANCEの場合、2ndは予測距離MIDでの重みで選択されるべき
+        // MID距離ではSPECIAL_ATTACKやADVANCEが有効
+        let advanceAndSpecialCount = 0;
+        let advanceFirstCount = 0;
+        for (let i = 0; i < 1000; i++) {
+          const result = selectCommands(state, 'player1', monster, AILevel.LV3, () => i / 1000, opponentMonster);
+          if (result.first.type === CommandType.ADVANCE) {
+            advanceFirstCount++;
+            // 2ndは予測MID距離での選択なので、WEAPON_ATTACKは選ばれないはず
+            expect(result.second.type).not.toBe(CommandType.WEAPON_ATTACK);
+            if (result.second.type === CommandType.SPECIAL_ATTACK || result.second.type === CommandType.ADVANCE) {
+              advanceAndSpecialCount++;
+            }
+          }
+        }
+        // 前進が1stに選ばれることがあること
+        expect(advanceFirstCount).toBeGreaterThan(0);
+      });
+
+      it('中距離で1stが前進 → 2ndは近距離の重みで選択される（WEAPON_ATTACKが有効に）', () => {
+        const state = createTestState({ currentDistance: DistanceType.MID });
+        const monster = createTestMonster();
+        let weaponIn2ndAfterAdvance = false;
+        for (let i = 0; i < 1000; i++) {
+          const result = selectCommands(state, 'player1', monster, AILevel.LV3, () => i / 1000, opponentMonster);
+          if (result.first.type === CommandType.ADVANCE && result.second.type === CommandType.WEAPON_ATTACK) {
+            weaponIn2ndAfterAdvance = true;
+            break;
+          }
+        }
+        // 中距離→前進→近距離なので2ndでWEAPON_ATTACKが選択可能になる
+        expect(weaponIn2ndAfterAdvance).toBe(true);
+      });
+
+      it('中距離でWEAPON_ATTACKは1stに選ばれない（中距離では無効）', () => {
+        const state = createTestState({ currentDistance: DistanceType.MID });
+        const monster = createTestMonster();
+        for (let i = 0; i < 100; i++) {
+          const result = selectCommands(state, 'player1', monster, AILevel.LV3, () => i / 100, opponentMonster);
+          expect(result.first.type).not.toBe(CommandType.WEAPON_ATTACK);
+        }
+      });
+
+      it('近距離で1stが後退 → 2ndは中距離の重みで選択される', () => {
+        const state = createTestState({ currentDistance: DistanceType.NEAR });
+        const monster = createTestMonster();
+        for (let i = 0; i < 1000; i++) {
+          const result = selectCommands(state, 'player1', monster, AILevel.LV3, () => i / 1000, opponentMonster);
+          if (result.first.type === CommandType.RETREAT) {
+            // 後退→MID予測なので、2ndではWEAPON_ATTACKは選ばれないはず
+            expect(result.second.type).not.toBe(CommandType.WEAPON_ATTACK);
+          }
+        }
+      });
+
+      it('1stが移動でもスタンスでもない場合、2ndは同じ状態の重みで選択', () => {
+        const state = createTestState({ currentDistance: DistanceType.NEAR });
+        const monster = createTestMonster();
+        for (let i = 0; i < 100; i++) {
+          const result = selectCommands(state, 'player1', monster, AILevel.LV3, () => i / 100, opponentMonster);
+          if (result.first.type === CommandType.WEAPON_ATTACK || result.first.type === CommandType.SPECIAL_ATTACK) {
+            // 距離変化なし → 2ndは近距離のまま → WEAPON_ATTACK有効
+            // エラーが出ないことを確認
+            expect(result.second).toHaveProperty('type');
+          }
+        }
+      });
+
+      it('1stでリフレクター使用 → 残数0の場合2ndでリフレクター選択不可', () => {
+        const state = createTestState({
+          currentDistance: DistanceType.MID,
+          player1: {
+            monsterId: 'zaag',
+            currentHp: 250,
+            currentStance: StanceType.NORMAL,
+            remainingSpecialCount: 5,
+            usedReflectCount: 1,  // 残り1回 → 1stで使うと2ndでは使えない
+          },
+        });
+        const monster = createTestMonster(); // maxReflectCount: 2
+        for (let i = 0; i < 1000; i++) {
+          const result = selectCommands(state, 'player1', monster, AILevel.LV3, () => i / 1000, opponentMonster);
+          if (result.first.type === CommandType.REFLECTOR) {
+            // 1stでリフレクター使用 → 2ndではリフレクターは選べない
+            expect(result.second.type).not.toBe(CommandType.REFLECTOR);
+          }
+        }
+      });
+    });
   });
 
   describe('Lv4 AI（パターン読み）', () => {
