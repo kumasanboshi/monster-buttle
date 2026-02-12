@@ -1,4 +1,10 @@
-import { selectWeightedCommand, selectDeterministicCommand } from '../../ai/weightedSelection';
+import {
+  selectWeightedCommand,
+  selectDeterministicCommand,
+  selectWeightedCommandPair,
+  selectDeterministicCommandPair,
+  CommandPairWeightMap,
+} from '../../ai/weightedSelection';
 import { CommandType } from '../../types';
 
 describe('selectWeightedCommand', () => {
@@ -218,6 +224,153 @@ describe('selectDeterministicCommand', () => {
       const result3 = selectDeterministicCommand(weights);
       expect(result1).toBe(result2);
       expect(result2).toBe(result3);
+    });
+  });
+});
+
+// ヘルパー: CommandPairWeightMap を構築
+function buildPairMap(
+  entries: Array<{ first: CommandType; second: CommandType; score: number }>
+): CommandPairWeightMap {
+  const map: CommandPairWeightMap = new Map();
+  for (const entry of entries) {
+    const key = `${entry.first}:${entry.second}`;
+    map.set(key, entry);
+  }
+  return map;
+}
+
+describe('selectWeightedCommandPair', () => {
+  describe('基本動作', () => {
+    it('候補が1つなら必ずそれを返す', () => {
+      const map = buildPairMap([
+        { first: CommandType.ADVANCE, second: CommandType.SPECIAL_ATTACK, score: 2.0 },
+      ]);
+      const result = selectWeightedCommandPair(map, () => 0.5);
+      expect(result.first).toBe(CommandType.ADVANCE);
+      expect(result.second).toBe(CommandType.SPECIAL_ATTACK);
+    });
+
+    it('スコア比率に応じた確率で選択される', () => {
+      const map = buildPairMap([
+        { first: CommandType.ADVANCE, second: CommandType.WEAPON_ATTACK, score: 3.0 },
+        { first: CommandType.RETREAT, second: CommandType.SPECIAL_ATTACK, score: 1.0 },
+      ]);
+      // totalScore = 4.0, 3/4=0.75 が閾値
+      // randomFn=0.74 → 0.74*4=2.96 < 3.0 → 最初のペア
+      const result1 = selectWeightedCommandPair(map, () => 0.74);
+      expect(result1.first).toBe(CommandType.ADVANCE);
+      expect(result1.second).toBe(CommandType.WEAPON_ATTACK);
+
+      // randomFn=0.76 → 0.76*4=3.04 > 3.0 → 2番目のペア
+      const result2 = selectWeightedCommandPair(map, () => 0.76);
+      expect(result2.first).toBe(CommandType.RETREAT);
+      expect(result2.second).toBe(CommandType.SPECIAL_ATTACK);
+    });
+  });
+
+  describe('エッジケース', () => {
+    it('空マップでエラー', () => {
+      const map: CommandPairWeightMap = new Map();
+      expect(() => selectWeightedCommandPair(map, () => 0.5)).toThrow();
+    });
+
+    it('スコア0以下のペアは除外される', () => {
+      const map = buildPairMap([
+        { first: CommandType.ADVANCE, second: CommandType.WEAPON_ATTACK, score: 0 },
+        { first: CommandType.RETREAT, second: CommandType.SPECIAL_ATTACK, score: 2.0 },
+      ]);
+      const result = selectWeightedCommandPair(map, () => 0.5);
+      expect(result.first).toBe(CommandType.RETREAT);
+      expect(result.second).toBe(CommandType.SPECIAL_ATTACK);
+    });
+  });
+});
+
+describe('selectDeterministicCommandPair', () => {
+  describe('基本動作', () => {
+    it('最高スコアのペアを返す', () => {
+      const map = buildPairMap([
+        { first: CommandType.ADVANCE, second: CommandType.SPECIAL_ATTACK, score: 2.0 },
+        { first: CommandType.ADVANCE, second: CommandType.WEAPON_ATTACK, score: 5.0 },
+        { first: CommandType.RETREAT, second: CommandType.SPECIAL_ATTACK, score: 1.0 },
+      ]);
+      const result = selectDeterministicCommandPair(map);
+      expect(result.first).toBe(CommandType.ADVANCE);
+      expect(result.second).toBe(CommandType.WEAPON_ATTACK);
+    });
+
+    it('候補が1つなら必ずそれを返す', () => {
+      const map = buildPairMap([
+        { first: CommandType.STANCE_A, second: CommandType.STANCE_B, score: 0.5 },
+      ]);
+      const result = selectDeterministicCommandPair(map);
+      expect(result.first).toBe(CommandType.STANCE_A);
+      expect(result.second).toBe(CommandType.STANCE_B);
+    });
+  });
+
+  describe('タイブレーク', () => {
+    it('同率ペア: 2ndの攻撃系優先（WEAPON_ATTACK > SPECIAL_ATTACK）', () => {
+      const map = buildPairMap([
+        { first: CommandType.ADVANCE, second: CommandType.SPECIAL_ATTACK, score: 3.0 },
+        { first: CommandType.ADVANCE, second: CommandType.WEAPON_ATTACK, score: 3.0 },
+      ]);
+      const result = selectDeterministicCommandPair(map);
+      expect(result.second).toBe(CommandType.WEAPON_ATTACK);
+    });
+
+    it('同率ペア: 2ndの攻撃系優先（SPECIAL_ATTACK > ADVANCE）', () => {
+      const map = buildPairMap([
+        { first: CommandType.RETREAT, second: CommandType.ADVANCE, score: 3.0 },
+        { first: CommandType.RETREAT, second: CommandType.SPECIAL_ATTACK, score: 3.0 },
+      ]);
+      const result = selectDeterministicCommandPair(map);
+      expect(result.second).toBe(CommandType.SPECIAL_ATTACK);
+    });
+
+    it('2ndが同じ場合は1stの攻撃系優先', () => {
+      const map = buildPairMap([
+        { first: CommandType.RETREAT, second: CommandType.WEAPON_ATTACK, score: 3.0 },
+        { first: CommandType.ADVANCE, second: CommandType.WEAPON_ATTACK, score: 3.0 },
+      ]);
+      const result = selectDeterministicCommandPair(map);
+      expect(result.first).toBe(CommandType.ADVANCE);
+    });
+
+    it('2ndが同じ場合は1stの優先順で決定（WEAPON_ATTACK > SPECIAL_ATTACK）', () => {
+      const map = buildPairMap([
+        { first: CommandType.SPECIAL_ATTACK, second: CommandType.RETREAT, score: 3.0 },
+        { first: CommandType.WEAPON_ATTACK, second: CommandType.RETREAT, score: 3.0 },
+      ]);
+      const result = selectDeterministicCommandPair(map);
+      expect(result.first).toBe(CommandType.WEAPON_ATTACK);
+    });
+  });
+
+  describe('エッジケース', () => {
+    it('空マップでエラー', () => {
+      const map: CommandPairWeightMap = new Map();
+      expect(() => selectDeterministicCommandPair(map)).toThrow();
+    });
+
+    it('スコア0以下のペアのみでエラー', () => {
+      const map = buildPairMap([
+        { first: CommandType.ADVANCE, second: CommandType.RETREAT, score: 0 },
+        { first: CommandType.RETREAT, second: CommandType.ADVANCE, score: -1 },
+      ]);
+      expect(() => selectDeterministicCommandPair(map)).toThrow();
+    });
+
+    it('常に同じ結果（確定的）', () => {
+      const map = buildPairMap([
+        { first: CommandType.ADVANCE, second: CommandType.SPECIAL_ATTACK, score: 2.0 },
+        { first: CommandType.RETREAT, second: CommandType.WEAPON_ATTACK, score: 5.0 },
+      ]);
+      const r1 = selectDeterministicCommandPair(map);
+      const r2 = selectDeterministicCommandPair(map);
+      expect(r1.first).toBe(r2.first);
+      expect(r1.second).toBe(r2.second);
     });
   });
 });
