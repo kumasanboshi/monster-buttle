@@ -176,4 +176,47 @@ describe('CommandSelectionManager', () => {
       expect(manager.getSelection().first).toBeNull();
     });
   });
+
+  describe('選択キャンセル', () => {
+    it('2nd選択フェーズでキャンセルすると1st選択フェーズに戻る', () => {
+      const manager = new CommandSelectionManager(
+        createTestState(),
+        'player1',
+        createTestMonster()
+      );
+      manager.selectCommand(CommandType.ADVANCE);
+      manager.cancelSelection();
+      const selection = manager.getSelection();
+      expect(selection.phase).toBe('first');
+      expect(selection.first).toBeNull();
+    });
+
+    it('両方選択済みでキャンセルすると2ndが空になる', () => {
+      const manager = new CommandSelectionManager(
+        createTestState(),
+        'player1',
+        createTestMonster()
+      );
+      manager.selectCommand(CommandType.ADVANCE);
+      manager.selectCommand(CommandType.RETREAT);
+      manager.cancelSelection();
+      const selection = manager.getSelection();
+      expect(selection.phase).toBe('second');
+      expect(selection.first).toBe(CommandType.ADVANCE);
+      expect(selection.second).toBeNull();
+    });
+
+    it('未選択状態でキャンセルしても何も起きない', () => {
+      const manager = new CommandSelectionManager(
+        createTestState(),
+        'player1',
+        createTestMonster()
+      );
+      manager.cancelSelection();
+      const selection = manager.getSelection();
+      expect(selection.phase).toBe('first');
+      expect(selection.first).toBeNull();
+      expect(selection.second).toBeNull();
+    });
+  });
 });
