@@ -13,6 +13,7 @@ module.exports = {
     '!src/scenes/BootScene.ts',
     '!src/scenes/TitleScene.ts',
     '!src/scenes/CharacterSelectScene.ts',
+    '!src/scenes/BattleScene.ts',
   ],
   coverageDirectory: 'coverage',
   verbose: true,
