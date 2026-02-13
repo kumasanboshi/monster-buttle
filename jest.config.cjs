@@ -11,6 +11,7 @@ module.exports = {
     '!src/main.ts',
     '!src/scenes/BaseScene.ts',
     '!src/scenes/BootScene.ts',
+    '!src/scenes/TitleScene.ts',
   ],
   coverageDirectory: 'coverage',
   verbose: true,
