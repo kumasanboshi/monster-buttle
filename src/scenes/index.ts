@@ -21,3 +21,6 @@ export {
   validateManifest,
 } from './assetManifest';
 export type { AssetEntry, SpritesheetAssetEntry, AssetManifest } from './assetManifest';
+
+export { TITLE_TEXT, TITLE_BUTTONS } from './titleConfig';
+export type { TitleButtonConfig } from './titleConfig';
