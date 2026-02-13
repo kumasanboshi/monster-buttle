@@ -1,7 +1,7 @@
 import { MonsterBattleState } from './Monster';
 import { DistanceType } from './Distance';
 import { StanceType } from './Stance';
-import { TurnCommands } from './Command';
+import { TurnCommands, CommandType } from './Command';
 
 /**
  * バトル全体の状態
@@ -34,6 +34,22 @@ export interface DamageInfo {
 }
 
 /**
+ * コマンドフェーズごとの結果（1st / 2nd）
+ */
+export interface CommandPhaseResult {
+  /** フェーズで実行されたプレイヤー1のコマンド */
+  player1Command: CommandType;
+  /** フェーズで実行されたプレイヤー2のコマンド */
+  player2Command: CommandType;
+  /** フェーズ後の距離 */
+  distanceAfter: DistanceType;
+  /** プレイヤー1が受けたダメージ */
+  player1Damage: DamageInfo;
+  /** プレイヤー2が受けたダメージ */
+  player2Damage: DamageInfo;
+}
+
+/**
  * ターン結果
  */
 export interface TurnResult {
@@ -53,6 +69,8 @@ export interface TurnResult {
   player1StanceAfter: StanceType;
   /** プレイヤー2のターン後スタンス */
   player2StanceAfter: StanceType;
+  /** フェーズごとの結果（1st, 2nd） */
+  phases: [CommandPhaseResult, CommandPhaseResult];
 }
 
 /**
