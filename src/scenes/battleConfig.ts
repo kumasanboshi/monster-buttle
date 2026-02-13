@@ -167,6 +167,34 @@ export const COMMAND_BUTTON_ROWS: CommandType[][] = [
   [CommandType.REFLECTOR, CommandType.STANCE_A, CommandType.STANCE_B],
 ];
 
+/** エフェクト再生用定数 */
+export const EFFECT_CONFIG = {
+  /** ダメージ数値の表示時間（ms） */
+  damageNumberDuration: 800,
+  /** ダメージ数値の色 */
+  damageNumberColor: '#ff4444',
+  /** 武器攻撃エフェクトの時間（ms） */
+  weaponAttackDuration: 400,
+  /** 武器攻撃フラッシュ色 */
+  weaponFlashColor: 0xffffff,
+  /** 特殊攻撃エフェクトの時間（ms） */
+  specialAttackDuration: 500,
+  /** 特殊攻撃パルス色 */
+  specialPulseColor: 0xaa44ff,
+  /** リフレクターエフェクトの時間（ms） */
+  reflectorDuration: 600,
+  /** リフレクターシールド色 */
+  reflectorShieldColor: 0x4488ff,
+  /** リフレクターテキスト色 */
+  reflectorTextColor: '#4488ff',
+  /** 回避エフェクトの時間（ms） */
+  evasionDuration: 500,
+  /** 回避テキスト色 */
+  evasionTextColor: '#aaaaaa',
+  /** 距離移動アニメーションの時間（ms） */
+  distanceMoveDuration: 400,
+} as const;
+
 /**
  * 秒数を「M:SS」形式にフォーマット
  */
