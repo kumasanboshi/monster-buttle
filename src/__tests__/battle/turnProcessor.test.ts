@@ -795,4 +795,93 @@ describe('processTurn', () => {
       expect(turnResult.player2Damage.isReflected).toBe(false);
     });
   });
+
+  describe('phases（フェーズごとの結果）', () => {
+    it('phasesに2要素の配列を返す', () => {
+      const state = createTestBattleState();
+      const p1Cmds: TurnCommands = {
+        first: { type: CommandType.ADVANCE },
+        second: { type: CommandType.WEAPON_ATTACK },
+      };
+      const p2Cmds: TurnCommands = {
+        first: { type: CommandType.ADVANCE },
+        second: { type: CommandType.WEAPON_ATTACK },
+      };
+      const { turnResult } = processTurn(state, monster1, monster2, p1Cmds, p2Cmds, NO_EVASION);
+      expect(turnResult.phases).toHaveLength(2);
+    });
+
+    it('phases[0]は1stコマンドの結果を含む', () => {
+      const state = createTestBattleState({ currentDistance: DistanceType.MID });
+      const p1Cmds: TurnCommands = {
+        first: { type: CommandType.ADVANCE },
+        second: { type: CommandType.RETREAT },
+      };
+      const p2Cmds: TurnCommands = {
+        first: { type: CommandType.ADVANCE },
+        second: { type: CommandType.RETREAT },
+      };
+      const { turnResult } = processTurn(state, monster1, monster2, p1Cmds, p2Cmds, NO_EVASION);
+      expect(turnResult.phases[0].player1Command).toBe(CommandType.ADVANCE);
+      expect(turnResult.phases[0].player2Command).toBe(CommandType.ADVANCE);
+      // 両方前進 → MIDからNEARへ
+      expect(turnResult.phases[0].distanceAfter).toBe(DistanceType.NEAR);
+    });
+
+    it('phases[1]は2ndコマンドの結果を含む', () => {
+      const state = createTestBattleState({ currentDistance: DistanceType.MID });
+      const p1Cmds: TurnCommands = {
+        first: { type: CommandType.ADVANCE },
+        second: { type: CommandType.RETREAT },
+      };
+      const p2Cmds: TurnCommands = {
+        first: { type: CommandType.ADVANCE },
+        second: { type: CommandType.RETREAT },
+      };
+      const { turnResult } = processTurn(state, monster1, monster2, p1Cmds, p2Cmds, NO_EVASION);
+      expect(turnResult.phases[1].player1Command).toBe(CommandType.RETREAT);
+      expect(turnResult.phases[1].player2Command).toBe(CommandType.RETREAT);
+      // 両方後退 → NEARからFARへ（2段階離れ）
+      expect(turnResult.phases[1].distanceAfter).toBe(DistanceType.FAR);
+    });
+
+    it('phases合計ダメージが既存のplayer1Damage/player2Damageと一致する', () => {
+      const state = createTestBattleState({ currentDistance: DistanceType.NEAR });
+      const p1Cmds: TurnCommands = {
+        first: { type: CommandType.WEAPON_ATTACK },
+        second: { type: CommandType.WEAPON_ATTACK },
+      };
+      const p2Cmds: TurnCommands = {
+        first: { type: CommandType.WEAPON_ATTACK },
+        second: { type: CommandType.WEAPON_ATTACK },
+      };
+      const { turnResult } = processTurn(state, monster1, monster2, p1Cmds, p2Cmds, NO_EVASION);
+      // フェーズ合計 = 全体ダメージ
+      const p1PhaseDamage = turnResult.phases[0].player1Damage.damage + turnResult.phases[1].player1Damage.damage;
+      const p2PhaseDamage = turnResult.phases[0].player2Damage.damage + turnResult.phases[1].player2Damage.damage;
+      expect(p1PhaseDamage).toBe(turnResult.player1Damage.damage);
+      expect(p2PhaseDamage).toBe(turnResult.player2Damage.damage);
+    });
+
+    it('phases[0]のダメージがフェーズ1のみの結果を反映する', () => {
+      // 1st: 武器攻撃 vs 武器攻撃（近距離、ダメージあり）
+      // 2nd: 移動のみ（ダメージなし）
+      const state = createTestBattleState({ currentDistance: DistanceType.NEAR });
+      const p1Cmds: TurnCommands = {
+        first: { type: CommandType.WEAPON_ATTACK },
+        second: { type: CommandType.RETREAT },
+      };
+      const p2Cmds: TurnCommands = {
+        first: { type: CommandType.WEAPON_ATTACK },
+        second: { type: CommandType.RETREAT },
+      };
+      const { turnResult } = processTurn(state, monster1, monster2, p1Cmds, p2Cmds, NO_EVASION);
+      // 1stフェーズ: 両者にダメージあり
+      expect(turnResult.phases[0].player1Damage.damage).toBeGreaterThan(0);
+      expect(turnResult.phases[0].player2Damage.damage).toBeGreaterThan(0);
+      // 2ndフェーズ: 移動のみ → ダメージなし
+      expect(turnResult.phases[1].player1Damage.damage).toBe(0);
+      expect(turnResult.phases[1].player2Damage.damage).toBe(0);
+    });
+  });
 });
