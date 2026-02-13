@@ -208,6 +208,12 @@ describe('formatTime', () => {
     expect(formatTime(-1)).toBe('0:00');
     expect(formatTime(-120)).toBe('0:00');
   });
+
+  it('小数値を切り捨ててフォーマットすること', () => {
+    expect(formatTime(65.7)).toBe('1:05');
+    expect(formatTime(59.999)).toBe('0:59');
+    expect(formatTime(120.1)).toBe('2:00');
+  });
 });
 
 describe('clampHp', () => {
