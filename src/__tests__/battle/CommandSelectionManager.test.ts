@@ -335,4 +335,21 @@ describe('CommandSelectionManager', () => {
       expect(labels.stanceB).toBe('攻勢');
     });
   });
+
+  describe('リセット機能', () => {
+    it('リセットで初期状態に戻る', () => {
+      const manager = new CommandSelectionManager(
+        createTestState(),
+        'player1',
+        createTestMonster()
+      );
+      manager.selectCommand(CommandType.ADVANCE);
+      manager.selectCommand(CommandType.RETREAT);
+      manager.reset();
+      const selection = manager.getSelection();
+      expect(selection.phase).toBe('first');
+      expect(selection.first).toBeNull();
+      expect(selection.second).toBeNull();
+    });
+  });
 });
