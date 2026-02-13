@@ -443,27 +443,33 @@ export class BattleScene extends BaseScene {
 
     // エフェクト再生 → UI更新
     this.effectPlayer.playSequence(effectSequence).then(() => {
-      // バトル状態を更新
-      this.battleState = newState;
-      this.turnHistory.push(turnResult);
-
-      // UI更新
-      this.updateHp(newState.player1.currentHp, newState.player2.currentHp);
-      this.updateDistance(newState.currentDistance);
-      this.updateStance(turnResult.player1StanceAfter, turnResult.player2StanceAfter);
-
-      // コマンドマネージャーを次のターン用にリセット
-      this.commandManager = new CommandSelectionManager(
-        this.battleState,
-        'player1',
-        this.playerMonster
-      );
-
-      // コマンド入力を再有効化
-      this.isPlayingEffects = false;
-      this.setCommandUIEnabled(true);
-      this.updateCommandUI();
+      this.applyTurnResult(newState, turnResult);
+    }).catch((error) => {
+      console.error('Effect playback error:', error);
+      this.applyTurnResult(newState, turnResult);
     });
+  }
+
+  /**
+   * ターン結果をUIに反映し、次のターンの準備をする
+   */
+  private applyTurnResult(newState: BattleState, turnResult: TurnResult): void {
+    this.battleState = newState;
+    this.turnHistory.push(turnResult);
+
+    this.updateHp(newState.player1.currentHp, newState.player2.currentHp);
+    this.updateDistance(newState.currentDistance);
+    this.updateStance(turnResult.player1StanceAfter, turnResult.player2StanceAfter);
+
+    this.commandManager = new CommandSelectionManager(
+      this.battleState,
+      'player1',
+      this.playerMonster
+    );
+
+    this.isPlayingEffects = false;
+    this.setCommandUIEnabled(true);
+    this.updateCommandUI();
   }
 
   /**
