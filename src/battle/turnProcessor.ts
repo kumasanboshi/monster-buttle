@@ -7,6 +7,7 @@ import {
   BattleState,
   DamageInfo,
   TurnResult,
+  CommandPhaseResult,
   TurnCommands,
   calculateDistance,
   calculateNextStance,
@@ -293,6 +294,22 @@ export function processTurn(
     randomFn
   );
 
+  // フェーズごとの結果を構築
+  const phase1: CommandPhaseResult = {
+    player1Command: p1Commands.first.type,
+    player2Command: p2Commands.first.type,
+    distanceAfter: firstResult.distance,
+    player1Damage: firstResult.p1Damage,
+    player2Damage: firstResult.p2Damage,
+  };
+  const phase2: CommandPhaseResult = {
+    player1Command: p1Commands.second.type,
+    player2Command: p2Commands.second.type,
+    distanceAfter: secondResult.distance,
+    player1Damage: secondResult.p1Damage,
+    player2Damage: secondResult.p2Damage,
+  };
+
   // ターン結果構築
   const turnResult: TurnResult = {
     turnNumber: state.currentTurn,
@@ -303,6 +320,7 @@ export function processTurn(
     player2Damage: mergeDamageInfo(firstResult.p2Damage, secondResult.p2Damage),
     player1StanceAfter: secondResult.p1State.currentStance,
     player2StanceAfter: secondResult.p2State.currentStance,
+    phases: [phase1, phase2],
   };
 
   // 新しいバトル状態

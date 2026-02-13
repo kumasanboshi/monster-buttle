@@ -20,7 +20,11 @@ export { Weapon, Reflector, EquipmentSet, EquipmentType } from './Equipment';
 export { MonsterStats, Monster, MonsterBattleState } from './Monster';
 
 // BattleState types
-export { BattleState, DamageInfo, TurnResult, BattleResultType, BattleResult } from './BattleState';
+export { BattleState, DamageInfo, TurnResult, CommandPhaseResult, BattleResultType, BattleResult } from './BattleState';
+
+// BattleEffect types
+export { BattleEffectType, BattleEffect, BattleEffectSequence } from './BattleEffect';
+export type { EffectTarget } from './BattleEffect';
 
 // GameMode types
 export { GameMode } from './GameMode';
