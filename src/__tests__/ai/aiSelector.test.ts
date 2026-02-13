@@ -663,15 +663,20 @@ describe('selectCommands', () => {
       p2Second: CommandType,
       distanceAfter: DistanceType
     ): TurnResult {
+      const noDamage = { damage: 0, isEvaded: false, isReflected: false };
       return {
         turnNumber,
         player1Commands: { first: { type: p1First }, second: { type: p1Second } },
         player2Commands: { first: { type: p2First }, second: { type: p2Second } },
         distanceAfter,
-        player1Damage: { damage: 0, isEvaded: false, isReflected: false },
-        player2Damage: { damage: 0, isEvaded: false, isReflected: false },
+        player1Damage: noDamage,
+        player2Damage: noDamage,
         player1StanceAfter: StanceType.NORMAL,
         player2StanceAfter: StanceType.NORMAL,
+        phases: [
+          { player1Command: p1First, player2Command: p2First, distanceAfter, player1Damage: noDamage, player2Damage: noDamage },
+          { player1Command: p1Second, player2Command: p2Second, distanceAfter, player1Damage: noDamage, player2Damage: noDamage },
+        ],
       };
     }
 
@@ -1039,15 +1044,20 @@ describe('selectCommands', () => {
       p2Second: CommandType,
       distanceAfter: DistanceType
     ): TurnResult {
+      const noDamage = { damage: 0, isEvaded: false, isReflected: false };
       return {
         turnNumber,
         player1Commands: { first: { type: p1First }, second: { type: p1Second } },
         player2Commands: { first: { type: p2First }, second: { type: p2Second } },
         distanceAfter,
-        player1Damage: { damage: 0, isEvaded: false, isReflected: false },
-        player2Damage: { damage: 0, isEvaded: false, isReflected: false },
+        player1Damage: noDamage,
+        player2Damage: noDamage,
         player1StanceAfter: StanceType.NORMAL,
         player2StanceAfter: StanceType.NORMAL,
+        phases: [
+          { player1Command: p1First, player2Command: p2First, distanceAfter, player1Damage: noDamage, player2Damage: noDamage },
+          { player1Command: p1Second, player2Command: p2Second, distanceAfter, player1Damage: noDamage, player2Damage: noDamage },
+        ],
       };
     }
 
