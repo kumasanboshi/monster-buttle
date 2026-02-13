@@ -2,12 +2,27 @@ import {
   BattleState,
   DamageInfo,
   TurnResult,
+  CommandPhaseResult,
   BattleResultType,
   BattleResult,
 } from '../../types/BattleState';
 import { DistanceType } from '../../types/Distance';
 import { StanceType } from '../../types/Stance';
 import { CommandType } from '../../types/Command';
+
+/** テスト用: TurnResult用のデフォルトphases生成ヘルパー */
+function makeDefaultPhases(
+  p1First: CommandType, p1Second: CommandType,
+  p2First: CommandType, p2Second: CommandType,
+  distanceAfter: DistanceType,
+  p1Damage: DamageInfo, p2Damage: DamageInfo
+): [CommandPhaseResult, CommandPhaseResult] {
+  const noDamage: DamageInfo = { damage: 0, isEvaded: false, isReflected: false };
+  return [
+    { player1Command: p1First, player2Command: p2First, distanceAfter, player1Damage: p1Damage, player2Damage: p2Damage },
+    { player1Command: p1Second, player2Command: p2Second, distanceAfter, player1Damage: noDamage, player2Damage: noDamage },
+  ];
+}
 
 describe('BattleState Types', () => {
   describe('BattleState', () => {
@@ -219,6 +234,13 @@ describe('BattleState Types', () => {
         },
         player1StanceAfter: StanceType.NORMAL,
         player2StanceAfter: StanceType.NORMAL,
+        phases: makeDefaultPhases(
+          CommandType.WEAPON_ATTACK, CommandType.ADVANCE,
+          CommandType.REFLECTOR, CommandType.RETREAT,
+          DistanceType.MID,
+          { damage: 0, isEvaded: false, isReflected: false },
+          { damage: 40, isEvaded: false, isReflected: false }
+        ),
       };
       expect(turnResult.player1Commands).toBeDefined();
       expect(turnResult.player2Commands).toBeDefined();
@@ -248,6 +270,13 @@ describe('BattleState Types', () => {
         },
         player1StanceAfter: StanceType.NORMAL,
         player2StanceAfter: StanceType.NORMAL,
+        phases: makeDefaultPhases(
+          CommandType.ADVANCE, CommandType.WEAPON_ATTACK,
+          CommandType.ADVANCE, CommandType.WEAPON_ATTACK,
+          DistanceType.NEAR,
+          { damage: 35, isEvaded: false, isReflected: false },
+          { damage: 42, isEvaded: false, isReflected: false }
+        ),
       };
       expect(turnResult.distanceAfter).toBe(DistanceType.NEAR);
     });
@@ -276,6 +305,13 @@ describe('BattleState Types', () => {
         },
         player1StanceAfter: StanceType.NORMAL,
         player2StanceAfter: StanceType.OFFENSIVE,
+        phases: makeDefaultPhases(
+          CommandType.SPECIAL_ATTACK, CommandType.RETREAT,
+          CommandType.WEAPON_ATTACK, CommandType.STANCE_A,
+          DistanceType.FAR,
+          { damage: 48, isEvaded: false, isReflected: false },
+          { damage: 55, isEvaded: false, isReflected: false }
+        ),
       };
       expect(turnResult.player1Damage.damage).toBe(48);
       expect(turnResult.player2Damage.damage).toBe(55);
@@ -305,6 +341,13 @@ describe('BattleState Types', () => {
         },
         player1StanceAfter: StanceType.NORMAL,
         player2StanceAfter: StanceType.NORMAL,
+        phases: makeDefaultPhases(
+          CommandType.WEAPON_ATTACK, CommandType.ADVANCE,
+          CommandType.RETREAT, CommandType.SPECIAL_ATTACK,
+          DistanceType.MID,
+          { damage: 0, isEvaded: true, isReflected: false },
+          { damage: 40, isEvaded: false, isReflected: false }
+        ),
       };
       expect(turnResult.player1Damage.isEvaded).toBe(true);
     });
@@ -333,11 +376,19 @@ describe('BattleState Types', () => {
         },
         player1StanceAfter: StanceType.NORMAL,
         player2StanceAfter: StanceType.NORMAL,
+        phases: makeDefaultPhases(
+          CommandType.SPECIAL_ATTACK, CommandType.ADVANCE,
+          CommandType.REFLECTOR, CommandType.WEAPON_ATTACK,
+          DistanceType.MID,
+          { damage: 30, isEvaded: false, isReflected: true },
+          { damage: 0, isEvaded: false, isReflected: false }
+        ),
       };
       expect(turnResult.player1Damage.isReflected).toBe(true);
     });
 
     it('should record stance changes', () => {
+      const noDamage = { damage: 0, isEvaded: false, isReflected: false };
       const turnResult: TurnResult = {
         turnNumber: 6,
         player1Commands: {
@@ -349,18 +400,16 @@ describe('BattleState Types', () => {
           second: { type: CommandType.RETREAT },
         },
         distanceAfter: DistanceType.MID,
-        player1Damage: {
-          damage: 0,
-          isEvaded: false,
-          isReflected: false,
-        },
-        player2Damage: {
-          damage: 0,
-          isEvaded: false,
-          isReflected: false,
-        },
+        player1Damage: noDamage,
+        player2Damage: noDamage,
         player1StanceAfter: StanceType.OFFENSIVE,
         player2StanceAfter: StanceType.DEFENSIVE,
+        phases: makeDefaultPhases(
+          CommandType.STANCE_A, CommandType.ADVANCE,
+          CommandType.STANCE_B, CommandType.RETREAT,
+          DistanceType.MID,
+          noDamage, noDamage
+        ),
       };
       expect(turnResult.player1StanceAfter).toBe(StanceType.OFFENSIVE);
       expect(turnResult.player2StanceAfter).toBe(StanceType.DEFENSIVE);

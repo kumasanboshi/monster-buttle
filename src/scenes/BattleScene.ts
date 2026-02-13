@@ -18,11 +18,16 @@ import {
 import { DistanceType } from '../types/Distance';
 import { StanceType } from '../types/Stance';
 import { CommandType } from '../types/Command';
-import { BattleState } from '../types/BattleState';
+import { BattleState, TurnResult } from '../types/BattleState';
 import { Monster } from '../types/Monster';
+import { TurnCommands } from '../types/Command';
 import { MONSTER_DATABASE, getMonsterById } from '../constants/monsters';
 import { INITIAL_MONSTER_ID } from './characterSelectConfig';
 import { CommandSelectionManager } from '../battle/CommandSelectionManager';
+import { processTurn } from '../battle/turnProcessor';
+import { resolveBattleEffects } from '../battle/effectResolver';
+import { BattleEffectPlayer } from './BattleEffectPlayer';
+import { selectCommands, AILevel } from '../ai';
 
 /**
  * バトル画面シーン
@@ -70,6 +75,12 @@ export class BattleScene extends BaseScene {
   private cancelButtonBg!: Phaser.GameObjects.Rectangle;
   private cancelButtonText!: Phaser.GameObjects.Text;
 
+  // バトルロジック
+  private battleState!: BattleState;
+  private effectPlayer!: BattleEffectPlayer;
+  private turnHistory: TurnResult[] = [];
+  private isPlayingEffects = false;
+
   constructor() {
     super(SceneKey.BATTLE);
   }
@@ -88,9 +99,14 @@ export class BattleScene extends BaseScene {
     this.playerCurrentHp = this.playerMonster.stats.hp;
     this.enemyCurrentHp = this.enemyMonster.stats.hp;
 
-    // BattleStateを構築しCommandSelectionManagerを初期化
+    // バトル状態を構築
+    this.battleState = this.buildBattleState();
+    this.turnHistory = [];
+    this.isPlayingEffects = false;
+
+    // CommandSelectionManagerを初期化
     this.commandManager = new CommandSelectionManager(
-      this.buildBattleState(),
+      this.battleState,
       'player1',
       this.playerMonster
     );
@@ -100,6 +116,14 @@ export class BattleScene extends BaseScene {
     this.createCharacterDisplays();
     this.createStatusDisplays();
     this.createCommandUI();
+
+    // エフェクトプレイヤーを初期化（UI生成後）
+    this.effectPlayer = new BattleEffectPlayer(this, {
+      playerText: this.playerCharacterText,
+      enemyText: this.enemyCharacterText,
+      playerHpBarFill: this.playerHpBarFill,
+      enemyHpBarFill: this.enemyHpBarFill,
+    });
   }
 
   private buildBattleState(): BattleState {
@@ -387,11 +411,84 @@ export class BattleScene extends BaseScene {
   }
 
   private onConfirmClick(): void {
-    const result = this.commandManager.confirmSelection();
-    if (result) {
-      // TODO: ターン処理に渡す（後続issueで実装）
-      this.commandManager.reset();
-      this.updateCommandUI();
+    if (this.isPlayingEffects) return;
+
+    const playerCommands = this.commandManager.confirmSelection();
+    if (!playerCommands) return;
+
+    // 敵AIコマンド生成
+    const enemyCommands = selectCommands(
+      this.battleState,
+      'player2',
+      this.enemyMonster,
+      AILevel.LV2
+    );
+
+    // ターン処理
+    const distanceBefore = this.battleState.currentDistance;
+    const { newState, turnResult } = processTurn(
+      this.battleState,
+      this.playerMonster,
+      this.enemyMonster,
+      playerCommands,
+      enemyCommands
+    );
+
+    // エフェクト解決
+    const effectSequence = resolveBattleEffects(turnResult, distanceBefore);
+
+    // エフェクト再生中はコマンド入力を無効化
+    this.isPlayingEffects = true;
+    this.setCommandUIEnabled(false);
+
+    // エフェクト再生 → UI更新
+    this.effectPlayer.playSequence(effectSequence).then(() => {
+      this.applyTurnResult(newState, turnResult);
+    }).catch((error) => {
+      console.error('Effect playback error:', error);
+      this.applyTurnResult(newState, turnResult);
+    });
+  }
+
+  /**
+   * ターン結果をUIに反映し、次のターンの準備をする
+   */
+  private applyTurnResult(newState: BattleState, turnResult: TurnResult): void {
+    this.battleState = newState;
+    this.turnHistory.push(turnResult);
+
+    this.updateHp(newState.player1.currentHp, newState.player2.currentHp);
+    this.updateDistance(newState.currentDistance);
+    this.updateStance(turnResult.player1StanceAfter, turnResult.player2StanceAfter);
+
+    this.commandManager = new CommandSelectionManager(
+      this.battleState,
+      'player1',
+      this.playerMonster
+    );
+
+    this.isPlayingEffects = false;
+    this.setCommandUIEnabled(true);
+    this.updateCommandUI();
+  }
+
+  /**
+   * コマンドUIの有効/無効を切り替える
+   */
+  private setCommandUIEnabled(enabled: boolean): void {
+    this.commandButtons.forEach((button) => {
+      if (enabled) {
+        button.bg.setInteractive({ useHandCursor: true });
+      } else {
+        button.bg.disableInteractive();
+      }
+    });
+    if (enabled) {
+      this.confirmButtonBg.setInteractive({ useHandCursor: true });
+      this.cancelButtonBg.setInteractive({ useHandCursor: true });
+    } else {
+      this.confirmButtonBg.disableInteractive();
+      this.cancelButtonBg.disableInteractive();
     }
   }
 

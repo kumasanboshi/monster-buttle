@@ -156,6 +156,7 @@ describe('Type Exports', () => {
     });
 
     it('should export TurnResult type', () => {
+      const noDamage = { damage: 0, isEvaded: false, isReflected: false };
       const turnResult: Types.TurnResult = {
         turnNumber: 1,
         player1Commands: {
@@ -167,11 +168,7 @@ describe('Type Exports', () => {
           second: { type: Types.CommandType.RETREAT },
         },
         distanceAfter: Types.DistanceType.MID,
-        player1Damage: {
-          damage: 0,
-          isEvaded: false,
-          isReflected: false,
-        },
+        player1Damage: noDamage,
         player2Damage: {
           damage: 40,
           isEvaded: false,
@@ -179,6 +176,10 @@ describe('Type Exports', () => {
         },
         player1StanceAfter: Types.StanceType.NORMAL,
         player2StanceAfter: Types.StanceType.NORMAL,
+        phases: [
+          { player1Command: Types.CommandType.WEAPON_ATTACK, player2Command: Types.CommandType.REFLECTOR, distanceAfter: Types.DistanceType.MID, player1Damage: noDamage, player2Damage: { damage: 40, isEvaded: false, isReflected: false } },
+          { player1Command: Types.CommandType.ADVANCE, player2Command: Types.CommandType.RETREAT, distanceAfter: Types.DistanceType.MID, player1Damage: noDamage, player2Damage: noDamage },
+        ],
       };
       expect(turnResult).toBeDefined();
     });
