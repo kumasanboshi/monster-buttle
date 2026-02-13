@@ -276,4 +276,63 @@ describe('CommandSelectionManager', () => {
       expect(manager.confirmSelection()).toBeNull();
     });
   });
+
+  describe('スタンスボタンラベル', () => {
+    it('通常スタンスの場合、STANCE_Aが"攻勢"、STANCE_Bが"守勢"', () => {
+      const manager = new CommandSelectionManager(
+        createTestState({
+          player1: {
+            monsterId: 'zaag',
+            currentHp: 250,
+            currentStance: StanceType.NORMAL,
+            remainingSpecialCount: 5,
+            usedReflectCount: 0,
+          },
+        }),
+        'player1',
+        createTestMonster()
+      );
+      const labels = manager.getStanceLabels();
+      expect(labels.stanceA).toBe('攻勢');
+      expect(labels.stanceB).toBe('守勢');
+    });
+
+    it('攻勢スタンスの場合、STANCE_Aが"通常"、STANCE_Bが"守勢"', () => {
+      const manager = new CommandSelectionManager(
+        createTestState({
+          player1: {
+            monsterId: 'zaag',
+            currentHp: 250,
+            currentStance: StanceType.OFFENSIVE,
+            remainingSpecialCount: 5,
+            usedReflectCount: 0,
+          },
+        }),
+        'player1',
+        createTestMonster()
+      );
+      const labels = manager.getStanceLabels();
+      expect(labels.stanceA).toBe('通常');
+      expect(labels.stanceB).toBe('守勢');
+    });
+
+    it('守勢スタンスの場合、STANCE_Aが"通常"、STANCE_Bが"攻勢"', () => {
+      const manager = new CommandSelectionManager(
+        createTestState({
+          player1: {
+            monsterId: 'zaag',
+            currentHp: 250,
+            currentStance: StanceType.DEFENSIVE,
+            remainingSpecialCount: 5,
+            usedReflectCount: 0,
+          },
+        }),
+        'player1',
+        createTestMonster()
+      );
+      const labels = manager.getStanceLabels();
+      expect(labels.stanceA).toBe('通常');
+      expect(labels.stanceB).toBe('攻勢');
+    });
+  });
 });
