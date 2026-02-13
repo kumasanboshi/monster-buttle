@@ -3,6 +3,7 @@ import { DEFAULT_GAME_CONFIG, GAME_WIDTH, GAME_HEIGHT } from './scenes/gameConfi
 import { BootScene } from './scenes/BootScene';
 import { TitleScene } from './scenes/TitleScene';
 import { CharacterSelectScene } from './scenes/CharacterSelectScene';
+import { BattleScene } from './scenes/BattleScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -16,7 +17,7 @@ const config: Phaser.Types.Core.GameConfig = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
   },
-  scene: [BootScene, TitleScene, CharacterSelectScene],
+  scene: [BootScene, TitleScene, CharacterSelectScene, BattleScene],
   render: {
     pixelArt: DEFAULT_GAME_CONFIG.pixelArt,
   },
