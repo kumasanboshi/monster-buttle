@@ -137,7 +137,7 @@ export class CharacterSelectScene extends BaseScene {
     const panelY = 80;
 
     this.add
-      .rectangle(panelX + 100, panelY + 120, 220, 260, 0x222244)
+      .rectangle(panelX + 100, panelY + 130, 220, 290, 0x222244)
       .setStrokeStyle(2, 0x444488);
 
     this.add
@@ -208,7 +208,8 @@ export class CharacterSelectScene extends BaseScene {
       { label: `素早さ: ${monster.stats.speed}`, color: '#ffff88' },
       { label: `丈夫さ: ${monster.stats.toughness}`, color: '#88ffff' },
       { label: `特殊回数: ${monster.stats.specialAttackCount}`, color: '#ff88ff' },
-      { label: `武器: ${monster.weapon.name}`, color: '#cccccc' },
+      { label: `武器: ${monster.weapon.name}(×${monster.weapon.multiplier})`, color: '#cccccc' },
+      { label: `反射: ${monster.reflector.name}(${monster.reflector.maxReflectCount}回)`, color: '#cccccc' },
     ];
 
     lines.forEach((line, i) => {
