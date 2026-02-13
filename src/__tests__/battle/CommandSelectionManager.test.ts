@@ -219,4 +219,61 @@ describe('CommandSelectionManager', () => {
       expect(selection.second).toBeNull();
     });
   });
+
+  describe('決定機能', () => {
+    it('両方未選択の場合、決定できない', () => {
+      const manager = new CommandSelectionManager(
+        createTestState(),
+        'player1',
+        createTestMonster()
+      );
+      expect(manager.canConfirm()).toBe(false);
+    });
+
+    it('1stのみ選択済みの場合、決定できない', () => {
+      const manager = new CommandSelectionManager(
+        createTestState(),
+        'player1',
+        createTestMonster()
+      );
+      manager.selectCommand(CommandType.ADVANCE);
+      expect(manager.canConfirm()).toBe(false);
+    });
+
+    it('両方選択済みの場合、決定できる', () => {
+      const manager = new CommandSelectionManager(
+        createTestState(),
+        'player1',
+        createTestMonster()
+      );
+      manager.selectCommand(CommandType.ADVANCE);
+      manager.selectCommand(CommandType.RETREAT);
+      expect(manager.canConfirm()).toBe(true);
+    });
+
+    it('confirmSelectionで選択済みコマンドペアを返す', () => {
+      const manager = new CommandSelectionManager(
+        createTestState(),
+        'player1',
+        createTestMonster()
+      );
+      manager.selectCommand(CommandType.ADVANCE);
+      manager.selectCommand(CommandType.RETREAT);
+      const result = manager.confirmSelection();
+      expect(result).toEqual({
+        first: { type: CommandType.ADVANCE },
+        second: { type: CommandType.RETREAT },
+      });
+    });
+
+    it('確定できない場合、confirmSelectionはnullを返す', () => {
+      const manager = new CommandSelectionManager(
+        createTestState(),
+        'player1',
+        createTestMonster()
+      );
+      manager.selectCommand(CommandType.ADVANCE);
+      expect(manager.confirmSelection()).toBeNull();
+    });
+  });
 });
