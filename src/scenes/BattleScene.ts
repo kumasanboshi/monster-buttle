@@ -28,6 +28,7 @@ import { processTurn } from '../battle/turnProcessor';
 import { resolveBattleEffects } from '../battle/effectResolver';
 import { BattleEffectPlayer } from './BattleEffectPlayer';
 import { selectCommands, AILevel } from '../ai';
+import { checkVictoryAfterTurn } from '../battle/victoryCondition';
 
 /**
  * バトル画面シーン
@@ -460,6 +461,15 @@ export class BattleScene extends BaseScene {
     this.updateHp(newState.player1.currentHp, newState.player2.currentHp);
     this.updateDistance(newState.currentDistance);
     this.updateStance(turnResult.player1StanceAfter, turnResult.player2StanceAfter);
+
+    // 勝敗判定
+    const battleResult = checkVictoryAfterTurn(this.battleState);
+    if (battleResult) {
+      // turnHistoryを結果に含める
+      battleResult.turnHistory = this.turnHistory;
+      this.transitionTo(SceneKey.RESULT, { battleResult });
+      return;
+    }
 
     this.commandManager = new CommandSelectionManager(
       this.battleState,
