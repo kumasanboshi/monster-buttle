@@ -4,6 +4,7 @@ import {
   TitleButtonConfig,
 } from '../../scenes/titleConfig';
 import { SceneKey } from '../../scenes/sceneKeys';
+import { getAvailableTransitions } from '../../scenes/sceneTransitions';
 import { GameMode } from '../../types/GameMode';
 
 describe('TITLE_TEXT', () => {
@@ -129,5 +130,12 @@ describe('TITLE_BUTTONS', () => {
     expect(TITLE_BUTTONS[1].label).toBe('自由対戦（CPU）');
     expect(TITLE_BUTTONS[2].label).toBe('自由対戦（ローカル）');
     expect(TITLE_BUTTONS[3].label).toBe('設定');
+  });
+
+  it('すべてのボタンの targetScene が TITLE から有効な遷移先であること', () => {
+    const validTransitions = getAvailableTransitions(SceneKey.TITLE);
+    for (const button of TITLE_BUTTONS) {
+      expect(validTransitions).toContain(button.targetScene);
+    }
   });
 });
