@@ -24,3 +24,15 @@ export type { AssetEntry, SpritesheetAssetEntry, AssetManifest } from './assetMa
 
 export { TITLE_TEXT, TITLE_BUTTONS } from './titleConfig';
 export type { TitleButtonConfig } from './titleConfig';
+
+export {
+  INITIAL_MONSTER_ID,
+  UNLOCK_ORDER,
+  getUnlockedMonsterIds,
+  isMonsterUnlocked,
+  GRID_COLS,
+  GRID_ROWS,
+  THEME_COLORS,
+  CHARACTER_SELECT_BUTTONS,
+} from './characterSelectConfig';
+export type { CharacterSelectButtonConfig } from './characterSelectConfig';
