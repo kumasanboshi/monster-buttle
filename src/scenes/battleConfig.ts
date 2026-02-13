@@ -105,7 +105,7 @@ export const DISTANCE_CHARACTER_POSITIONS: Record<
  * 秒数を「M:SS」形式にフォーマット
  */
 export function formatTime(seconds: number): string {
-  const clamped = Math.max(0, seconds);
+  const clamped = Math.max(0, Math.floor(seconds));
   const min = Math.floor(clamped / 60);
   const sec = clamped % 60;
   return `${min}:${sec.toString().padStart(2, '0')}`;
