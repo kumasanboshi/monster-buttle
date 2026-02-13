@@ -120,6 +120,17 @@ export class CommandSelectionManager {
   }
 
   /**
+   * 選択状態をリセットする（ターン終了後など）
+   */
+  reset(): void {
+    this.selection = {
+      first: null,
+      second: null,
+      phase: 'first',
+    };
+  }
+
+  /**
    * 現在の選択状態を取得
    */
   getSelection(): Readonly<SelectionState> {
