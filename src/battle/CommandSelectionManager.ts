@@ -44,6 +44,11 @@ export class CommandSelectionManager {
    * @returns 選択が成功したかどうか
    */
   selectCommand(command: CommandType): boolean {
+    const validCommands = this.getValidCommands();
+    if (!validCommands.includes(command)) {
+      return false;
+    }
+
     if (this.selection.phase === 'first') {
       this.selection.first = command;
       this.selection.phase = 'second';
@@ -52,6 +57,13 @@ export class CommandSelectionManager {
 
     this.selection.second = command;
     return true;
+  }
+
+  /**
+   * 現在の状態で有効なコマンド一覧を取得
+   */
+  getValidCommands(): CommandType[] {
+    return getValidCommands(this.battleState, this.playerId, this.monster);
   }
 
   /**
