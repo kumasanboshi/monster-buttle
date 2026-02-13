@@ -80,6 +80,9 @@ export class BattleScene extends BaseScene {
 
   private selectRandomEnemy(excludeId: string): Monster {
     const candidates = MONSTER_DATABASE.filter((m) => m.id !== excludeId);
+    if (candidates.length === 0) {
+      return MONSTER_DATABASE[0];
+    }
     const index = Math.floor(Math.random() * candidates.length);
     return candidates[index];
   }
