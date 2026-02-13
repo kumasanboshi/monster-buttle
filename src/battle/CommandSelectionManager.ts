@@ -1,4 +1,4 @@
-import { CommandType, BattleState, Monster } from '../types';
+import { CommandType, TurnCommands, BattleState, Monster } from '../types';
 import { getValidCommands } from '../ai/commandValidator';
 
 /**
@@ -81,6 +81,27 @@ export class CommandSelectionManager {
       this.selection.first = null;
       this.selection.phase = 'first';
     }
+  }
+
+  /**
+   * 両方のコマンドが選択済みかどうか
+   */
+  canConfirm(): boolean {
+    return this.selection.first !== null && this.selection.second !== null;
+  }
+
+  /**
+   * 選択を確定し、TurnCommandsを返す
+   * @returns 確定できない場合はnull
+   */
+  confirmSelection(): TurnCommands | null {
+    if (!this.canConfirm()) {
+      return null;
+    }
+    return {
+      first: { type: this.selection.first! },
+      second: { type: this.selection.second! },
+    };
   }
 
   /**
