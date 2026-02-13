@@ -1,5 +1,6 @@
-import { CommandType, TurnCommands, BattleState, Monster } from '../types';
+import { CommandType, TurnCommands, BattleState, Monster, StanceType, calculateNextStance } from '../types';
 import { getValidCommands } from '../ai/commandValidator';
+import { STANCE_LABELS } from '../scenes/battleConfig';
 
 /**
  * コマンド選択フェーズ
@@ -101,6 +102,20 @@ export class CommandSelectionManager {
     return {
       first: { type: this.selection.first! },
       second: { type: this.selection.second! },
+    };
+  }
+
+  /**
+   * スタンスボタンのラベルを取得
+   * 現在のスタンスから遷移先のスタンス名を返す
+   */
+  getStanceLabels(): { stanceA: string; stanceB: string } {
+    const currentStance = this.battleState[this.playerId].currentStance;
+    const nextA = calculateNextStance(currentStance, CommandType.STANCE_A);
+    const nextB = calculateNextStance(currentStance, CommandType.STANCE_B);
+    return {
+      stanceA: STANCE_LABELS[nextA],
+      stanceB: STANCE_LABELS[nextB],
     };
   }
 
