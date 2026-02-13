@@ -21,3 +21,6 @@ export { MonsterStats, Monster, MonsterBattleState } from './Monster';
 
 // BattleState types
 export { BattleState, DamageInfo, TurnResult, BattleResultType, BattleResult } from './BattleState';
+
+// GameMode types
+export { GameMode } from './GameMode';
