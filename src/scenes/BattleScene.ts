@@ -458,6 +458,11 @@ export class BattleScene extends BaseScene {
     this.battleState = newState;
     this.turnHistory.push(turnResult);
 
+    // UI更新
+    this.updateHp(newState.player1.currentHp, newState.player2.currentHp);
+    this.updateDistance(newState.currentDistance);
+    this.updateStance(turnResult.player1StanceAfter, turnResult.player2StanceAfter);
+
     // 勝敗判定（processTurnで更新済みのbattleStateを使用）
     const battleResult = checkVictoryAfterTurn(this.battleState);
     if (battleResult) {
@@ -466,11 +471,6 @@ export class BattleScene extends BaseScene {
       this.transitionTo(SceneKey.RESULT, { battleResult });
       return;
     }
-
-    // UI更新（バトル継続時のみ）
-    this.updateHp(newState.player1.currentHp, newState.player2.currentHp);
-    this.updateDistance(newState.currentDistance);
-    this.updateStance(turnResult.player1StanceAfter, turnResult.player2StanceAfter);
 
     this.commandManager = new CommandSelectionManager(
       this.battleState,
