@@ -67,6 +67,23 @@ export class CommandSelectionManager {
   }
 
   /**
+   * 直前の選択をキャンセルする
+   * - 2nd選択済み → 2ndをクリアし2nd選択フェーズに戻る
+   * - 1st選択済み（2nd選択フェーズ） → 1stをクリアし1st選択フェーズに戻る
+   * - 未選択 → 何もしない
+   */
+  cancelSelection(): void {
+    if (this.selection.second !== null) {
+      this.selection.second = null;
+      return;
+    }
+    if (this.selection.first !== null) {
+      this.selection.first = null;
+      this.selection.phase = 'first';
+    }
+  }
+
+  /**
    * 現在の選択状態を取得
    */
   getSelection(): Readonly<SelectionState> {
