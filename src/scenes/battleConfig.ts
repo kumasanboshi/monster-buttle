@@ -1,5 +1,6 @@
 import { DistanceType } from '../types/Distance';
 import { StanceType } from '../types/Stance';
+import { CommandType } from '../types/Command';
 import { GAME_WIDTH } from './gameConfig';
 
 /** バトル画面レイアウト定数 */
@@ -100,6 +101,71 @@ export const DISTANCE_CHARACTER_POSITIONS: Record<
   [DistanceType.MID]: { playerX: 200, enemyX: 600 },
   [DistanceType.FAR]: { playerX: 120, enemyX: 680 },
 };
+
+/** コマンドボタンのデフォルトラベル（STANCE_A/Bはスタンスに応じて動的に変わる） */
+export const COMMAND_LABELS: Record<CommandType, string> = {
+  [CommandType.ADVANCE]: '前進',
+  [CommandType.RETREAT]: '後退',
+  [CommandType.WEAPON_ATTACK]: '武器',
+  [CommandType.SPECIAL_ATTACK]: '特殊',
+  [CommandType.REFLECTOR]: 'リフレクタ',
+  [CommandType.STANCE_A]: 'スタンスA',
+  [CommandType.STANCE_B]: 'スタンスB',
+};
+
+/** コマンド選択UIのレイアウト定数 */
+export const COMMAND_UI_LAYOUT = {
+  /** コマンドボタン1段目のY座標 */
+  row1Y: 490,
+  /** コマンドボタン2段目のY座標 */
+  row2Y: 530,
+  /** ボタン幅 */
+  buttonWidth: 80,
+  /** ボタン高さ */
+  buttonHeight: 30,
+  /** ボタン間隔（左端から次の左端まで） */
+  buttonSpacing: 95,
+  /** 1段目の開始X座標 */
+  row1StartX: 135,
+  /** 2段目の開始X座標 */
+  row2StartX: 182,
+  /** 選択表示のY座標 */
+  selectionY: 565,
+  /** 決定ボタンのY座標 */
+  confirmY: 565,
+  /** キャンセルボタンのX座標 */
+  cancelX: 650,
+  /** キャンセルボタンのY座標 */
+  cancelY: 530,
+} as const;
+
+/** コマンドUIの色設定 */
+export const COMMAND_UI_COLORS = {
+  /** 有効なボタン背景 */
+  buttonActive: 0x445588,
+  /** 無効なボタン背景 */
+  buttonDisabled: 0x333333,
+  /** 選択済みボタン背景 */
+  buttonSelected: 0x6688bb,
+  /** ボタンテキスト（有効） */
+  buttonTextActive: '#ffffff',
+  /** ボタンテキスト（無効） */
+  buttonTextDisabled: '#666666',
+  /** 決定ボタン背景（有効） */
+  confirmActive: 0x448844,
+  /** 決定ボタン背景（無効） */
+  confirmDisabled: 0x333333,
+  /** キャンセルボタン背景 */
+  cancelButton: 0x884444,
+  /** 選択表示テキスト */
+  selectionText: '#ffffff',
+} as const;
+
+/** コマンドボタンの配置（行ごと） */
+export const COMMAND_BUTTON_ROWS: CommandType[][] = [
+  [CommandType.ADVANCE, CommandType.RETREAT, CommandType.WEAPON_ATTACK, CommandType.SPECIAL_ATTACK],
+  [CommandType.REFLECTOR, CommandType.STANCE_A, CommandType.STANCE_B],
+];
 
 /**
  * 秒数を「M:SS」形式にフォーマット

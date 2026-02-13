@@ -8,20 +8,26 @@ import {
   DISTANCE_LABELS,
   STANCE_LABELS,
   DISTANCE_CHARACTER_POSITIONS,
+  COMMAND_LABELS,
+  COMMAND_UI_LAYOUT,
+  COMMAND_UI_COLORS,
+  COMMAND_BUTTON_ROWS,
   formatTime,
   clampHp,
 } from './battleConfig';
 import { DistanceType } from '../types/Distance';
 import { StanceType } from '../types/Stance';
+import { CommandType } from '../types/Command';
+import { BattleState } from '../types/BattleState';
 import { Monster } from '../types/Monster';
 import { MONSTER_DATABASE, getMonsterById } from '../constants/monsters';
 import { INITIAL_MONSTER_ID } from './characterSelectConfig';
+import { CommandSelectionManager } from '../battle/CommandSelectionManager';
 
 /**
- * バトル画面シーン（基盤）
+ * バトル画面シーン
  *
- * HPバー、キャラ表示、距離表示、残り時間、スタンス表示を管理する。
- * コマンド選択UIは別issueで実装。
+ * HPバー、キャラ表示、距離表示、残り時間、スタンス表示、コマンド選択UIを管理する。
  */
 export class BattleScene extends BaseScene {
   // モンスターデータ
@@ -54,6 +60,16 @@ export class BattleScene extends BaseScene {
   private playerStanceText!: Phaser.GameObjects.Text;
   private enemyStanceText!: Phaser.GameObjects.Text;
 
+  // コマンド選択UI
+  private commandManager!: CommandSelectionManager;
+  private commandButtons: Map<CommandType, { bg: Phaser.GameObjects.Rectangle; text: Phaser.GameObjects.Text }> = new Map();
+  private selectionText1st!: Phaser.GameObjects.Text;
+  private selectionText2nd!: Phaser.GameObjects.Text;
+  private confirmButtonBg!: Phaser.GameObjects.Rectangle;
+  private confirmButtonText!: Phaser.GameObjects.Text;
+  private cancelButtonBg!: Phaser.GameObjects.Rectangle;
+  private cancelButtonText!: Phaser.GameObjects.Text;
+
   constructor() {
     super(SceneKey.BATTLE);
   }
@@ -72,10 +88,41 @@ export class BattleScene extends BaseScene {
     this.playerCurrentHp = this.playerMonster.stats.hp;
     this.enemyCurrentHp = this.enemyMonster.stats.hp;
 
+    // BattleStateを構築しCommandSelectionManagerを初期化
+    this.commandManager = new CommandSelectionManager(
+      this.buildBattleState(),
+      'player1',
+      this.playerMonster
+    );
+
     // UI生成
     this.createHpBars();
     this.createCharacterDisplays();
     this.createStatusDisplays();
+    this.createCommandUI();
+  }
+
+  private buildBattleState(): BattleState {
+    return {
+      player1: {
+        monsterId: this.playerMonster.id,
+        currentHp: this.playerCurrentHp,
+        currentStance: this.currentPlayerStance,
+        remainingSpecialCount: this.playerMonster.stats.specialAttackCount,
+        usedReflectCount: 0,
+      },
+      player2: {
+        monsterId: this.enemyMonster.id,
+        currentHp: this.enemyCurrentHp,
+        currentStance: this.currentEnemyStance,
+        remainingSpecialCount: this.enemyMonster.stats.specialAttackCount,
+        usedReflectCount: 0,
+      },
+      currentDistance: this.currentDistance,
+      currentTurn: 1,
+      remainingTime: this.remainingTime,
+      isFinished: false,
+    };
   }
 
   private selectRandomEnemy(excludeId: string): Monster {
@@ -235,6 +282,164 @@ export class BattleScene extends BaseScene {
     this.updateDistanceDisplay();
     this.updateTimeDisplay();
     this.updateStanceDisplay();
+  }
+
+  private createCommandUI(): void {
+    const { row1Y, row2Y, buttonWidth, buttonHeight, buttonSpacing, row1StartX, row2StartX } = COMMAND_UI_LAYOUT;
+    const stanceLabels = this.commandManager.getStanceLabels();
+
+    // コマンドボタン生成
+    COMMAND_BUTTON_ROWS.forEach((row, rowIndex) => {
+      const y = rowIndex === 0 ? row1Y : row2Y;
+      const startX = rowIndex === 0 ? row1StartX : row2StartX;
+
+      row.forEach((commandType, colIndex) => {
+        const x = startX + colIndex * buttonSpacing;
+        let label = COMMAND_LABELS[commandType];
+        if (commandType === CommandType.STANCE_A) label = stanceLabels.stanceA;
+        if (commandType === CommandType.STANCE_B) label = stanceLabels.stanceB;
+
+        const bg = this.add
+          .rectangle(x, y, buttonWidth, buttonHeight, COMMAND_UI_COLORS.buttonActive)
+          .setInteractive({ useHandCursor: true })
+          .on('pointerdown', () => this.onCommandClick(commandType));
+
+        const text = this.add
+          .text(x, y, label, {
+            fontSize: '14px',
+            color: COMMAND_UI_COLORS.buttonTextActive,
+            fontFamily: 'Arial, sans-serif',
+            fontStyle: 'bold',
+          })
+          .setOrigin(0.5);
+
+        this.commandButtons.set(commandType, { bg, text });
+      });
+    });
+
+    // キャンセルボタン
+    this.cancelButtonBg = this.add
+      .rectangle(
+        COMMAND_UI_LAYOUT.cancelX,
+        COMMAND_UI_LAYOUT.cancelY,
+        buttonWidth,
+        buttonHeight,
+        COMMAND_UI_COLORS.cancelButton
+      )
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.onCancelClick());
+
+    this.cancelButtonText = this.add
+      .text(COMMAND_UI_LAYOUT.cancelX, COMMAND_UI_LAYOUT.cancelY, '戻す', {
+        fontSize: '14px',
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+
+    // 選択表示
+    this.selectionText1st = this.add
+      .text(200, COMMAND_UI_LAYOUT.selectionY, '1st: ---', {
+        fontSize: '16px',
+        color: COMMAND_UI_COLORS.selectionText,
+        fontFamily: 'Arial, sans-serif',
+      })
+      .setOrigin(0.5);
+
+    this.selectionText2nd = this.add
+      .text(380, COMMAND_UI_LAYOUT.selectionY, '2nd: ---', {
+        fontSize: '16px',
+        color: COMMAND_UI_COLORS.selectionText,
+        fontFamily: 'Arial, sans-serif',
+      })
+      .setOrigin(0.5);
+
+    // 決定ボタン
+    this.confirmButtonBg = this.add
+      .rectangle(580, COMMAND_UI_LAYOUT.confirmY, 100, buttonHeight, COMMAND_UI_COLORS.confirmDisabled)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.onConfirmClick());
+
+    this.confirmButtonText = this.add
+      .text(580, COMMAND_UI_LAYOUT.confirmY, '決定', {
+        fontSize: '16px',
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+
+    // 初期状態でUI更新
+    this.updateCommandUI();
+  }
+
+  private onCommandClick(command: CommandType): void {
+    const success = this.commandManager.selectCommand(command);
+    if (success) {
+      this.updateCommandUI();
+    }
+  }
+
+  private onCancelClick(): void {
+    this.commandManager.cancelSelection();
+    this.updateCommandUI();
+  }
+
+  private onConfirmClick(): void {
+    const result = this.commandManager.confirmSelection();
+    if (result) {
+      // TODO: ターン処理に渡す（後続issueで実装）
+      this.commandManager.reset();
+      this.updateCommandUI();
+    }
+  }
+
+  private updateCommandUI(): void {
+    const selection = this.commandManager.getSelection();
+    const validCommands = this.commandManager.getValidCommands();
+    const stanceLabels = this.commandManager.getStanceLabels();
+
+    // ボタンの有効/無効/選択状態を更新
+    this.commandButtons.forEach((button, commandType) => {
+      const isValid = validCommands.includes(commandType);
+      const isSelected =
+        selection.first === commandType || selection.second === commandType;
+
+      if (!isValid) {
+        button.bg.setFillStyle(COMMAND_UI_COLORS.buttonDisabled);
+        button.text.setColor(COMMAND_UI_COLORS.buttonTextDisabled);
+        button.bg.disableInteractive();
+      } else if (isSelected) {
+        button.bg.setFillStyle(COMMAND_UI_COLORS.buttonSelected);
+        button.text.setColor(COMMAND_UI_COLORS.buttonTextActive);
+        button.bg.setInteractive({ useHandCursor: true });
+      } else {
+        button.bg.setFillStyle(COMMAND_UI_COLORS.buttonActive);
+        button.text.setColor(COMMAND_UI_COLORS.buttonTextActive);
+        button.bg.setInteractive({ useHandCursor: true });
+      }
+
+      // スタンスボタンのラベルを動的に更新
+      if (commandType === CommandType.STANCE_A) {
+        button.text.setText(stanceLabels.stanceA);
+      } else if (commandType === CommandType.STANCE_B) {
+        button.text.setText(stanceLabels.stanceB);
+      }
+    });
+
+    // 選択表示を更新
+    const firstLabel = selection.first ? COMMAND_LABELS[selection.first] : '---';
+    const secondLabel = selection.second ? COMMAND_LABELS[selection.second] : '---';
+    this.selectionText1st.setText(`1st: ${firstLabel}`);
+    this.selectionText2nd.setText(`2nd: ${secondLabel}`);
+
+    // 決定ボタンの状態
+    if (this.commandManager.canConfirm()) {
+      this.confirmButtonBg.setFillStyle(COMMAND_UI_COLORS.confirmActive);
+    } else {
+      this.confirmButtonBg.setFillStyle(COMMAND_UI_COLORS.confirmDisabled);
+    }
   }
 
   // --- 表示更新メソッド（内部用） ---
