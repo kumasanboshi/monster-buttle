@@ -113,4 +113,67 @@ describe('CommandSelectionManager', () => {
       expect(manager.getSelection().second).toBe(CommandType.ADVANCE);
     });
   });
+
+  describe('有効コマンド判定', () => {
+    it('有効なコマンド一覧を取得できる', () => {
+      const manager = new CommandSelectionManager(
+        createTestState(),
+        'player1',
+        createTestMonster()
+      );
+      const validCommands = manager.getValidCommands();
+      expect(validCommands).toContain(CommandType.ADVANCE);
+      expect(validCommands).toContain(CommandType.RETREAT);
+      expect(validCommands).toContain(CommandType.SPECIAL_ATTACK);
+      expect(validCommands).toContain(CommandType.STANCE_A);
+      expect(validCommands).toContain(CommandType.STANCE_B);
+    });
+
+    it('中距離では武器攻撃が無効', () => {
+      const manager = new CommandSelectionManager(
+        createTestState({ currentDistance: DistanceType.MID }),
+        'player1',
+        createTestMonster()
+      );
+      expect(manager.getValidCommands()).not.toContain(CommandType.WEAPON_ATTACK);
+    });
+
+    it('近距離では武器攻撃が有効', () => {
+      const manager = new CommandSelectionManager(
+        createTestState({ currentDistance: DistanceType.NEAR }),
+        'player1',
+        createTestMonster()
+      );
+      expect(manager.getValidCommands()).toContain(CommandType.WEAPON_ATTACK);
+    });
+
+    it('リフレクター残り回数0では無効', () => {
+      const manager = new CommandSelectionManager(
+        createTestState({
+          player1: {
+            monsterId: 'zaag',
+            currentHp: 250,
+            currentStance: StanceType.NORMAL,
+            remainingSpecialCount: 5,
+            usedReflectCount: 2,
+          },
+        }),
+        'player1',
+        createTestMonster() // maxReflectCount: 2
+      );
+      expect(manager.getValidCommands()).not.toContain(CommandType.REFLECTOR);
+    });
+
+    it('無効なコマンドは選択できない', () => {
+      const manager = new CommandSelectionManager(
+        createTestState({ currentDistance: DistanceType.MID }),
+        'player1',
+        createTestMonster()
+      );
+      // 中距離では武器攻撃は無効
+      const result = manager.selectCommand(CommandType.WEAPON_ATTACK);
+      expect(result).toBe(false);
+      expect(manager.getSelection().first).toBeNull();
+    });
+  });
 });
