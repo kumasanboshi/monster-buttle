@@ -23,7 +23,7 @@ export const TITLE_BUTTONS: TitleButtonConfig[] = [
   },
   {
     label: '自由対戦（CPU）',
-    targetScene: SceneKey.MODE_SELECT,
+    targetScene: SceneKey.CHARACTER_SELECT,
     mode: GameMode.FREE_CPU,
   },
   {

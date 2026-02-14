@@ -3,30 +3,48 @@ import { SceneKey } from './sceneKeys';
 import { GAME_WIDTH, GAME_HEIGHT } from './gameConfig';
 import {
   GRID_COLS,
-  GRID_ROWS,
   THEME_COLORS,
-  CHARACTER_SELECT_BUTTONS,
   getUnlockedMonsterIds,
+  getCharacterSelectButtons,
+  CHARACTER_SELECT_HEADERS,
+  CharacterSelectStep,
 } from './characterSelectConfig';
 import { MONSTER_DATABASE } from '../constants/monsters';
-import { Monster } from '../types/Monster';
+import { GameMode } from '../types/GameMode';
+
+/** CharacterSelectSceneに渡されるデータ */
+export interface CharacterSelectSceneData {
+  mode?: GameMode;
+  step?: CharacterSelectStep;
+  playerMonsterId?: string;
+  clearedStages?: number;
+}
 
 /**
  * キャラ選択画面シーン
  *
  * 8魂格の選択グリッド、ロック表示、パラメータ表示、決定/戻るボタンを表示する。
+ * FREE_CPUモードでは player/opponent の2ステップに対応。
  */
 export class CharacterSelectScene extends BaseScene {
   private selectedMonsterId: string | null = null;
   private parameterTexts: Phaser.GameObjects.Text[] = [];
   private gridCells: Phaser.GameObjects.Container[] = [];
+  private mode?: GameMode;
+  private step?: CharacterSelectStep;
+  private playerMonsterId?: string;
 
   constructor() {
     super(SceneKey.CHARACTER_SELECT);
   }
 
-  create(data?: { mode?: string; clearedStages?: number }): void {
-    const clearedStages = data?.clearedStages ?? 7;
+  create(data?: CharacterSelectSceneData): void {
+    this.mode = data?.mode;
+    this.step = data?.step;
+    this.playerMonsterId = data?.playerMonsterId;
+
+    // FREE_CPUは全キャラ解放
+    const clearedStages = this.mode === GameMode.FREE_CPU ? 7 : (data?.clearedStages ?? 7);
     const unlockedIds = getUnlockedMonsterIds(clearedStages);
 
     this.createHeader();
@@ -39,8 +57,17 @@ export class CharacterSelectScene extends BaseScene {
   }
 
   private createHeader(): void {
+    let headerText: string;
+    if (this.step === 'player') {
+      headerText = CHARACTER_SELECT_HEADERS.player;
+    } else if (this.step === 'opponent') {
+      headerText = CHARACTER_SELECT_HEADERS.opponent;
+    } else {
+      headerText = CHARACTER_SELECT_HEADERS.default;
+    }
+
     this.add
-      .text(GAME_WIDTH / 2, 30, 'キャラ選択', {
+      .text(GAME_WIDTH / 2, 30, headerText, {
         fontSize: '32px',
         color: '#ffffff',
         fontFamily: 'Arial, sans-serif',
@@ -151,16 +178,22 @@ export class CharacterSelectScene extends BaseScene {
   }
 
   private createButtons(): void {
+    const buttons = getCharacterSelectButtons(this.step, this.mode);
     const buttonY = GAME_HEIGHT - 50;
-    const buttonSpacing = 200;
+    const buttonSpacing = buttons.length > 2 ? 150 : 200;
 
-    CHARACTER_SELECT_BUTTONS.forEach((buttonConfig, index) => {
-      const x = GAME_WIDTH / 2 + (index - 0.5) * buttonSpacing;
+    buttons.forEach((buttonConfig, index) => {
+      const centerOffset = (buttons.length - 1) / 2;
+      const x = GAME_WIDTH / 2 + (index - centerOffset) * buttonSpacing;
+
+      const color = buttonConfig.action === 'confirm' ? '#88ff88'
+        : buttonConfig.action === 'random' ? '#ffcc44'
+        : '#cccccc';
 
       const text = this.add
         .text(x, buttonY, buttonConfig.label, {
           fontSize: '24px',
-          color: buttonConfig.action === 'confirm' ? '#88ff88' : '#cccccc',
+          color,
           fontFamily: 'Arial, sans-serif',
         })
         .setOrigin(0.5)
@@ -170,15 +203,50 @@ export class CharacterSelectScene extends BaseScene {
       text.on('pointerout', () => text.setScale(1.0));
 
       text.on('pointerdown', () => {
-        if (buttonConfig.action === 'confirm' && this.selectedMonsterId) {
-          this.transitionTo(buttonConfig.targetScene, {
-            monsterId: this.selectedMonsterId,
-          });
-        } else if (buttonConfig.action === 'back') {
-          this.transitionTo(buttonConfig.targetScene);
-        }
+        this.handleButtonClick(buttonConfig);
       });
     });
+  }
+
+  private handleButtonClick(buttonConfig: { action: string; targetScene: SceneKey }): void {
+    if (buttonConfig.action === 'confirm' && this.selectedMonsterId) {
+      if (this.mode === GameMode.FREE_CPU && this.step === 'player') {
+        // player → opponent
+        this.transitionTo(buttonConfig.targetScene, {
+          mode: this.mode,
+          step: 'opponent',
+          playerMonsterId: this.selectedMonsterId,
+        });
+      } else if (this.mode === GameMode.FREE_CPU && this.step === 'opponent') {
+        // opponent → difficulty
+        this.transitionTo(buttonConfig.targetScene, {
+          mode: this.mode,
+          playerMonsterId: this.playerMonsterId,
+          enemyMonsterId: this.selectedMonsterId,
+        });
+      } else {
+        // デフォルト（既存動作）
+        this.transitionTo(buttonConfig.targetScene, {
+          monsterId: this.selectedMonsterId,
+        });
+      }
+    } else if (buttonConfig.action === 'random') {
+      // ランダム → difficulty with null enemy
+      this.transitionTo(buttonConfig.targetScene, {
+        mode: this.mode,
+        playerMonsterId: this.playerMonsterId,
+        enemyMonsterId: null,
+      });
+    } else if (buttonConfig.action === 'back') {
+      if (this.mode === GameMode.FREE_CPU && this.step === 'opponent') {
+        this.transitionTo(buttonConfig.targetScene, {
+          mode: this.mode,
+          step: 'player',
+        });
+      } else {
+        this.transitionTo(buttonConfig.targetScene);
+      }
+    }
   }
 
   private selectMonster(monsterId: string): void {

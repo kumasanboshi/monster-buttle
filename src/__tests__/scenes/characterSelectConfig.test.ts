@@ -7,10 +7,13 @@ import {
   GRID_ROWS,
   THEME_COLORS,
   CHARACTER_SELECT_BUTTONS,
+  getCharacterSelectButtons,
+  CHARACTER_SELECT_HEADERS,
 } from '../../scenes/characterSelectConfig';
 import { MONSTER_DATABASE } from '../../constants/monsters';
 import { SceneKey } from '../../scenes/sceneKeys';
 import { getAvailableTransitions } from '../../scenes/sceneTransitions';
+import { GameMode } from '../../types/GameMode';
 
 describe('INITIAL_MONSTER_ID', () => {
   it('初期キャラが zaag（レイン）であること', () => {
@@ -161,6 +164,86 @@ describe('CHARACTER_SELECT_BUTTONS', () => {
   it('すべてのボタンの targetScene が CHARACTER_SELECT から有効な遷移先であること', () => {
     const validTransitions = getAvailableTransitions(SceneKey.CHARACTER_SELECT);
     for (const button of CHARACTER_SELECT_BUTTONS) {
+      expect(validTransitions).toContain(button.targetScene);
+    }
+  });
+});
+
+describe('CHARACTER_SELECT_HEADERS', () => {
+  it('player用ヘッダーが「キャラ選択（自分）」であること', () => {
+    expect(CHARACTER_SELECT_HEADERS.player).toBe('キャラ選択（自分）');
+  });
+
+  it('opponent用ヘッダーが「キャラ選択（相手）」であること', () => {
+    expect(CHARACTER_SELECT_HEADERS.opponent).toBe('キャラ選択（相手）');
+  });
+
+  it('default用ヘッダーが「キャラ選択」であること', () => {
+    expect(CHARACTER_SELECT_HEADERS.default).toBe('キャラ選択');
+  });
+});
+
+describe('getCharacterSelectButtons', () => {
+  describe('FREE_CPU - step=player', () => {
+    it('決定ボタンの遷移先がCHARACTER_SELECTであること', () => {
+      const buttons = getCharacterSelectButtons('player', GameMode.FREE_CPU);
+      const confirm = buttons.find((b) => b.action === 'confirm');
+      expect(confirm).toBeDefined();
+      expect(confirm!.targetScene).toBe(SceneKey.CHARACTER_SELECT);
+    });
+
+    it('戻るボタンの遷移先がTITLEであること', () => {
+      const buttons = getCharacterSelectButtons('player', GameMode.FREE_CPU);
+      const back = buttons.find((b) => b.action === 'back');
+      expect(back).toBeDefined();
+      expect(back!.targetScene).toBe(SceneKey.TITLE);
+    });
+
+    it('ランダムボタンが含まれないこと', () => {
+      const buttons = getCharacterSelectButtons('player', GameMode.FREE_CPU);
+      const random = buttons.find((b) => b.action === 'random');
+      expect(random).toBeUndefined();
+    });
+  });
+
+  describe('FREE_CPU - step=opponent', () => {
+    it('決定ボタンの遷移先がDIFFICULTY_SELECTであること', () => {
+      const buttons = getCharacterSelectButtons('opponent', GameMode.FREE_CPU);
+      const confirm = buttons.find((b) => b.action === 'confirm');
+      expect(confirm).toBeDefined();
+      expect(confirm!.targetScene).toBe(SceneKey.DIFFICULTY_SELECT);
+    });
+
+    it('戻るボタンの遷移先がCHARACTER_SELECTであること', () => {
+      const buttons = getCharacterSelectButtons('opponent', GameMode.FREE_CPU);
+      const back = buttons.find((b) => b.action === 'back');
+      expect(back).toBeDefined();
+      expect(back!.targetScene).toBe(SceneKey.CHARACTER_SELECT);
+    });
+
+    it('ランダムボタンが含まれること', () => {
+      const buttons = getCharacterSelectButtons('opponent', GameMode.FREE_CPU);
+      const random = buttons.find((b) => b.action === 'random');
+      expect(random).toBeDefined();
+      expect(random!.label).toBe('ランダム');
+      expect(random!.targetScene).toBe(SceneKey.DIFFICULTY_SELECT);
+    });
+  });
+
+  describe('モード未指定（デフォルト）', () => {
+    it('デフォルトのCHARACTER_SELECT_BUTTONSと同じボタンを返すこと', () => {
+      const buttons = getCharacterSelectButtons();
+      expect(buttons).toEqual(CHARACTER_SELECT_BUTTONS);
+    });
+  });
+
+  it('すべてのボタンの targetScene が CHARACTER_SELECT から有効な遷移先であること', () => {
+    const validTransitions = getAvailableTransitions(SceneKey.CHARACTER_SELECT);
+    const allButtons = [
+      ...getCharacterSelectButtons('player', GameMode.FREE_CPU),
+      ...getCharacterSelectButtons('opponent', GameMode.FREE_CPU),
+    ];
+    for (const button of allButtons) {
       expect(validTransitions).toContain(button.targetScene);
     }
   });

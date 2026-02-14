@@ -1,5 +1,6 @@
 import { BattleResultType } from '../types/BattleState';
 import { SceneKey } from './sceneKeys';
+import { GameMode } from '../types/GameMode';
 
 /** リザルト画面レイアウト定数 */
 export interface ResultLayoutConfig {
@@ -62,7 +63,7 @@ export interface ResultButtonConfig {
   targetScene: SceneKey;
 }
 
-/** リザルト画面のボタン定義（表示順） */
+/** リザルト画面のデフォルトボタン定義（表示順） */
 export const RESULT_BUTTON_CONFIG: ResultButtonConfig[] = [
   {
     label: '次へ',
@@ -77,3 +78,25 @@ export const RESULT_BUTTON_CONFIG: ResultButtonConfig[] = [
     targetScene: SceneKey.TITLE,
   },
 ];
+
+/** FREE_CPUモード用のボタン定義 */
+const FREE_CPU_BUTTON_CONFIG: ResultButtonConfig[] = [
+  {
+    label: 'もう一度',
+    targetScene: SceneKey.CHARACTER_SELECT,
+  },
+  {
+    label: 'タイトルへ',
+    targetScene: SceneKey.TITLE,
+  },
+];
+
+/**
+ * モードに応じたボタン定義を返す
+ */
+export function getResultButtons(mode?: GameMode): ResultButtonConfig[] {
+  if (mode === GameMode.FREE_CPU) {
+    return FREE_CPU_BUTTON_CONFIG;
+  }
+  return RESULT_BUTTON_CONFIG;
+}
