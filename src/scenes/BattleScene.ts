@@ -22,8 +22,9 @@ import { BattleState, TurnResult } from '../types/BattleState';
 import { Monster } from '../types/Monster';
 import { TurnCommands } from '../types/Command';
 import { MONSTER_DATABASE, getMonsterById } from '../constants/monsters';
-import { FINAL_MONSTER_DATABASE } from '../constants/monsterStats';
+import { FINAL_MONSTER_DATABASE, getMonsterWithGrownStats } from '../constants/monsterStats';
 import { INITIAL_MONSTER_ID } from './characterSelectConfig';
+import { getChallengeStage } from '../constants/challengeConfig';
 import { CommandSelectionManager } from '../battle/CommandSelectionManager';
 import { processTurn } from '../battle/turnProcessor';
 import { resolveBattleEffects } from '../battle/effectResolver';
@@ -38,6 +39,8 @@ export interface BattleSceneData {
   enemyMonsterId?: string;
   aiLevel?: AILevel;
   mode?: GameMode;
+  stageNumber?: number;
+  clearedStages?: number;
 }
 
 /**
@@ -93,6 +96,8 @@ export class BattleScene extends BaseScene {
   private isPlayingEffects = false;
   private enemyAILevel: AILevel = AILevel.LV2;
   private gameMode?: GameMode;
+  private stageNumber?: number;
+  private clearedStages?: number;
 
   constructor() {
     super(SceneKey.BATTLE);
@@ -100,22 +105,14 @@ export class BattleScene extends BaseScene {
 
   create(data?: BattleSceneData): void {
     this.gameMode = data?.mode;
+    this.stageNumber = data?.stageNumber;
+    this.clearedStages = data?.clearedStages;
     this.enemyAILevel = data?.aiLevel ?? AILevel.LV2;
 
-    // モンスター取得（FREE_CPUは最終パラメータを使用）
-    const db = this.gameMode === GameMode.FREE_CPU ? FINAL_MONSTER_DATABASE : MONSTER_DATABASE;
-    const playerMonsterId = data?.monsterId || INITIAL_MONSTER_ID;
-    const foundPlayer = db.find((m) => m.id === playerMonsterId);
-    if (!foundPlayer) {
-      throw new Error(`Monster ${playerMonsterId} not found in database`);
-    }
-    this.playerMonster = foundPlayer;
-
-    if (data?.enemyMonsterId) {
-      const foundEnemy = db.find((m) => m.id === data.enemyMonsterId);
-      this.enemyMonster = foundEnemy || this.selectRandomEnemy(this.playerMonster.id, db);
+    if (this.gameMode === GameMode.CHALLENGE && this.stageNumber) {
+      this.setupChallengeMode(data);
     } else {
-      this.enemyMonster = this.selectRandomEnemy(this.playerMonster.id, db);
+      this.setupNormalMode(data);
     }
 
     // 初期状態設定
@@ -151,6 +148,49 @@ export class BattleScene extends BaseScene {
       playerHpBarFill: this.playerHpBarFill,
       enemyHpBarFill: this.enemyHpBarFill,
     });
+  }
+
+  private setupChallengeMode(data?: BattleSceneData): void {
+    const stage = getChallengeStage(this.stageNumber!);
+    if (!stage) {
+      throw new Error(`Challenge stage ${this.stageNumber} not found`);
+    }
+
+    this.enemyAILevel = stage.aiLevel;
+    const growthStages = this.clearedStages ?? 0;
+
+    // プレイヤーモンスター（成長パラメータ適用）
+    const playerMonsterId = data?.monsterId || INITIAL_MONSTER_ID;
+    const foundPlayer = getMonsterWithGrownStats(playerMonsterId, growthStages);
+    if (!foundPlayer) {
+      throw new Error(`Monster ${playerMonsterId} not found`);
+    }
+    this.playerMonster = foundPlayer;
+
+    // 敵モンスター（成長パラメータ適用）
+    const foundEnemy = getMonsterWithGrownStats(stage.enemyMonsterId, growthStages);
+    if (!foundEnemy) {
+      throw new Error(`Monster ${stage.enemyMonsterId} not found`);
+    }
+    this.enemyMonster = foundEnemy;
+  }
+
+  private setupNormalMode(data?: BattleSceneData): void {
+    // モンスター取得（FREE_CPUは最終パラメータを使用）
+    const db = this.gameMode === GameMode.FREE_CPU ? FINAL_MONSTER_DATABASE : MONSTER_DATABASE;
+    const playerMonsterId = data?.monsterId || INITIAL_MONSTER_ID;
+    const foundPlayer = db.find((m) => m.id === playerMonsterId);
+    if (!foundPlayer) {
+      throw new Error(`Monster ${playerMonsterId} not found in database`);
+    }
+    this.playerMonster = foundPlayer;
+
+    if (data?.enemyMonsterId) {
+      const foundEnemy = db.find((m) => m.id === data.enemyMonsterId);
+      this.enemyMonster = foundEnemy || this.selectRandomEnemy(this.playerMonster.id, db);
+    } else {
+      this.enemyMonster = this.selectRandomEnemy(this.playerMonster.id, db);
+    }
   }
 
   private buildBattleState(): BattleState {
@@ -494,7 +534,13 @@ export class BattleScene extends BaseScene {
     if (battleResult) {
       battleResult.turnHistory = this.turnHistory;
       this.setCommandUIEnabled(false);
-      this.transitionTo(SceneKey.RESULT, { battleResult, mode: this.gameMode });
+      this.transitionTo(SceneKey.RESULT, {
+        battleResult,
+        mode: this.gameMode,
+        stageNumber: this.stageNumber,
+        clearedStages: this.clearedStages,
+        monsterId: this.playerMonster.id,
+      });
       return;
     }
 
