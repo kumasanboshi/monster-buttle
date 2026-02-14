@@ -32,6 +32,8 @@ import { BattleEffectPlayer } from './BattleEffectPlayer';
 import { selectCommands, AILevel } from '../ai';
 import { checkVictoryAfterTurn } from '../battle/victoryCondition';
 import { GameMode } from '../types/GameMode';
+import { TutorialManager } from '../battle/TutorialManager';
+import { GAME_HEIGHT } from './gameConfig';
 
 /** BattleSceneに渡されるデータ */
 export interface BattleSceneData {
@@ -99,6 +101,12 @@ export class BattleScene extends BaseScene {
   private stageNumber?: number;
   private clearedStages?: number;
 
+  // チュートリアル
+  private tutorialManager!: TutorialManager;
+  private tutorialPopupOverlay?: Phaser.GameObjects.Rectangle;
+  private tutorialPopupText?: Phaser.GameObjects.Text;
+  private tutorialPopupHint?: Phaser.GameObjects.Text;
+
   constructor() {
     super(SceneKey.BATTLE);
   }
@@ -148,6 +156,13 @@ export class BattleScene extends BaseScene {
       playerHpBarFill: this.playerHpBarFill,
       enemyHpBarFill: this.enemyHpBarFill,
     });
+
+    // チュートリアル初期化
+    this.tutorialManager = new TutorialManager(
+      this.stageNumber ?? 0,
+      this.gameMode ?? GameMode.FREE_CPU
+    );
+    this.startTutorialTurnIfNeeded(this.battleState.currentTurn);
   }
 
   private setupChallengeMode(data?: BattleSceneData): void {
@@ -466,6 +481,9 @@ export class BattleScene extends BaseScene {
   }
 
   private onCommandClick(command: CommandType): void {
+    // チュートリアル固定ターンではコマンド変更不可
+    if (this.tutorialManager.isFixedTurn(this.battleState.currentTurn)) return;
+
     const success = this.commandManager.selectCommand(command);
     if (success) {
       this.updateCommandUI();
@@ -473,6 +491,9 @@ export class BattleScene extends BaseScene {
   }
 
   private onCancelClick(): void {
+    // チュートリアル固定ターンではキャンセル不可
+    if (this.tutorialManager.isFixedTurn(this.battleState.currentTurn)) return;
+
     this.commandManager.cancelSelection();
     this.updateCommandUI();
   }
@@ -483,8 +504,11 @@ export class BattleScene extends BaseScene {
     const playerCommands = this.commandManager.confirmSelection();
     if (!playerCommands) return;
 
-    // 敵AIコマンド生成
-    const enemyCommands = selectCommands(
+    // チュートリアル固定ターン: TutorialManagerから敵コマンドを取得
+    // 通常ターン: AIコマンド生成
+    const currentTurn = this.battleState.currentTurn;
+    const tutorialEnemyCmds = this.tutorialManager.getEnemyCommands(currentTurn);
+    const enemyCommands = tutorialEnemyCmds ?? selectCommands(
       this.battleState,
       'player2',
       this.enemyMonster,
@@ -553,6 +577,9 @@ export class BattleScene extends BaseScene {
     this.isPlayingEffects = false;
     this.setCommandUIEnabled(true);
     this.updateCommandUI();
+
+    // 次のターンのチュートリアル処理
+    this.startTutorialTurnIfNeeded(this.battleState.currentTurn);
   }
 
   /**
@@ -691,5 +718,96 @@ export class BattleScene extends BaseScene {
   public updateTime(time: number): void {
     this.remainingTime = Math.max(0, time);
     this.updateTimeDisplay();
+  }
+
+  // --- チュートリアル ---
+
+  /**
+   * チュートリアルターン開始処理
+   * ポップアップ表示 → 固定コマンド自動選択
+   */
+  private startTutorialTurnIfNeeded(turn: number): void {
+    const message = this.tutorialManager.getPopupMessage(turn);
+    if (!message) return;
+
+    // コマンドUI無効化（ポップアップ表示中）
+    this.setCommandUIEnabled(false);
+
+    this.showTutorialPopup(message, () => {
+      // ターン6の自由戦闘メッセージ表示後はフラグ更新
+      if (!this.tutorialManager.isFixedTurn(turn)) {
+        this.tutorialManager.markFreeBattleMessageShown();
+        this.setCommandUIEnabled(true);
+        return;
+      }
+
+      // 固定コマンドを自動選択
+      this.autoSelectTutorialCommands(turn);
+      this.setCommandUIEnabled(true);
+    });
+  }
+
+  /**
+   * チュートリアルポップアップ表示
+   */
+  private showTutorialPopup(message: string, onDismiss: () => void): void {
+    // 半透明オーバーレイ
+    this.tutorialPopupOverlay = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6)
+      .setDepth(100)
+      .setInteractive();
+
+    // メッセージテキスト
+    this.tutorialPopupText = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20, message, {
+        fontSize: '24px',
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif',
+        fontStyle: 'bold',
+        align: 'center',
+        wordWrap: { width: GAME_WIDTH - 100 },
+      })
+      .setOrigin(0.5)
+      .setDepth(101);
+
+    // 「タップして続ける」ヒント
+    this.tutorialPopupHint = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 40, 'タップして続ける', {
+        fontSize: '16px',
+        color: '#aaaaaa',
+        fontFamily: 'Arial, sans-serif',
+      })
+      .setOrigin(0.5)
+      .setDepth(101);
+
+    // クリックで閉じる
+    this.tutorialPopupOverlay.once('pointerdown', () => {
+      this.dismissTutorialPopup();
+      onDismiss();
+    });
+  }
+
+  /**
+   * チュートリアルポップアップを閉じる
+   */
+  private dismissTutorialPopup(): void {
+    this.tutorialPopupOverlay?.destroy();
+    this.tutorialPopupText?.destroy();
+    this.tutorialPopupHint?.destroy();
+    this.tutorialPopupOverlay = undefined;
+    this.tutorialPopupText = undefined;
+    this.tutorialPopupHint = undefined;
+  }
+
+  /**
+   * チュートリアル固定コマンドを自動選択する
+   */
+  private autoSelectTutorialCommands(turn: number): void {
+    const playerCmds = this.tutorialManager.getPlayerCommands(turn);
+    if (!playerCmds) return;
+
+    this.commandManager.selectCommand(playerCmds.first.type);
+    this.commandManager.selectCommand(playerCmds.second.type);
+    this.updateCommandUI();
   }
 }
