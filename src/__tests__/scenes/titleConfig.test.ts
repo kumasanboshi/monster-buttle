@@ -68,8 +68,8 @@ describe('TITLE_BUTTONS', () => {
       expect(button.label).toBe('自由対戦（CPU）');
     });
 
-    it('遷移先が MODE_SELECT であること', () => {
-      expect(button.targetScene).toBe(SceneKey.MODE_SELECT);
+    it('遷移先が CHARACTER_SELECT であること', () => {
+      expect(button.targetScene).toBe(SceneKey.CHARACTER_SELECT);
     });
 
     it('モードが FREE_CPU であること', () => {
