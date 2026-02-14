@@ -3,6 +3,7 @@ import { BattleEffect, BattleEffectType, BattleEffectSequence, EffectTarget } fr
 import { DistanceType } from '../types/Distance';
 import { DISTANCE_CHARACTER_POSITIONS } from './battleConfig';
 import { EFFECT_CONFIG } from './battleConfig';
+import { loadSettings, getEffectSpeedMultiplier } from '../utils/settingsManager';
 
 /**
  * エフェクト再生に必要なターゲットオブジェクト
@@ -22,10 +23,13 @@ export interface EffectTargets {
 export class BattleEffectPlayer {
   private scene: Phaser.Scene;
   private targets: EffectTargets;
+  private speedMultiplier: number;
 
   constructor(scene: Phaser.Scene, targets: EffectTargets) {
     this.scene = scene;
     this.targets = targets;
+    const settings = loadSettings();
+    this.speedMultiplier = getEffectSpeedMultiplier(settings.effectSpeed);
   }
 
   /**
@@ -99,7 +103,7 @@ export class BattleEffectPlayer {
         targets: damageText,
         y: damageText.y - 40,
         alpha: 0,
-        duration: EFFECT_CONFIG.damageNumberDuration,
+        duration: EFFECT_CONFIG.damageNumberDuration * this.speedMultiplier,
         ease: 'Power2',
         onComplete: () => {
           damageText.destroy();
@@ -123,7 +127,7 @@ export class BattleEffectPlayer {
       this.scene.tweens.add({
         targets: targetObj,
         x: originalX + 5,
-        duration: EFFECT_CONFIG.weaponAttackDuration / 4,
+        duration: EFFECT_CONFIG.weaponAttackDuration * this.speedMultiplier / 4,
         yoyo: true,
         repeat: 3,
         ease: 'Sine.inOut',
@@ -149,7 +153,7 @@ export class BattleEffectPlayer {
         targets: targetObj,
         scaleX: 1.3,
         scaleY: 1.3,
-        duration: EFFECT_CONFIG.specialAttackDuration / 2,
+        duration: EFFECT_CONFIG.specialAttackDuration * this.speedMultiplier / 2,
         yoyo: true,
         ease: 'Sine.inOut',
         onComplete: () => {
@@ -186,7 +190,7 @@ export class BattleEffectPlayer {
         targets: reflectText,
         alpha: 0,
         y: reflectText.y - 20,
-        duration: EFFECT_CONFIG.reflectorDuration,
+        duration: EFFECT_CONFIG.reflectorDuration * this.speedMultiplier,
         ease: 'Power2',
         onComplete: () => {
           targetObj.clearTint();
@@ -220,7 +224,7 @@ export class BattleEffectPlayer {
       this.scene.tweens.add({
         targets: targetObj,
         x: originalX + (effect.target === 'player' ? -30 : 30),
-        duration: EFFECT_CONFIG.evasionDuration / 2,
+        duration: EFFECT_CONFIG.evasionDuration * this.speedMultiplier / 2,
         yoyo: true,
         ease: 'Power2',
         onComplete: () => {
@@ -232,7 +236,7 @@ export class BattleEffectPlayer {
         targets: missText,
         alpha: 0,
         y: missText.y - 20,
-        duration: EFFECT_CONFIG.evasionDuration,
+        duration: EFFECT_CONFIG.evasionDuration * this.speedMultiplier,
         ease: 'Power2',
         onComplete: () => {
           missText.destroy();
@@ -262,7 +266,7 @@ export class BattleEffectPlayer {
       this.scene.tweens.add({
         targets: playerText,
         x: newPositions.playerX,
-        duration: EFFECT_CONFIG.distanceMoveDuration,
+        duration: EFFECT_CONFIG.distanceMoveDuration * this.speedMultiplier,
         ease: 'Power2',
         onComplete: onOneComplete,
       });
@@ -270,7 +274,7 @@ export class BattleEffectPlayer {
       this.scene.tweens.add({
         targets: enemyText,
         x: newPositions.enemyX,
-        duration: EFFECT_CONFIG.distanceMoveDuration,
+        duration: EFFECT_CONFIG.distanceMoveDuration * this.speedMultiplier,
         ease: 'Power2',
         onComplete: onOneComplete,
       });
