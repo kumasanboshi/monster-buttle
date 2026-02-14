@@ -19,6 +19,8 @@ export enum SceneKey {
   RESULT = 'RESULT',
   /** 設定画面 */
   SETTINGS = 'SETTINGS',
+  /** 難易度選択画面 */
+  DIFFICULTY_SELECT = 'DIFFICULTY_SELECT',
 }
 
 /** 全シーンキーの配列（順序はシーン登録順） */
@@ -30,4 +32,5 @@ export const ALL_SCENE_KEYS: SceneKey[] = [
   SceneKey.BATTLE,
   SceneKey.RESULT,
   SceneKey.SETTINGS,
+  SceneKey.DIFFICULTY_SELECT,
 ];
