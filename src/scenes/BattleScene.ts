@@ -22,6 +22,7 @@ import { BattleState, TurnResult } from '../types/BattleState';
 import { Monster } from '../types/Monster';
 import { TurnCommands } from '../types/Command';
 import { MONSTER_DATABASE, getMonsterById } from '../constants/monsters';
+import { FINAL_MONSTER_DATABASE } from '../constants/monsterStats';
 import { INITIAL_MONSTER_ID } from './characterSelectConfig';
 import { CommandSelectionManager } from '../battle/CommandSelectionManager';
 import { processTurn } from '../battle/turnProcessor';
@@ -29,6 +30,15 @@ import { resolveBattleEffects } from '../battle/effectResolver';
 import { BattleEffectPlayer } from './BattleEffectPlayer';
 import { selectCommands, AILevel } from '../ai';
 import { checkVictoryAfterTurn } from '../battle/victoryCondition';
+import { GameMode } from '../types/GameMode';
+
+/** BattleSceneに渡されるデータ */
+export interface BattleSceneData {
+  monsterId?: string;
+  enemyMonsterId?: string;
+  aiLevel?: AILevel;
+  mode?: GameMode;
+}
 
 /**
  * バトル画面シーン
@@ -81,16 +91,29 @@ export class BattleScene extends BaseScene {
   private effectPlayer!: BattleEffectPlayer;
   private turnHistory: TurnResult[] = [];
   private isPlayingEffects = false;
+  private enemyAILevel: AILevel = AILevel.LV2;
+  private gameMode?: GameMode;
 
   constructor() {
     super(SceneKey.BATTLE);
   }
 
-  create(data?: { monsterId?: string }): void {
-    // モンスター取得
+  create(data?: BattleSceneData): void {
+    this.gameMode = data?.mode;
+    this.enemyAILevel = data?.aiLevel ?? AILevel.LV2;
+
+    // モンスター取得（FREE_CPUは最終パラメータを使用）
+    const db = this.gameMode === GameMode.FREE_CPU ? FINAL_MONSTER_DATABASE : MONSTER_DATABASE;
     const playerMonsterId = data?.monsterId || INITIAL_MONSTER_ID;
-    this.playerMonster = getMonsterById(playerMonsterId) || getMonsterById(INITIAL_MONSTER_ID)!;
-    this.enemyMonster = this.selectRandomEnemy(this.playerMonster.id);
+    this.playerMonster = db.find((m) => m.id === playerMonsterId)
+      || getMonsterById(INITIAL_MONSTER_ID)!;
+
+    if (data?.enemyMonsterId) {
+      this.enemyMonster = db.find((m) => m.id === data.enemyMonsterId)
+        || this.selectRandomEnemy(this.playerMonster.id, db);
+    } else {
+      this.enemyMonster = this.selectRandomEnemy(this.playerMonster.id, db);
+    }
 
     // 初期状態設定
     this.currentDistance = BATTLE_INITIAL.initialDistance;
@@ -150,10 +173,10 @@ export class BattleScene extends BaseScene {
     };
   }
 
-  private selectRandomEnemy(excludeId: string): Monster {
-    const candidates = MONSTER_DATABASE.filter((m) => m.id !== excludeId);
+  private selectRandomEnemy(excludeId: string, db: Monster[] = MONSTER_DATABASE): Monster {
+    const candidates = db.filter((m) => m.id !== excludeId);
     if (candidates.length === 0) {
-      return MONSTER_DATABASE[0];
+      return db[0];
     }
     const index = Math.floor(Math.random() * candidates.length);
     return candidates[index];
@@ -422,7 +445,7 @@ export class BattleScene extends BaseScene {
       this.battleState,
       'player2',
       this.enemyMonster,
-      AILevel.LV2
+      this.enemyAILevel
     );
 
     // ターン処理
@@ -468,7 +491,7 @@ export class BattleScene extends BaseScene {
     if (battleResult) {
       battleResult.turnHistory = this.turnHistory;
       this.setCommandUIEnabled(false);
-      this.transitionTo(SceneKey.RESULT, { battleResult });
+      this.transitionTo(SceneKey.RESULT, { battleResult, mode: this.gameMode });
       return;
     }
 
