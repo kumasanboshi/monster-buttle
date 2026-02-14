@@ -19,9 +19,10 @@ describe('SCENE_TRANSITIONS', () => {
     expect(targets).toEqual([SceneKey.TITLE]);
   });
 
-  it('TITLE からの遷移先に MODE_SELECT と SETTINGS が含まれること', () => {
+  it('TITLE からの遷移先に MODE_SELECT, CHARACTER_SELECT, SETTINGS が含まれること', () => {
     const targets = SCENE_TRANSITIONS.filter((t) => t.from === SceneKey.TITLE).map((t) => t.to);
     expect(targets).toContain(SceneKey.MODE_SELECT);
+    expect(targets).toContain(SceneKey.CHARACTER_SELECT);
     expect(targets).toContain(SceneKey.SETTINGS);
   });
 
@@ -31,10 +32,13 @@ describe('SCENE_TRANSITIONS', () => {
     expect(targets).toContain(SceneKey.TITLE);
   });
 
-  it('CHARACTER_SELECT からの遷移先に BATTLE と MODE_SELECT が含まれること', () => {
+  it('CHARACTER_SELECT からの遷移先に BATTLE, MODE_SELECT, CHARACTER_SELECT, DIFFICULTY_SELECT, TITLE が含まれること', () => {
     const targets = SCENE_TRANSITIONS.filter((t) => t.from === SceneKey.CHARACTER_SELECT).map((t) => t.to);
     expect(targets).toContain(SceneKey.BATTLE);
     expect(targets).toContain(SceneKey.MODE_SELECT);
+    expect(targets).toContain(SceneKey.CHARACTER_SELECT);
+    expect(targets).toContain(SceneKey.DIFFICULTY_SELECT);
+    expect(targets).toContain(SceneKey.TITLE);
   });
 
   it('BATTLE からの遷移先が RESULT のみであること', () => {
@@ -52,6 +56,12 @@ describe('SCENE_TRANSITIONS', () => {
     const targets = SCENE_TRANSITIONS.filter((t) => t.from === SceneKey.SETTINGS).map((t) => t.to);
     expect(targets).toEqual([SceneKey.TITLE]);
   });
+
+  it('DIFFICULTY_SELECT からの遷移先に BATTLE と CHARACTER_SELECT が含まれること', () => {
+    const targets = SCENE_TRANSITIONS.filter((t) => t.from === SceneKey.DIFFICULTY_SELECT).map((t) => t.to);
+    expect(targets).toContain(SceneKey.BATTLE);
+    expect(targets).toContain(SceneKey.CHARACTER_SELECT);
+  });
 });
 
 describe('getAvailableTransitions', () => {
@@ -59,9 +69,10 @@ describe('getAvailableTransitions', () => {
     expect(getAvailableTransitions(SceneKey.BOOT)).toEqual([SceneKey.TITLE]);
   });
 
-  it('TITLE から遷移可能なシーンに MODE_SELECT と SETTINGS が含まれること', () => {
+  it('TITLE から遷移可能なシーンに MODE_SELECT, CHARACTER_SELECT, SETTINGS が含まれること', () => {
     const transitions = getAvailableTransitions(SceneKey.TITLE);
     expect(transitions).toContain(SceneKey.MODE_SELECT);
+    expect(transitions).toContain(SceneKey.CHARACTER_SELECT);
     expect(transitions).toContain(SceneKey.SETTINGS);
   });
 });
@@ -82,8 +93,15 @@ describe('isValidTransition', () => {
     expect(isValidTransition(SceneKey.BOOT, SceneKey.BATTLE)).toBe(false);
   });
 
-  it('同一シーンへの遷移に false を返すこと', () => {
+  it('同一シーンへの遷移は原則 false だが CHARACTER_SELECT→CHARACTER_SELECT は許可されること', () => {
     expect(isValidTransition(SceneKey.TITLE, SceneKey.TITLE)).toBe(false);
     expect(isValidTransition(SceneKey.BOOT, SceneKey.BOOT)).toBe(false);
+    expect(isValidTransition(SceneKey.CHARACTER_SELECT, SceneKey.CHARACTER_SELECT)).toBe(true);
+  });
+
+  it('DIFFICULTY_SELECT からの遷移が正しいこと', () => {
+    expect(isValidTransition(SceneKey.DIFFICULTY_SELECT, SceneKey.BATTLE)).toBe(true);
+    expect(isValidTransition(SceneKey.DIFFICULTY_SELECT, SceneKey.CHARACTER_SELECT)).toBe(true);
+    expect(isValidTransition(SceneKey.DIFFICULTY_SELECT, SceneKey.TITLE)).toBe(false);
   });
 });
