@@ -107,11 +107,11 @@ export class BattleScene extends BaseScene {
     this.gameMode = data?.mode;
     this.stageNumber = data?.stageNumber;
     this.clearedStages = data?.clearedStages;
-    this.enemyAILevel = data?.aiLevel ?? AILevel.LV2;
 
     if (this.gameMode === GameMode.CHALLENGE && this.stageNumber) {
       this.setupChallengeMode(data);
     } else {
+      this.enemyAILevel = data?.aiLevel ?? AILevel.LV2;
       this.setupNormalMode(data);
     }
 
@@ -163,14 +163,14 @@ export class BattleScene extends BaseScene {
     const playerMonsterId = data?.monsterId || INITIAL_MONSTER_ID;
     const foundPlayer = getMonsterWithGrownStats(playerMonsterId, growthStages);
     if (!foundPlayer) {
-      throw new Error(`Monster ${playerMonsterId} not found`);
+      throw new Error(`Failed to create monster ${playerMonsterId} with growth stage ${growthStages}`);
     }
     this.playerMonster = foundPlayer;
 
     // 敵モンスター（成長パラメータ適用）
     const foundEnemy = getMonsterWithGrownStats(stage.enemyMonsterId, growthStages);
     if (!foundEnemy) {
-      throw new Error(`Monster ${stage.enemyMonsterId} not found`);
+      throw new Error(`Failed to create monster ${stage.enemyMonsterId} with growth stage ${growthStages}`);
     }
     this.enemyMonster = foundEnemy;
   }
