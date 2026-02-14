@@ -105,12 +105,15 @@ export class BattleScene extends BaseScene {
     // モンスター取得（FREE_CPUは最終パラメータを使用）
     const db = this.gameMode === GameMode.FREE_CPU ? FINAL_MONSTER_DATABASE : MONSTER_DATABASE;
     const playerMonsterId = data?.monsterId || INITIAL_MONSTER_ID;
-    this.playerMonster = db.find((m) => m.id === playerMonsterId)
-      || getMonsterById(INITIAL_MONSTER_ID)!;
+    const foundPlayer = db.find((m) => m.id === playerMonsterId);
+    if (!foundPlayer) {
+      throw new Error(`Monster ${playerMonsterId} not found in database`);
+    }
+    this.playerMonster = foundPlayer;
 
     if (data?.enemyMonsterId) {
-      this.enemyMonster = db.find((m) => m.id === data.enemyMonsterId)
-        || this.selectRandomEnemy(this.playerMonster.id, db);
+      const foundEnemy = db.find((m) => m.id === data.enemyMonsterId);
+      this.enemyMonster = foundEnemy || this.selectRandomEnemy(this.playerMonster.id, db);
     } else {
       this.enemyMonster = this.selectRandomEnemy(this.playerMonster.id, db);
     }
