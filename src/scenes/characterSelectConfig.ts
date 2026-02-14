@@ -86,12 +86,25 @@ export const CHARACTER_SELECT_BUTTONS: CharacterSelectButtonConfig[] = [
 ];
 
 /**
+ * 挑戦モードのヘッダーテキストを返す
+ */
+export function getChallengeHeader(stageNumber: number): string {
+  return `挑戦モード - ステージ${stageNumber}`;
+}
+
+/**
  * ステップとモードに応じたボタン定義を返す
  */
 export function getCharacterSelectButtons(
   step?: CharacterSelectStep,
   mode?: GameMode,
 ): CharacterSelectButtonConfig[] {
+  if (mode === GameMode.CHALLENGE) {
+    return [
+      { label: '決定', targetScene: SceneKey.BATTLE, action: 'confirm' },
+      { label: 'タイトルへ', targetScene: SceneKey.TITLE, action: 'back' },
+    ];
+  }
   if (mode === GameMode.FREE_CPU) {
     if (step === 'player') {
       return [
