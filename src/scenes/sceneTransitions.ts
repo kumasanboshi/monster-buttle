@@ -26,6 +26,7 @@ export const SCENE_TRANSITIONS: SceneTransition[] = [
   { from: SceneKey.BATTLE, to: SceneKey.RESULT },
   { from: SceneKey.RESULT, to: SceneKey.TITLE },
   { from: SceneKey.RESULT, to: SceneKey.CHARACTER_SELECT },
+  { from: SceneKey.RESULT, to: SceneKey.BATTLE },
   { from: SceneKey.SETTINGS, to: SceneKey.TITLE },
 ];
 

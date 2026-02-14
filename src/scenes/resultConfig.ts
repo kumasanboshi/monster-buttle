@@ -91,12 +91,57 @@ const FREE_CPU_BUTTON_CONFIG: ResultButtonConfig[] = [
   },
 ];
 
+/** CHALLENGE用オプション */
+export interface ChallengeResultOptions {
+  /** 現在のステージ番号 */
+  stageNumber?: number;
+  /** バトル結果タイプ */
+  resultType?: BattleResultType;
+}
+
 /**
  * モードに応じたボタン定義を返す
  */
-export function getResultButtons(mode?: GameMode): ResultButtonConfig[] {
+export function getResultButtons(
+  mode?: GameMode,
+  options?: ChallengeResultOptions,
+): ResultButtonConfig[] {
+  if (mode === GameMode.CHALLENGE && options) {
+    return getChallengeResultButtons(options.stageNumber, options.resultType);
+  }
   if (mode === GameMode.FREE_CPU) {
     return FREE_CPU_BUTTON_CONFIG;
   }
   return RESULT_BUTTON_CONFIG;
+}
+
+/**
+ * CHALLENGE用ボタン定義を返す
+ */
+function getChallengeResultButtons(
+  stageNumber?: number,
+  resultType?: BattleResultType,
+): ResultButtonConfig[] {
+  const isWin = resultType === BattleResultType.PLAYER1_WIN;
+  const isFinalStage = stageNumber === 8;
+
+  if (isWin && isFinalStage) {
+    return [
+      { label: 'タイトルへ', targetScene: SceneKey.TITLE },
+    ];
+  }
+
+  if (isWin) {
+    return [
+      { label: '次へ', targetScene: SceneKey.BATTLE },
+      { label: 'リトライ', targetScene: SceneKey.BATTLE },
+      { label: 'タイトルへ', targetScene: SceneKey.TITLE },
+    ];
+  }
+
+  // 敗北・ドロー
+  return [
+    { label: 'リトライ', targetScene: SceneKey.BATTLE },
+    { label: 'タイトルへ', targetScene: SceneKey.TITLE },
+  ];
 }

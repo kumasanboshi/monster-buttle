@@ -9,6 +9,8 @@ import {
   RESULT_TEXT,
   getResultButtons,
 } from './resultConfig';
+import { updateClearedStages } from '../utils/gameProgressManager';
+import { getChallengeStage, getNextStageNumber } from '../constants/challengeConfig';
 
 /** ResultSceneに渡されるデータ */
 export interface ResultSceneData {
@@ -16,6 +18,12 @@ export interface ResultSceneData {
   battleResult?: BattleResult;
   /** ゲームモード */
   mode?: GameMode;
+  /** ステージ番号（CHALLENGEモード） */
+  stageNumber?: number;
+  /** クリア済みステージ数（CHALLENGEモード） */
+  clearedStages?: number;
+  /** プレイヤーモンスターID */
+  monsterId?: string;
 }
 
 /**
@@ -25,6 +33,10 @@ export interface ResultSceneData {
  */
 export class ResultScene extends BaseScene {
   private gameMode?: GameMode;
+  private stageNumber?: number;
+  private clearedStages?: number;
+  private monsterId?: string;
+  private resultType?: BattleResultType;
 
   constructor() {
     super(SceneKey.RESULT);
@@ -33,6 +45,20 @@ export class ResultScene extends BaseScene {
   create(data?: ResultSceneData): void {
     const battleResult = data?.battleResult;
     this.gameMode = data?.mode;
+    this.stageNumber = data?.stageNumber;
+    this.clearedStages = data?.clearedStages;
+    this.monsterId = data?.monsterId;
+    this.resultType = battleResult?.resultType;
+
+    // CHALLENGE勝利時に進捗更新
+    if (
+      this.gameMode === GameMode.CHALLENGE &&
+      this.stageNumber &&
+      this.resultType === BattleResultType.PLAYER1_WIN
+    ) {
+      const updated = updateClearedStages(this.stageNumber);
+      this.clearedStages = updated.clearedStages;
+    }
 
     this.createResultDisplay(battleResult?.resultType);
     this.createHpDisplay(battleResult);
@@ -78,7 +104,10 @@ export class ResultScene extends BaseScene {
 
   /** ボタンを生成 */
   private createButtons(): void {
-    const buttons = getResultButtons(this.gameMode);
+    const buttons = getResultButtons(this.gameMode, this.gameMode === GameMode.CHALLENGE ? {
+      stageNumber: this.stageNumber,
+      resultType: this.resultType,
+    } : undefined);
 
     buttons.forEach((buttonConfig, index) => {
       const y = RESULT_LAYOUT.buttonStartY + index * RESULT_LAYOUT.buttonSpacing;
@@ -103,13 +132,17 @@ export class ResultScene extends BaseScene {
       });
 
       text.on('pointerdown', () => {
-        this.handleButtonClick(buttonConfig.targetScene);
+        this.handleButtonClick(buttonConfig.targetScene, buttonConfig.label);
       });
     });
   }
 
   /** ボタンクリック処理 */
-  private handleButtonClick(targetScene: SceneKey): void {
+  private handleButtonClick(targetScene: SceneKey, buttonLabel: string): void {
+    if (this.gameMode === GameMode.CHALLENGE) {
+      this.handleChallengeButtonClick(targetScene, buttonLabel);
+      return;
+    }
     if (targetScene === SceneKey.CHARACTER_SELECT && this.gameMode === GameMode.FREE_CPU) {
       this.transitionTo(targetScene, {
         mode: GameMode.FREE_CPU,
@@ -117,6 +150,36 @@ export class ResultScene extends BaseScene {
       });
     } else {
       this.transitionTo(targetScene);
+    }
+  }
+
+  /** CHALLENGE用ボタンクリック処理 */
+  private handleChallengeButtonClick(targetScene: SceneKey, buttonLabel: string): void {
+    if (targetScene === SceneKey.TITLE) {
+      this.transitionTo(SceneKey.TITLE);
+      return;
+    }
+
+    if (buttonLabel === '次へ' && this.stageNumber) {
+      // 次のステージへ
+      const nextStageNumber = this.stageNumber + 1;
+      const nextStage = getChallengeStage(nextStageNumber);
+      if (nextStage) {
+        this.transitionTo(SceneKey.BATTLE, {
+          monsterId: this.monsterId,
+          mode: GameMode.CHALLENGE,
+          stageNumber: nextStageNumber,
+          clearedStages: this.clearedStages,
+        });
+      }
+    } else if (buttonLabel === 'リトライ' && this.stageNumber) {
+      // 同じステージへ
+      this.transitionTo(SceneKey.BATTLE, {
+        monsterId: this.monsterId,
+        mode: GameMode.CHALLENGE,
+        stageNumber: this.stageNumber,
+        clearedStages: this.clearedStages,
+      });
     }
   }
 
