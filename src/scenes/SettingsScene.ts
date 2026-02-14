@@ -265,7 +265,6 @@ export class SettingsScene extends BaseScene {
     const { sliderBarX, sliderBarWidth } = SETTINGS_LAYOUT;
     const fillWidth = (value / 100) * sliderBarWidth;
     slider.barFill.x = sliderBarX + fillWidth / 2;
-    (slider.barFill as any).width = fillWidth;
     slider.barFill.setScale(fillWidth / sliderBarWidth, 1);
     slider.valueText.setText(`${value}`);
 
