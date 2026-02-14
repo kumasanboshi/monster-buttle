@@ -18,7 +18,7 @@ export const TITLE_TEXT = 'モンスター対戦';
 export const TITLE_BUTTONS: TitleButtonConfig[] = [
   {
     label: '挑戦モード',
-    targetScene: SceneKey.MODE_SELECT,
+    targetScene: SceneKey.CHARACTER_SELECT,
     mode: GameMode.CHALLENGE,
   },
   {
