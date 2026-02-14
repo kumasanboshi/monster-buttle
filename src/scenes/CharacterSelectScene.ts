@@ -6,11 +6,14 @@ import {
   THEME_COLORS,
   getUnlockedMonsterIds,
   getCharacterSelectButtons,
+  getChallengeHeader,
   CHARACTER_SELECT_HEADERS,
   CharacterSelectStep,
 } from './characterSelectConfig';
 import { MONSTER_DATABASE } from '../constants/monsters';
 import { GameMode } from '../types/GameMode';
+import { loadGameProgress } from '../utils/gameProgressManager';
+import { getNextStageNumber } from '../constants/challengeConfig';
 
 /** CharacterSelectSceneに渡されるデータ */
 export interface CharacterSelectSceneData {
@@ -18,6 +21,7 @@ export interface CharacterSelectSceneData {
   step?: CharacterSelectStep;
   playerMonsterId?: string;
   clearedStages?: number;
+  stageNumber?: number;
 }
 
 /**
@@ -33,6 +37,8 @@ export class CharacterSelectScene extends BaseScene {
   private mode?: GameMode;
   private step?: CharacterSelectStep;
   private playerMonsterId?: string;
+  private stageNumber?: number;
+  private clearedStages?: number;
 
   constructor() {
     super(SceneKey.CHARACTER_SELECT);
@@ -43,8 +49,17 @@ export class CharacterSelectScene extends BaseScene {
     this.step = data?.step;
     this.playerMonsterId = data?.playerMonsterId;
 
-    // FREE_CPUは全キャラ解放
-    const clearedStages = this.mode === GameMode.FREE_CPU ? 7 : (data?.clearedStages ?? 7);
+    // CHALLENGEモード：進捗からステージ番号を決定
+    if (this.mode === GameMode.CHALLENGE) {
+      const progress = loadGameProgress();
+      this.clearedStages = progress.clearedStages;
+      this.stageNumber = data?.stageNumber ?? getNextStageNumber(progress.clearedStages) ?? undefined;
+    }
+
+    // FREE_CPUは全キャラ解放、CHALLENGEは進捗ベース
+    const clearedStages = this.mode === GameMode.FREE_CPU ? 7
+      : this.mode === GameMode.CHALLENGE ? (this.clearedStages ?? 0)
+      : (data?.clearedStages ?? 7);
     const unlockedIds = getUnlockedMonsterIds(clearedStages);
 
     this.createHeader();
@@ -58,7 +73,9 @@ export class CharacterSelectScene extends BaseScene {
 
   private createHeader(): void {
     let headerText: string;
-    if (this.step === 'player') {
+    if (this.mode === GameMode.CHALLENGE && this.stageNumber) {
+      headerText = getChallengeHeader(this.stageNumber);
+    } else if (this.step === 'player') {
       headerText = CHARACTER_SELECT_HEADERS.player;
     } else if (this.step === 'opponent') {
       headerText = CHARACTER_SELECT_HEADERS.opponent;
@@ -210,6 +227,16 @@ export class CharacterSelectScene extends BaseScene {
 
   private handleButtonClick(buttonConfig: { action: string; targetScene: SceneKey }): void {
     if (buttonConfig.action === 'confirm' && this.selectedMonsterId) {
+      if (this.mode === GameMode.CHALLENGE) {
+        // CHALLENGE → BATTLE with stage info
+        this.transitionTo(buttonConfig.targetScene, {
+          monsterId: this.selectedMonsterId,
+          mode: GameMode.CHALLENGE,
+          stageNumber: this.stageNumber,
+          clearedStages: this.clearedStages,
+        });
+        return;
+      }
       if (this.mode === GameMode.FREE_CPU && this.step === 'player') {
         // player → opponent
         this.transitionTo(buttonConfig.targetScene, {
