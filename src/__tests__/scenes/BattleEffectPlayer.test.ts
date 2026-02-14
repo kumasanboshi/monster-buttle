@@ -1,6 +1,19 @@
 import { BattleEffectPlayer, EffectTargets } from '../../scenes/BattleEffectPlayer';
 import { BattleEffectType, BattleEffectSequence } from '../../types/BattleEffect';
 import { DistanceType } from '../../types/Distance';
+import { EFFECT_CONFIG } from '../../scenes/battleConfig';
+
+// localStorageモック
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => { store[key] = value; },
+    removeItem: (key: string) => { delete store[key]; },
+    clear: () => { store = {}; },
+  };
+})();
+Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock });
 
 /** Phaser.Tweensのモック */
 function createMockTweens() {
@@ -159,6 +172,41 @@ describe('BattleEffectPlayer', () => {
 
       // 2つのフェーズで合計2回以上Tweenが呼ばれる
       expect(scene.tweens.add.mock.calls.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  describe('演出速度の反映', () => {
+    it('デフォルト（通常速度）ではEFFECT_CONFIGの値がそのまま使われること', async () => {
+      localStorage.clear();
+      const freshScene = createMockScene();
+      const freshTargets = createMockTargets();
+      const freshPlayer = new BattleEffectPlayer(freshScene as any, freshTargets);
+
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.DAMAGE_NUMBER, target: 'enemy', value: 10 }],
+      ];
+      await freshPlayer.playSequence(sequence);
+
+      const tweenCall = freshScene.tweens.add.mock.calls[0][0];
+      expect(tweenCall.duration).toBe(EFFECT_CONFIG.damageNumberDuration);
+    });
+
+    it('高速設定ではEFFECT_CONFIGの値に0.5を乗じること', async () => {
+      localStorage.setItem(
+        'monster-buttle-settings',
+        JSON.stringify({ bgmVolume: 80, seVolume: 80, effectSpeed: 'fast' })
+      );
+      const fastScene = createMockScene();
+      const fastTargets = createMockTargets();
+      const fastPlayer = new BattleEffectPlayer(fastScene as any, fastTargets);
+
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.DAMAGE_NUMBER, target: 'enemy', value: 10 }],
+      ];
+      await fastPlayer.playSequence(sequence);
+
+      const tweenCall = fastScene.tweens.add.mock.calls[0][0];
+      expect(tweenCall.duration).toBe(EFFECT_CONFIG.damageNumberDuration * 0.5);
     });
   });
 });
