@@ -1,9 +1,9 @@
 import { SceneKey, ALL_SCENE_KEYS } from '../../scenes/sceneKeys';
 
 describe('SceneKey', () => {
-  it('PROJECT.md の画面構成に対応する7つのシーンキーが定義されていること', () => {
+  it('PROJECT.md の画面構成に対応する8つのシーンキーが定義されていること', () => {
     const keys = Object.values(SceneKey);
-    expect(keys).toHaveLength(7);
+    expect(keys).toHaveLength(8);
   });
 
   it('BOOT シーンキーが定義されていること', () => {
@@ -34,6 +34,10 @@ describe('SceneKey', () => {
     expect(SceneKey.SETTINGS).toBe('SETTINGS');
   });
 
+  it('DIFFICULTY_SELECT シーンキーが定義されていること', () => {
+    expect(SceneKey.DIFFICULTY_SELECT).toBe('DIFFICULTY_SELECT');
+  });
+
   it('すべてのシーンキーが一意であること', () => {
     const values = Object.values(SceneKey);
     const uniqueValues = new Set(values);
@@ -44,7 +48,7 @@ describe('SceneKey', () => {
 describe('ALL_SCENE_KEYS', () => {
   it('全シーンキーを配列として含むこと', () => {
     expect(Array.isArray(ALL_SCENE_KEYS)).toBe(true);
-    expect(ALL_SCENE_KEYS).toHaveLength(7);
+    expect(ALL_SCENE_KEYS).toHaveLength(8);
   });
 
   it('SceneKey enum の全値を網羅していること', () => {
