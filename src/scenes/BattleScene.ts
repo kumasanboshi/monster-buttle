@@ -809,5 +809,11 @@ export class BattleScene extends BaseScene {
     this.commandManager.selectCommand(playerCmds.first.type);
     this.commandManager.selectCommand(playerCmds.second.type);
     this.updateCommandUI();
+
+    // 固定ターン: コマンドボタンとキャンセルを無効化し、決定のみ有効にする
+    this.commandButtons.forEach((button) => {
+      button.bg.disableInteractive();
+    });
+    this.cancelButtonBg.disableInteractive();
   }
 }
