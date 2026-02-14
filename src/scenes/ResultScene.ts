@@ -2,17 +2,20 @@ import { BaseScene } from './BaseScene';
 import { SceneKey } from './sceneKeys';
 import { GAME_WIDTH, GAME_HEIGHT } from './gameConfig';
 import { BattleResult, BattleResultType } from '../types/BattleState';
+import { GameMode } from '../types/GameMode';
 import {
   RESULT_LAYOUT,
   RESULT_COLORS,
   RESULT_TEXT,
-  RESULT_BUTTON_CONFIG,
+  getResultButtons,
 } from './resultConfig';
 
 /** ResultSceneに渡されるデータ */
 export interface ResultSceneData {
   /** バトル結果 */
   battleResult?: BattleResult;
+  /** ゲームモード */
+  mode?: GameMode;
 }
 
 /**
@@ -21,12 +24,15 @@ export interface ResultSceneData {
  * 勝敗表示、残りHP表示、遷移ボタンを表示する。
  */
 export class ResultScene extends BaseScene {
+  private gameMode?: GameMode;
+
   constructor() {
     super(SceneKey.RESULT);
   }
 
   create(data?: ResultSceneData): void {
     const battleResult = data?.battleResult;
+    this.gameMode = data?.mode;
 
     this.createResultDisplay(battleResult?.resultType);
     this.createHpDisplay(battleResult);
@@ -72,7 +78,9 @@ export class ResultScene extends BaseScene {
 
   /** ボタンを生成 */
   private createButtons(): void {
-    RESULT_BUTTON_CONFIG.forEach((buttonConfig, index) => {
+    const buttons = getResultButtons(this.gameMode);
+
+    buttons.forEach((buttonConfig, index) => {
       const y = RESULT_LAYOUT.buttonStartY + index * RESULT_LAYOUT.buttonSpacing;
 
       const text = this.add
@@ -95,9 +103,21 @@ export class ResultScene extends BaseScene {
       });
 
       text.on('pointerdown', () => {
-        this.transitionTo(buttonConfig.targetScene);
+        this.handleButtonClick(buttonConfig.targetScene);
       });
     });
+  }
+
+  /** ボタンクリック処理 */
+  private handleButtonClick(targetScene: SceneKey): void {
+    if (targetScene === SceneKey.CHARACTER_SELECT && this.gameMode === GameMode.FREE_CPU) {
+      this.transitionTo(targetScene, {
+        mode: GameMode.FREE_CPU,
+        step: 'player',
+      });
+    } else {
+      this.transitionTo(targetScene);
+    }
   }
 
   /** 結果タイプに応じた色文字列を返す */
