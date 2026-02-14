@@ -3,6 +3,7 @@ import { DistanceType } from '../../types/Distance';
 import { StanceType } from '../../types/Stance';
 import { SceneKey } from '../../scenes/sceneKeys';
 import { RESULT_TEXT, RESULT_COLORS } from '../../scenes/resultConfig';
+import { GameMode } from '../../types/GameMode';
 
 // Phaserモジュール全体をモック
 jest.mock('phaser', () => ({
@@ -273,6 +274,62 @@ describe('ResultScene - create', () => {
     it('BattleResultがない場合でもエラーにならないこと', () => {
       expect(() => setupScene()).not.toThrow();
       expect(() => setupScene({})).not.toThrow();
+    });
+  });
+
+  describe('FREE_CPUモード', () => {
+    it('「もう一度」「タイトルへ」の2ボタンが表示されること', () => {
+      const battleResult = createTestBattleResult(BattleResultType.PLAYER1_WIN);
+      setupScene({ battleResult, mode: GameMode.FREE_CPU });
+
+      const againButton = addTextCalls.find((call) => call.text === 'もう一度');
+      const titleButton = addTextCalls.find((call) => call.text === 'タイトルへ');
+      expect(againButton).toBeDefined();
+      expect(titleButton).toBeDefined();
+    });
+
+    it('「次へ」「リトライ」ボタンは表示されないこと', () => {
+      const battleResult = createTestBattleResult(BattleResultType.PLAYER1_WIN);
+      setupScene({ battleResult, mode: GameMode.FREE_CPU });
+
+      const nextButton = addTextCalls.find((call) => call.text === '次へ');
+      const retryButton = addTextCalls.find((call) => call.text === 'リトライ');
+      expect(nextButton).toBeUndefined();
+      expect(retryButton).toBeUndefined();
+    });
+
+    it('「もう一度」クリックでCHARACTER_SELECTにmode=FREE_CPU, step=playerで遷移すること', () => {
+      const battleResult = createTestBattleResult(BattleResultType.PLAYER1_WIN);
+      setupScene({ battleResult, mode: GameMode.FREE_CPU });
+
+      const againButton = addTextCalls.find((call) => call.text === 'もう一度');
+      const onCalls = againButton.on.mock.calls;
+      const pointerdownCall = onCalls.find(
+        (call: any[]) => call[0] === 'pointerdown',
+      );
+      pointerdownCall[1]();
+
+      expect((scene as any).transitionTo).toHaveBeenCalledWith(
+        SceneKey.CHARACTER_SELECT,
+        expect.objectContaining({
+          mode: GameMode.FREE_CPU,
+          step: 'player',
+        }),
+      );
+    });
+
+    it('「タイトルへ」クリックでTITLEに遷移すること', () => {
+      const battleResult = createTestBattleResult(BattleResultType.PLAYER1_WIN);
+      setupScene({ battleResult, mode: GameMode.FREE_CPU });
+
+      const titleButton = addTextCalls.find((call) => call.text === 'タイトルへ');
+      const onCalls = titleButton.on.mock.calls;
+      const pointerdownCall = onCalls.find(
+        (call: any[]) => call[0] === 'pointerdown',
+      );
+      pointerdownCall[1]();
+
+      expect((scene as any).transitionTo).toHaveBeenCalledWith(SceneKey.TITLE);
     });
   });
 });

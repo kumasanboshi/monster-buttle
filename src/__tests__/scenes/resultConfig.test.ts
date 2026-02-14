@@ -6,7 +6,9 @@ import {
   RESULT_COLORS,
   RESULT_TEXT,
   RESULT_BUTTON_CONFIG,
+  getResultButtons,
 } from '../../scenes/resultConfig';
+import { GameMode } from '../../types/GameMode';
 
 describe('RESULT_LAYOUT', () => {
   it('すべてのレイアウト定数が正の数であること', () => {
@@ -110,5 +112,35 @@ describe('RESULT_BUTTON_CONFIG', () => {
     );
     expect(titleButton).toBeDefined();
     expect(titleButton!.targetScene).toBe(SceneKey.TITLE);
+  });
+});
+
+describe('getResultButtons', () => {
+  describe('モード未指定（デフォルト）', () => {
+    it('デフォルトのRESULT_BUTTON_CONFIGと同じボタンを返すこと', () => {
+      const buttons = getResultButtons();
+      expect(buttons).toEqual(RESULT_BUTTON_CONFIG);
+    });
+  });
+
+  describe('FREE_CPUモード', () => {
+    it('2つのボタンが返されること', () => {
+      const buttons = getResultButtons(GameMode.FREE_CPU);
+      expect(buttons).toHaveLength(2);
+    });
+
+    it('「もう一度」ボタンが含まれること', () => {
+      const buttons = getResultButtons(GameMode.FREE_CPU);
+      const againBtn = buttons.find((b) => b.label === 'もう一度');
+      expect(againBtn).toBeDefined();
+      expect(againBtn!.targetScene).toBe(SceneKey.CHARACTER_SELECT);
+    });
+
+    it('「タイトルへ」ボタンが含まれること', () => {
+      const buttons = getResultButtons(GameMode.FREE_CPU);
+      const titleBtn = buttons.find((b) => b.label === 'タイトルへ');
+      expect(titleBtn).toBeDefined();
+      expect(titleBtn!.targetScene).toBe(SceneKey.TITLE);
+    });
   });
 });
