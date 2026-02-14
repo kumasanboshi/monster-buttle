@@ -1,4 +1,5 @@
 import { SceneKey } from './sceneKeys';
+import { GameMode } from '../types/GameMode';
 
 /** 初期解放キャラのID（ザーグ：レイン） */
 export const INITIAL_MONSTER_ID = 'zaag';
@@ -50,6 +51,16 @@ export const THEME_COLORS: Record<string, string> = {
   igna: '#ff4500', // 赤/橙/金
 };
 
+/** キャラ選択画面のステップ */
+export type CharacterSelectStep = 'player' | 'opponent';
+
+/** キャラ選択画面のヘッダーテキスト */
+export const CHARACTER_SELECT_HEADERS = {
+  player: 'キャラ選択（自分）',
+  opponent: 'キャラ選択（相手）',
+  default: 'キャラ選択',
+} as const;
+
 /** キャラ選択画面のボタン設定 */
 export interface CharacterSelectButtonConfig {
   /** ボタンのラベル */
@@ -57,10 +68,10 @@ export interface CharacterSelectButtonConfig {
   /** 遷移先シーン */
   targetScene: SceneKey;
   /** ボタンの役割 */
-  action: 'confirm' | 'back';
+  action: 'confirm' | 'back' | 'random';
 }
 
-/** キャラ選択画面のボタン定義 */
+/** キャラ選択画面のデフォルトボタン定義 */
 export const CHARACTER_SELECT_BUTTONS: CharacterSelectButtonConfig[] = [
   {
     label: '決定',
@@ -73,3 +84,28 @@ export const CHARACTER_SELECT_BUTTONS: CharacterSelectButtonConfig[] = [
     action: 'back',
   },
 ];
+
+/**
+ * ステップとモードに応じたボタン定義を返す
+ */
+export function getCharacterSelectButtons(
+  step?: CharacterSelectStep,
+  mode?: GameMode,
+): CharacterSelectButtonConfig[] {
+  if (mode === GameMode.FREE_CPU) {
+    if (step === 'player') {
+      return [
+        { label: '決定', targetScene: SceneKey.CHARACTER_SELECT, action: 'confirm' },
+        { label: '戻る', targetScene: SceneKey.TITLE, action: 'back' },
+      ];
+    }
+    if (step === 'opponent') {
+      return [
+        { label: '決定', targetScene: SceneKey.DIFFICULTY_SELECT, action: 'confirm' },
+        { label: 'ランダム', targetScene: SceneKey.DIFFICULTY_SELECT, action: 'random' },
+        { label: '戻る', targetScene: SceneKey.CHARACTER_SELECT, action: 'back' },
+      ];
+    }
+  }
+  return CHARACTER_SELECT_BUTTONS;
+}
