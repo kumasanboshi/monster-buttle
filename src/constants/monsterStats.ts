@@ -35,6 +35,22 @@ export function calculateGrownStats(
 }
 
 /**
+ * 指定成長段階のパラメータを持つモンスターを返す
+ */
+export function getMonsterWithGrownStats(monsterId: string, stages: number): Monster | undefined {
+  const base = MONSTER_DATABASE.find((m) => m.id === monsterId);
+  if (!base) return undefined;
+
+  const abilityUp = ABILITY_UP_VALUES[monsterId];
+  if (!abilityUp) return undefined;
+
+  return {
+    ...base,
+    stats: calculateGrownStats(base.stats, abilityUp, stages),
+  };
+}
+
+/**
  * 最終パラメータ（全ステージクリア後）を持つモンスターを返す
  */
 export function getMonsterWithFinalStats(monsterId: string): Monster | undefined {
