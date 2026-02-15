@@ -1,8 +1,8 @@
 /**
  * Socket.ioクライアント
  *
- * サーバーとの接続・部屋作成・参加を管理する。
- * コールバック経由でModeSelectSceneにイベントを通知する。
+ * サーバーとの接続・部屋作成・参加・バトル通信を管理する。
+ * コールバック経由でシーンにイベントを通知する。
  */
 
 import { io, Socket } from 'socket.io-client';
@@ -12,8 +12,14 @@ import {
   ClientToServerEvents,
   ServerToClientEvents,
   ErrorCode,
+  BattleStartedPayload,
+  WaitingForCommandsPayload,
+  TurnResultPayload,
+  CommandTimeoutPayload,
+  BattleFinishedPayload,
 } from '../../shared/types/SocketEvents';
 import { RoomInfo } from '../../shared/types/RoomTypes';
+import { TurnCommands } from '../types/Command';
 
 /** SocketClientのイベントコールバック */
 export interface SocketClientCallbacks {
@@ -24,6 +30,13 @@ export interface SocketClientCallbacks {
   onOpponentJoined?: (roomInfo: RoomInfo) => void;
   onOpponentLeft?: (roomInfo: RoomInfo) => void;
   onError?: (code: ErrorCode, message: string) => void;
+  // Battle callbacks
+  onBattleStarted?: (payload: BattleStartedPayload) => void;
+  onWaitingForCommands?: (payload: WaitingForCommandsPayload) => void;
+  onTurnResult?: (payload: TurnResultPayload) => void;
+  onCommandTimeout?: (payload: CommandTimeoutPayload) => void;
+  onBattleFinished?: (payload: BattleFinishedPayload) => void;
+  onOpponentDisconnected?: (payload: { roomId: string }) => void;
 }
 
 type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -74,6 +87,24 @@ export class SocketClient {
     this.socket.emit(ClientEvents.ROOM_LEAVE);
   }
 
+  /** バトル開始（モンスター選択完了） */
+  startBattle(roomId: string, monsterId: string): void {
+    if (!this.socket) return;
+    this.socket.emit(ClientEvents.BATTLE_START, { roomId, monsterId });
+  }
+
+  /** コマンドを提出する */
+  submitCommands(roomId: string, commands: TurnCommands): void {
+    if (!this.socket) return;
+    this.socket.emit(ClientEvents.BATTLE_COMMAND_SUBMIT, { roomId, commands });
+  }
+
+  /** 降参する */
+  surrender(roomId: string): void {
+    if (!this.socket) return;
+    this.socket.emit(ClientEvents.BATTLE_SURRENDER, { roomId });
+  }
+
   private setupListeners(): void {
     if (!this.socket) return;
 
@@ -103,6 +134,31 @@ export class SocketClient {
 
     this.socket.on(ServerEvents.ERROR, (payload) => {
       this.callbacks.onError?.(payload.code, payload.message);
+    });
+
+    // Battle event listeners
+    this.socket.on(ServerEvents.BATTLE_STARTED, (payload) => {
+      this.callbacks.onBattleStarted?.(payload);
+    });
+
+    this.socket.on(ServerEvents.BATTLE_WAITING_COMMANDS, (payload) => {
+      this.callbacks.onWaitingForCommands?.(payload);
+    });
+
+    this.socket.on(ServerEvents.BATTLE_TURN_RESULT, (payload) => {
+      this.callbacks.onTurnResult?.(payload);
+    });
+
+    this.socket.on(ServerEvents.BATTLE_COMMAND_TIMEOUT, (payload) => {
+      this.callbacks.onCommandTimeout?.(payload);
+    });
+
+    this.socket.on(ServerEvents.BATTLE_FINISHED, (payload) => {
+      this.callbacks.onBattleFinished?.(payload);
+    });
+
+    this.socket.on(ServerEvents.BATTLE_OPPONENT_DISCONNECTED, (payload) => {
+      this.callbacks.onOpponentDisconnected?.(payload);
     });
   }
 }
