@@ -151,10 +151,14 @@ export class BattleManager {
       return { error: 'COMMANDS_NOT_READY' };
     }
 
+    if (!player1Monster || !player2Monster) {
+      return { error: 'BATTLE_NOT_STARTED' };
+    }
+
     const { newState, turnResult } = processTurn(
       battleState,
-      player1Monster!,
-      player2Monster!,
+      player1Monster,
+      player2Monster,
       pendingCommands.player1Commands,
       pendingCommands.player2Commands,
     );
@@ -193,7 +197,10 @@ export class BattleManager {
 
     // 初回ターン（履歴なし）→ デフォルト
     if (battleRoom.turnHistory.length === 0) {
-      return { ...DEFAULT_COMMANDS };
+      return {
+        first: { type: DEFAULT_COMMANDS.first.type },
+        second: { type: DEFAULT_COMMANDS.second.type },
+      };
     }
 
     const lastTurn = battleRoom.turnHistory[battleRoom.turnHistory.length - 1];
