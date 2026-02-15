@@ -134,9 +134,10 @@ describe('ModeSelectScene', () => {
     capturedCallbacks = {};
   });
 
-  // ヘルパー: テキストからボタンを見つけてクリック
+  // ヘルパー: テキストからボタンを見つけてクリック（最後に追加された要素を優先）
   function clickButton(label: string): void {
-    const btn = addTextCalls.find((call) => call.text === label);
+    const matching = addTextCalls.filter((call) => call.text === label);
+    const btn = matching[matching.length - 1];
     if (!btn) throw new Error(`Button '${label}' not found`);
     const onCalls = btn.on.mock.calls;
     const pointerdownCall = onCalls.find((call: any[]) => call[0] === 'pointerdown');
@@ -144,9 +145,10 @@ describe('ModeSelectScene', () => {
     pointerdownCall[1]();
   }
 
-  // ヘルパー: テキスト要素が存在するか確認
+  // ヘルパー: テキスト要素が存在するか確認（最後に追加された要素を優先）
   function findText(label: string): any {
-    return addTextCalls.find((call) => call.text === label);
+    const matching = addTextCalls.filter((call) => call.text === label);
+    return matching[matching.length - 1];
   }
 
   describe('初期化', () => {
