@@ -380,6 +380,7 @@ export class ConnectionManager {
   private handleCommandTimeout(roomId: string): void {
     const battleRoom = this.battleManager.getRoom(roomId);
     if (!battleRoom || !battleRoom.pendingCommands || !battleRoom.battleState) return;
+    if (battleRoom.battleState.isFinished) return;
 
     const { pendingCommands } = battleRoom;
     const p1Missing = pendingCommands.player1Commands === null;
@@ -387,7 +388,8 @@ export class ConnectionManager {
 
     // 未提出プレイヤーに前回コマンドを自動提出
     if (p1Missing) {
-      const autoCommands = this.battleManager.getLastCommands(roomId, 1)!;
+      const autoCommands = this.battleManager.getLastCommands(roomId, 1);
+      if (!autoCommands) return;
       this.battleManager.submitCommands(roomId, 1, autoCommands);
 
       this.io.to(roomId).emit(ServerEvents.BATTLE_COMMAND_TIMEOUT, {
@@ -398,7 +400,8 @@ export class ConnectionManager {
     }
 
     if (p2Missing) {
-      const autoCommands = this.battleManager.getLastCommands(roomId, 2)!;
+      const autoCommands = this.battleManager.getLastCommands(roomId, 2);
+      if (!autoCommands) return;
       this.battleManager.submitCommands(roomId, 2, autoCommands);
 
       this.io.to(roomId).emit(ServerEvents.BATTLE_COMMAND_TIMEOUT, {
