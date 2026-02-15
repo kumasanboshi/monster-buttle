@@ -69,6 +69,12 @@ describe('SocketClient', () => {
       onOpponentJoined: jest.fn(),
       onOpponentLeft: jest.fn(),
       onError: jest.fn(),
+      onBattleStarted: jest.fn(),
+      onWaitingForCommands: jest.fn(),
+      onTurnResult: jest.fn(),
+      onCommandTimeout: jest.fn(),
+      onBattleFinished: jest.fn(),
+      onOpponentDisconnected: jest.fn(),
     };
     client = new SocketClient();
   });
