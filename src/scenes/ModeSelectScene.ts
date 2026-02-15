@@ -25,10 +25,12 @@ export class ModeSelectScene extends BaseScene {
   private socketClient: SocketClient;
   private currentState: ModeSelectState = ModeSelectState.MAIN_MENU;
   private uiElements: Phaser.GameObjects.GameObject[] = [];
+  private errorText: Phaser.GameObjects.Text | null = null;
   private roomId: string = '';
   private playerNumber: 1 | 2 = 1;
   private roomIdInput: string = '';
   private passwordInput: string = '';
+  private isProcessing: boolean = false;
 
   constructor() {
     super(SceneKey.MODE_SELECT);
@@ -60,20 +62,26 @@ export class ModeSelectScene extends BaseScene {
         this.showMainMenu();
       },
       onRoomCreated: (roomId: string, _roomInfo: RoomInfo) => {
+        if (this.currentState !== ModeSelectState.CREATE_ROOM) return;
         this.roomId = roomId;
         this.playerNumber = 1;
+        this.isProcessing = false;
         this.showWaiting();
       },
       onRoomJoined: (roomInfo: RoomInfo, playerNumber: 1 | 2) => {
+        if (this.currentState !== ModeSelectState.JOIN_ROOM) return;
         this.roomId = roomInfo.roomId;
         this.playerNumber = playerNumber;
+        this.isProcessing = false;
         this.transitionToCharacterSelect();
       },
       onOpponentJoined: (_roomInfo: RoomInfo) => {
+        if (this.currentState !== ModeSelectState.WAITING) return;
         this.transitionToCharacterSelect();
       },
       onOpponentLeft: () => {},
       onError: (code: ErrorCode) => {
+        this.isProcessing = false;
         this.showError(code);
       },
     });
@@ -89,6 +97,8 @@ export class ModeSelectScene extends BaseScene {
     this.currentState = ModeSelectState.MAIN_MENU;
     this.roomIdInput = '';
     this.passwordInput = '';
+    this.isProcessing = false;
+    this.errorText = null;
 
     // タイトル
     this.uiElements.push(
@@ -171,6 +181,8 @@ export class ModeSelectScene extends BaseScene {
     createBtn.on('pointerover', () => createBtn.setColor(MODE_SELECT_COLORS.buttonHover));
     createBtn.on('pointerout', () => createBtn.setColor(MODE_SELECT_COLORS.buttonNormal));
     createBtn.on('pointerdown', () => {
+      if (this.isProcessing) return;
+      this.isProcessing = true;
       const password = this.passwordInput || undefined;
       this.socketClient.createRoom(password);
     });
@@ -279,6 +291,8 @@ export class ModeSelectScene extends BaseScene {
     joinBtn.on('pointerover', () => joinBtn.setColor(MODE_SELECT_COLORS.buttonHover));
     joinBtn.on('pointerout', () => joinBtn.setColor(MODE_SELECT_COLORS.buttonNormal));
     joinBtn.on('pointerdown', () => {
+      if (this.isProcessing || !this.roomIdInput) return;
+      this.isProcessing = true;
       const password = this.passwordInput || undefined;
       this.socketClient.joinRoom(this.roomIdInput, password);
     });
@@ -300,15 +314,17 @@ export class ModeSelectScene extends BaseScene {
   }
 
   private showError(code: ErrorCode): void {
+    if (this.errorText) {
+      this.errorText.destroy();
+    }
     const message = ERROR_MESSAGES[code];
-    this.uiElements.push(
-      this.add
-        .text(GAME_WIDTH / 2, MODE_SELECT_LAYOUT.noteY - 40, message, {
-          fontSize: '16px',
-          color: MODE_SELECT_COLORS.error,
-        })
-        .setOrigin(0.5),
-    );
+    this.errorText = this.add
+      .text(GAME_WIDTH / 2, MODE_SELECT_LAYOUT.noteY - 40, message, {
+        fontSize: '16px',
+        color: MODE_SELECT_COLORS.error,
+      })
+      .setOrigin(0.5) as unknown as Phaser.GameObjects.Text;
+    this.uiElements.push(this.errorText);
   }
 
   private transitionToCharacterSelect(): void {
