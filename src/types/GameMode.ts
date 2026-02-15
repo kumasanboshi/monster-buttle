@@ -10,4 +10,6 @@ export enum GameMode {
   FREE_CPU = 'FREE_CPU',
   /** 自由対戦（ローカル） */
   FREE_LOCAL = 'FREE_LOCAL',
+  /** オンライン対戦 */
+  ONLINE = 'ONLINE',
 }

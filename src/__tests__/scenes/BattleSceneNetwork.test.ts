@@ -140,15 +140,23 @@ describe('BattleScene ネットワークモード', () => {
 
     it('ネットワークモードではプレイヤー視点の変換が必要であること', () => {
       // Player2の場合、サーバーのplayer1/player2がクライアント上で逆に見える
-      const playerNumber = 2;
       const serverState = createTestBattleState();
 
-      // Player2視点: サーバーのplayer2が自分、player1が敵
-      const myState = playerNumber === 1 ? serverState.player1 : serverState.player2;
-      const enemyState = playerNumber === 1 ? serverState.player2 : serverState.player1;
+      // Player1視点: player1が自分、player2が敵
+      function getMyState(pn: 1 | 2, state: BattleState) {
+        return pn === 1 ? state.player1 : state.player2;
+      }
+      function getEnemyState(pn: 1 | 2, state: BattleState) {
+        return pn === 1 ? state.player2 : state.player1;
+      }
 
-      expect(myState.monsterId).toBe('gardan');
-      expect(enemyState.monsterId).toBe('zaag');
+      // Player2視点: サーバーのplayer2が自分、player1が敵
+      expect(getMyState(2, serverState).monsterId).toBe('gardan');
+      expect(getEnemyState(2, serverState).monsterId).toBe('zaag');
+
+      // Player1視点: サーバーのplayer1が自分、player2が敵
+      expect(getMyState(1, serverState).monsterId).toBe('zaag');
+      expect(getEnemyState(1, serverState).monsterId).toBe('gardan');
     });
   });
 

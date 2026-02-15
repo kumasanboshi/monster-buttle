@@ -226,4 +226,44 @@ describe('SocketClient (Battle)', () => {
       expect(callbacks.onOpponentDisconnected).toHaveBeenCalledWith(payload);
     });
   });
+
+  describe('updateCallbacks', () => {
+    it('コールバックを部分的に更新できること', () => {
+      const newOnTurnResult = jest.fn();
+      client.updateCallbacks({ onTurnResult: newOnTurnResult });
+
+      const handler = getHandler('battle:turn_result');
+      const payload = {
+        roomId: 'room-1',
+        turnResult: {} as TurnResult,
+        newState: createTestBattleState(),
+      };
+      handler(payload);
+
+      // 更新されたコールバックが呼ばれる
+      expect(newOnTurnResult).toHaveBeenCalledWith(payload);
+      // 元のコールバックは呼ばれない
+      expect(callbacks.onTurnResult).not.toHaveBeenCalled();
+    });
+
+    it('他のコールバックは維持されること', () => {
+      client.updateCallbacks({ onTurnResult: jest.fn() });
+
+      // onBattleFinished は元のまま
+      const handler = getHandler('battle:finished');
+      const payload = {
+        roomId: 'room-1',
+        result: {
+          resultType: BattleResultType.PLAYER1_WIN,
+          finalState: createTestBattleState(),
+          turnHistory: [],
+          reason: 'HP Zero',
+        } as BattleResult,
+        reason: 'hp_zero' as const,
+      };
+      handler(payload);
+
+      expect(callbacks.onBattleFinished).toHaveBeenCalledWith(payload);
+    });
+  });
 });
