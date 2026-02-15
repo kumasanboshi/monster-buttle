@@ -408,4 +408,58 @@ describe('ModeSelectScene', () => {
       expect(scene.getCurrentState()).toBe(ModeSelectState.MAIN_MENU);
     });
   });
+
+  describe('入力バリデーション', () => {
+    it('部屋ID未入力で参加ボタンを押してもjoinRoomが呼ばれないこと', () => {
+      setupScene();
+      clickButton(MODE_SELECT_LABELS.joinRoom);
+      scene.setRoomIdInput('');
+      clickButton(MODE_SELECT_LABELS.join);
+
+      expect(mockJoinRoom).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('エラー表示の管理', () => {
+    it('連続してエラーが来た場合、前のエラーが破棄されて最新のみ表示されること', () => {
+      setupScene();
+      capturedCallbacks.onError?.(ErrorCode.ROOM_NOT_FOUND, '部屋が見つかりません');
+      capturedCallbacks.onError?.(ErrorCode.WRONG_PASSWORD, 'パスワードが違います');
+
+      // 最新のエラーのみ表示
+      const wrongPasswordErrors = addTextCalls.filter(
+        (call) => call.text === ERROR_MESSAGES[ErrorCode.WRONG_PASSWORD],
+      );
+      expect(wrongPasswordErrors).toHaveLength(1);
+
+      // 前のエラーテキストのdestroyが呼ばれている
+      const roomNotFoundErrors = addTextCalls.filter(
+        (call) => call.text === ERROR_MESSAGES[ErrorCode.ROOM_NOT_FOUND],
+      );
+      expect(roomNotFoundErrors[0].destroy).toHaveBeenCalled();
+    });
+  });
+
+  describe('レースコンディション防止', () => {
+    it('CREATE_ROOMで「戻る」を押した後にroom:createdが来てもWAITINGに遷移しないこと', () => {
+      setupScene();
+      clickButton(MODE_SELECT_LABELS.createRoom);
+      clickButton(MODE_SELECT_LABELS.create);
+      clickButton(MODE_SELECT_LABELS.back); // サーバー応答前に戻る
+
+      // 遅れてサーバーからroom:createdが来る
+      capturedCallbacks.onRoomCreated?.('ABC123', createTestRoomInfo());
+
+      expect(scene.getCurrentState()).toBe(ModeSelectState.MAIN_MENU);
+    });
+
+    it('「作成」ボタンを連続クリックしてもcreateRoomが1回のみ呼ばれること', () => {
+      setupScene();
+      clickButton(MODE_SELECT_LABELS.createRoom);
+      clickButton(MODE_SELECT_LABELS.create);
+      clickButton(MODE_SELECT_LABELS.create); // 2回目
+
+      expect(mockCreateRoom).toHaveBeenCalledTimes(1);
+    });
+  });
 });
