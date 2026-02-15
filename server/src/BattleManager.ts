@@ -163,16 +163,24 @@ export class BattleManager {
       pendingCommands.player2Commands,
     );
 
-    // Deduct elapsed time
-    const elapsedMs = Date.now() - pendingCommands.startedAt;
-    const elapsedSeconds = Math.floor(elapsedMs / 1000);
-    newState.remainingTime = Math.max(0, battleState.remainingTime - elapsedSeconds);
+    // Update turn history (before time deduction check)
+    battleRoom.turnHistory!.push(turnResult);
+
+    // Deduct elapsed time from remainingTime.
+    // After push, length > 1 means this is not the first turn.
+    // First turn: skip (startBattle → first command submission is input wait only).
+    // Turn 2+: elapsed = now - previous executeTurn completion time,
+    //   which includes effect playback time (by design).
+    if (battleRoom.turnHistory!.length > 1) {
+      const elapsedMs = Date.now() - pendingCommands.startedAt;
+      const elapsedSeconds = Math.floor(elapsedMs / 1000);
+      newState.remainingTime = Math.max(0, newState.remainingTime - elapsedSeconds);
+    }
 
     // Update state
     battleRoom.battleState = newState;
-    battleRoom.turnHistory!.push(turnResult);
 
-    // Reset pending commands
+    // Reset pending commands with current time as the baseline for next turn's time measurement
     battleRoom.pendingCommands = {
       player1Commands: null,
       player2Commands: null,

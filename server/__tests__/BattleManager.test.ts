@@ -413,20 +413,44 @@ describe('BattleManager', () => {
   });
 
   describe('制限時間計測', () => {
-    it('executeTurnで経過時間がremainingTimeから減算される', () => {
+    it('初回ターンでは時間が減算されないこと', () => {
       const room = roomManager.createRoom('host-id');
       roomManager.joinRoom(room.roomId, 'guest-id');
       battleManager.startBattle(room, monster1, monster2);
 
-      // 初期残り時間を確認
+      // 5秒待機をシミュレート
       const battleRoom = battleManager.getRoom(room.roomId);
-      expect(battleRoom!.battleState!.remainingTime).toBe(120);
-
-      // 経過時間をシミュレート: 5秒分
       battleRoom!.pendingCommands!.startedAt = Date.now() - 5000;
 
       const p1Cmds = makeCommands(CommandType.ADVANCE, CommandType.ADVANCE);
       const p2Cmds = makeCommands(CommandType.ADVANCE, CommandType.ADVANCE);
+      battleManager.submitCommands(room.roomId, 1, p1Cmds);
+      battleManager.submitCommands(room.roomId, 2, p2Cmds);
+      const result = battleManager.executeTurn(room.roomId);
+
+      expect('error' in result).toBe(false);
+      if (!('error' in result)) {
+        // 初回ターンなので時間は減らない
+        expect(result.newState.remainingTime).toBe(120);
+      }
+    });
+
+    it('executeTurnで経過時間がremainingTimeから減算される（2ターン目以降）', () => {
+      const room = roomManager.createRoom('host-id');
+      roomManager.joinRoom(room.roomId, 'guest-id');
+      battleManager.startBattle(room, monster1, monster2);
+
+      // 初回ターンを実行（時間減算なし）
+      const p1Cmds = makeCommands(CommandType.ADVANCE, CommandType.ADVANCE);
+      const p2Cmds = makeCommands(CommandType.ADVANCE, CommandType.ADVANCE);
+      battleManager.submitCommands(room.roomId, 1, p1Cmds);
+      battleManager.submitCommands(room.roomId, 2, p2Cmds);
+      battleManager.executeTurn(room.roomId);
+
+      // 2ターン目: 5秒経過をシミュレート
+      const battleRoom = battleManager.getRoom(room.roomId);
+      battleRoom!.pendingCommands!.startedAt = Date.now() - 5000;
+
       battleManager.submitCommands(room.roomId, 1, p1Cmds);
       battleManager.submitCommands(room.roomId, 2, p2Cmds);
       const result = battleManager.executeTurn(room.roomId);
@@ -444,14 +468,18 @@ describe('BattleManager', () => {
       roomManager.joinRoom(room.roomId, 'guest-id');
       battleManager.startBattle(room, monster1, monster2);
 
-      // 残り時間を1秒に設定
-      const battleRoom = battleManager.getRoom(room.roomId);
-      battleRoom!.battleState!.remainingTime = 1;
-      // 2秒経過をシミュレート
-      battleRoom!.pendingCommands!.startedAt = Date.now() - 2000;
-
+      // 初回ターンを実行（時間減算なし）
       const p1Cmds = makeCommands(CommandType.ADVANCE, CommandType.ADVANCE);
       const p2Cmds = makeCommands(CommandType.ADVANCE, CommandType.ADVANCE);
+      battleManager.submitCommands(room.roomId, 1, p1Cmds);
+      battleManager.submitCommands(room.roomId, 2, p2Cmds);
+      battleManager.executeTurn(room.roomId);
+
+      // 2ターン目: 残り時間を1秒に設定し、2秒経過をシミュレート
+      const battleRoom = battleManager.getRoom(room.roomId);
+      battleRoom!.battleState!.remainingTime = 1;
+      battleRoom!.pendingCommands!.startedAt = Date.now() - 2000;
+
       battleManager.submitCommands(room.roomId, 1, p1Cmds);
       battleManager.submitCommands(room.roomId, 2, p2Cmds);
       const result = battleManager.executeTurn(room.roomId);
