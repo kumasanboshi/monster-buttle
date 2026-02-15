@@ -86,4 +86,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.ALREADY_IN_ROOM]: '既に部屋に参加しています',
   [ErrorCode.NOT_IN_ROOM]: '部屋に参加していません',
   [ErrorCode.INVALID_PAYLOAD]: '入力内容が不正です',
+  [ErrorCode.BATTLE_NOT_STARTED]: 'バトルが開始されていません',
+  [ErrorCode.INVALID_COMMAND]: '無効なコマンドです',
+  [ErrorCode.ALREADY_SUBMITTED]: 'コマンドは既に提出済みです',
 };
