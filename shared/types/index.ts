@@ -21,4 +21,12 @@ export {
   ServerEvents,
   ClientToServerEvents,
   ServerToClientEvents,
+  // Battle payload types
+  BattleStartPayload,
+  BattleStartedPayload,
+  CommandSubmitPayload,
+  WaitingForCommandsPayload,
+  CommandTimeoutPayload,
+  TurnResultPayload,
+  BattleFinishedPayload,
 } from './SocketEvents';

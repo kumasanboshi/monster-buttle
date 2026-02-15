@@ -13,9 +13,13 @@ describe('GameMode', () => {
     expect(GameMode.FREE_LOCAL).toBe('FREE_LOCAL');
   });
 
-  it('3種類のモードが定義されていること', () => {
+  it('オンライン対戦モードが定義されていること', () => {
+    expect(GameMode.ONLINE).toBe('ONLINE');
+  });
+
+  it('4種類のモードが定義されていること', () => {
     const modes = Object.values(GameMode);
-    expect(modes).toHaveLength(3);
+    expect(modes).toHaveLength(4);
   });
 
   it('すべてのモードが一意であること', () => {
