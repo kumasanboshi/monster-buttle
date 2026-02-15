@@ -5,7 +5,7 @@ import { TurnCommands, CommandType } from '../../src/types/Command';
 import { DistanceType } from '../../src/types/Distance';
 import { StanceType } from '../../src/types/Stance';
 import { processTurn } from '../../src/battle/turnProcessor';
-import { checkVictoryAfterTurn } from '../../src/battle/victoryCondition';
+import { checkVictoryAfterTurn, checkVictoryOnTimeout } from '../../src/battle/victoryCondition';
 import { BattleResultType } from '../../src/types/BattleState';
 
 /**
@@ -163,6 +163,11 @@ export class BattleManager {
       pendingCommands.player2Commands,
     );
 
+    // Deduct elapsed time
+    const elapsedMs = Date.now() - pendingCommands.startedAt;
+    const elapsedSeconds = Math.floor(elapsedMs / 1000);
+    newState.remainingTime = Math.max(0, battleState.remainingTime - elapsedSeconds);
+
     // Update state
     battleRoom.battleState = newState;
     battleRoom.turnHistory!.push(turnResult);
@@ -173,6 +178,15 @@ export class BattleManager {
       player2Commands: null,
       startedAt: Date.now(),
     };
+
+    // Check time-up victory
+    if (newState.remainingTime <= 0) {
+      const timeoutResult = checkVictoryOnTimeout(newState);
+      timeoutResult.turnHistory = battleRoom.turnHistory!;
+      battleRoom.battleResult = timeoutResult;
+      battleRoom.battleState = { ...newState, isFinished: true };
+      return { turnResult, newState: battleRoom.battleState, battleRoom, battleResult: timeoutResult };
+    }
 
     // Check victory
     const victoryResult = checkVictoryAfterTurn(newState);
