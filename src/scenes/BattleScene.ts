@@ -542,6 +542,8 @@ export class BattleScene extends BaseScene {
   }
 
   private onCommandClick(command: CommandType): void {
+    if (this.isPlayingEffects) return;
+    if (this.isWaitingForOpponent) return;
     // チュートリアル固定ターンではコマンド変更不可
     if (this.tutorialManager.isFixedTurn(this.battleState.currentTurn)) return;
 
@@ -552,6 +554,8 @@ export class BattleScene extends BaseScene {
   }
 
   private onCancelClick(): void {
+    if (this.isPlayingEffects) return;
+    if (this.isWaitingForOpponent) return;
     // チュートリアル固定ターンではキャンセル不可
     if (this.tutorialManager.isFixedTurn(this.battleState.currentTurn)) return;
 
@@ -809,13 +813,40 @@ export class BattleScene extends BaseScene {
     });
   }
 
+  /**
+   * Player2視点用にTurnResultのplayer1/player2を入れ替える
+   */
+  private swapTurnResultPerspective(turnResult: TurnResult): TurnResult {
+    return {
+      ...turnResult,
+      player1Commands: turnResult.player2Commands,
+      player2Commands: turnResult.player1Commands,
+      player1Damage: turnResult.player2Damage,
+      player2Damage: turnResult.player1Damage,
+      player1StanceAfter: turnResult.player2StanceAfter,
+      player2StanceAfter: turnResult.player1StanceAfter,
+      phases: turnResult.phases.map(phase => ({
+        ...phase,
+        player1Command: phase.player2Command,
+        player2Command: phase.player1Command,
+        player1Damage: phase.player2Damage,
+        player2Damage: phase.player1Damage,
+      })) as [typeof turnResult.phases[0], typeof turnResult.phases[1]],
+    };
+  }
+
   private handleNetworkTurnResult(payload: import('../../shared/types/SocketEvents').TurnResultPayload): void {
     if (payload.roomId !== this.roomId) return;
 
     this.isWaitingForOpponent = false;
     this.hideWaitingMessage();
 
-    const { turnResult, newState } = payload;
+    const { turnResult: rawTurnResult, newState } = payload;
+
+    // Player2視点の場合、エフェクト表示のためにplayer1/player2を入れ替え
+    const turnResult = this.playerNumber === 2
+      ? this.swapTurnResultPerspective(rawTurnResult)
+      : rawTurnResult;
 
     // エフェクト解決
     const distanceBefore = this.battleState.currentDistance;

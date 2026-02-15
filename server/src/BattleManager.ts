@@ -179,6 +179,15 @@ export class BattleManager {
       startedAt: Date.now(),
     };
 
+    // Check HP-based victory first (takes priority over time-up)
+    const victoryResult = checkVictoryAfterTurn(newState);
+    if (victoryResult) {
+      victoryResult.turnHistory = battleRoom.turnHistory!;
+      battleRoom.battleResult = victoryResult;
+      battleRoom.battleState = { ...newState, isFinished: true };
+      return { turnResult, newState: battleRoom.battleState, battleRoom, battleResult: victoryResult };
+    }
+
     // Check time-up victory
     if (newState.remainingTime <= 0) {
       const timeoutResult = checkVictoryOnTimeout(newState);
@@ -186,15 +195,6 @@ export class BattleManager {
       battleRoom.battleResult = timeoutResult;
       battleRoom.battleState = { ...newState, isFinished: true };
       return { turnResult, newState: battleRoom.battleState, battleRoom, battleResult: timeoutResult };
-    }
-
-    // Check victory
-    const victoryResult = checkVictoryAfterTurn(newState);
-    if (victoryResult) {
-      victoryResult.turnHistory = battleRoom.turnHistory!;
-      battleRoom.battleResult = victoryResult;
-      battleRoom.battleState = { ...newState, isFinished: true };
-      return { turnResult, newState: battleRoom.battleState, battleRoom, battleResult: victoryResult };
     }
 
     return { turnResult, newState, battleRoom };
