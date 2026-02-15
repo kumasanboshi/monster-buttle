@@ -166,10 +166,11 @@ export class BattleManager {
     // Update turn history (before time deduction check)
     battleRoom.turnHistory!.push(turnResult);
 
-    // Deduct elapsed time (skip first turn - command input time is excluded)
-    // startedAt records when the previous turn completed, so elapsed time
-    // includes effect playback + command input time.
-    // First turn has no prior turn, so no time to deduct.
+    // Deduct elapsed time from remainingTime.
+    // After push, length > 1 means this is not the first turn.
+    // First turn: skip (startBattle → first command submission is input wait only).
+    // Turn 2+: elapsed = now - previous executeTurn completion time,
+    //   which includes effect playback time (by design).
     if (battleRoom.turnHistory!.length > 1) {
       const elapsedMs = Date.now() - pendingCommands.startedAt;
       const elapsedSeconds = Math.floor(elapsedMs / 1000);
