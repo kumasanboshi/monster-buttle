@@ -85,6 +85,9 @@ export class ConnectionManager {
         [ErrorCode.ALREADY_IN_ROOM]: 'すでに部屋に参加しています',
         [ErrorCode.NOT_IN_ROOM]: '部屋に参加していません',
         [ErrorCode.INVALID_PAYLOAD]: '不正なリクエストです',
+        [ErrorCode.BATTLE_NOT_STARTED]: 'バトルが開始されていません',
+        [ErrorCode.INVALID_COMMAND]: '無効なコマンドです',
+        [ErrorCode.ALREADY_SUBMITTED]: 'コマンドは既に提出済みです',
       };
       socket.emit(ServerEvents.ERROR, {
         code: result.error,
