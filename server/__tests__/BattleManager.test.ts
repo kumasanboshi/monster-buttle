@@ -412,6 +412,58 @@ describe('BattleManager', () => {
     });
   });
 
+  describe('制限時間計測', () => {
+    it('executeTurnで経過時間がremainingTimeから減算される', () => {
+      const room = roomManager.createRoom('host-id');
+      roomManager.joinRoom(room.roomId, 'guest-id');
+      battleManager.startBattle(room, monster1, monster2);
+
+      // 初期残り時間を確認
+      const battleRoom = battleManager.getRoom(room.roomId);
+      expect(battleRoom!.battleState!.remainingTime).toBe(120);
+
+      // 経過時間をシミュレート: 5秒分
+      battleRoom!.pendingCommands!.startedAt = Date.now() - 5000;
+
+      const p1Cmds = makeCommands(CommandType.ADVANCE, CommandType.ADVANCE);
+      const p2Cmds = makeCommands(CommandType.ADVANCE, CommandType.ADVANCE);
+      battleManager.submitCommands(room.roomId, 1, p1Cmds);
+      battleManager.submitCommands(room.roomId, 2, p2Cmds);
+      const result = battleManager.executeTurn(room.roomId);
+
+      expect('error' in result).toBe(false);
+      if (!('error' in result)) {
+        // 5秒分減っているはず（タイマー精度の許容範囲あり）
+        expect(result.newState.remainingTime).toBeLessThanOrEqual(115);
+        expect(result.newState.remainingTime).toBeGreaterThanOrEqual(113);
+      }
+    });
+
+    it('remainingTimeが0以下になると時間切れ判定される', () => {
+      const room = roomManager.createRoom('host-id');
+      roomManager.joinRoom(room.roomId, 'guest-id');
+      battleManager.startBattle(room, monster1, monster2);
+
+      // 残り時間を1秒に設定
+      const battleRoom = battleManager.getRoom(room.roomId);
+      battleRoom!.battleState!.remainingTime = 1;
+      // 2秒経過をシミュレート
+      battleRoom!.pendingCommands!.startedAt = Date.now() - 2000;
+
+      const p1Cmds = makeCommands(CommandType.ADVANCE, CommandType.ADVANCE);
+      const p2Cmds = makeCommands(CommandType.ADVANCE, CommandType.ADVANCE);
+      battleManager.submitCommands(room.roomId, 1, p1Cmds);
+      battleManager.submitCommands(room.roomId, 2, p2Cmds);
+      const result = battleManager.executeTurn(room.roomId);
+
+      expect('error' in result).toBe(false);
+      if (!('error' in result)) {
+        expect(result.battleResult).toBeDefined();
+        expect(result.newState.remainingTime).toBe(0);
+      }
+    });
+  });
+
   describe('removeRoom', () => {
     it('部屋を削除できる', () => {
       const room = roomManager.createRoom('host-id');
