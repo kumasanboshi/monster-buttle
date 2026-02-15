@@ -12,31 +12,10 @@ import {
 import {
   CommandType,
   DistanceType,
-  StanceType,
-  Monster,
   TurnCommands,
   BattleResultType,
 } from '../../src/types';
 import type { AddressInfo } from 'net';
-
-function createTestMonster(overrides: Partial<Monster> = {}): Monster {
-  return {
-    id: 'test-monster-1',
-    name: 'テストモンスター',
-    species: 'テスト種',
-    stats: {
-      hp: 100,
-      strength: 30,
-      special: 25,
-      speed: 0,
-      toughness: 20,
-      specialAttackCount: 3,
-    },
-    weapon: { name: 'テスト武器', multiplier: 1.6 },
-    reflector: { name: 'テストリフレクター', maxReflectCount: 2, reflectRate: 0.5 },
-    ...overrides,
-  };
-}
 
 function makeCommands(first: CommandType, second: CommandType): TurnCommands {
   return { first: { type: first }, second: { type: second } };
@@ -50,8 +29,9 @@ describe('ConnectionManager (Battle)', () => {
   let connectionManager: ConnectionManager;
   let port: number;
 
-  const monster1 = createTestMonster({ id: 'monster-1', name: 'モンスター1' });
-  const monster2 = createTestMonster({ id: 'monster-2', name: 'モンスター2' });
+  // 実際のモンスターDBに存在するIDを使用
+  const monster1Id = 'zaag';
+  const monster2Id = 'gardan';
 
   beforeAll((done) => {
     httpServer = createServer();
@@ -141,12 +121,12 @@ describe('ConnectionManager (Battle)', () => {
 
       host.emit(ClientEvents.BATTLE_START, {
         roomId,
-        monsterId: monster1.id,
+        monsterId: monster1Id,
       });
       // ゲスト側もモンスター選択を送信
       guest.emit(ClientEvents.BATTLE_START, {
         roomId,
-        monsterId: monster2.id,
+        monsterId: monster2Id,
       });
 
       const hostData = await hostStartedPromise;
@@ -169,8 +149,8 @@ describe('ConnectionManager (Battle)', () => {
       // バトル開始
       const hostStartedPromise = waitForEvent<any>(host, ServerEvents.BATTLE_STARTED);
       const guestStartedPromise = waitForEvent<any>(guest, ServerEvents.BATTLE_STARTED);
-      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1.id });
-      guest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2.id });
+      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1Id });
+      guest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2Id });
       await hostStartedPromise;
       await guestStartedPromise;
 
@@ -195,8 +175,8 @@ describe('ConnectionManager (Battle)', () => {
       // バトル開始
       const hostStartedPromise = waitForEvent<any>(host, ServerEvents.BATTLE_STARTED);
       const guestStartedPromise = waitForEvent<any>(guest, ServerEvents.BATTLE_STARTED);
-      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1.id });
-      guest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2.id });
+      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1Id });
+      guest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2Id });
       await hostStartedPromise;
       await guestStartedPromise;
 
@@ -231,8 +211,8 @@ describe('ConnectionManager (Battle)', () => {
       // バトル開始
       const hostStartedPromise = waitForEvent<any>(host, ServerEvents.BATTLE_STARTED);
       const guestStartedPromise = waitForEvent<any>(guest, ServerEvents.BATTLE_STARTED);
-      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1.id });
-      guest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2.id });
+      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1Id });
+      guest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2Id });
       await hostStartedPromise;
       await guestStartedPromise;
 
@@ -265,8 +245,8 @@ describe('ConnectionManager (Battle)', () => {
       // バトル開始
       const hostStartedPromise = waitForEvent<any>(host, ServerEvents.BATTLE_STARTED);
       const guestStartedPromise = waitForEvent<any>(guest, ServerEvents.BATTLE_STARTED);
-      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1.id });
-      guest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2.id });
+      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1Id });
+      guest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2Id });
       await hostStartedPromise;
       await guestStartedPromise;
 
@@ -290,18 +270,18 @@ describe('ConnectionManager (Battle)', () => {
 
   describe('コマンドタイムアウト', () => {
     it('タイムアウトで未提出プレイヤーにauto-submitされターン結果が通知される', async () => {
+      // タイムアウトを短く設定（バトル開始前に設定する）
+      connectionManager.setCommandTimeoutMs(500);
+
       const { host, guest, roomId } = await createRoomWithPlayers();
 
-      // バトル開始（タイムアウト短め: 500msでテスト）
+      // バトル開始
       const hostStartedPromise = waitForEvent<any>(host, ServerEvents.BATTLE_STARTED);
       const guestStartedPromise = waitForEvent<any>(guest, ServerEvents.BATTLE_STARTED);
-      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1.id });
-      guest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2.id });
+      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1Id });
+      guest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2Id });
       await hostStartedPromise;
       await guestStartedPromise;
-
-      // タイムアウトを短く設定してテスト
-      connectionManager.setCommandTimeoutMs(500);
 
       // ホストだけコマンド提出
       const waitingPromise = waitForEvent<any>(host, ServerEvents.BATTLE_WAITING_COMMANDS);
@@ -311,9 +291,9 @@ describe('ConnectionManager (Battle)', () => {
       });
       await waitingPromise;
 
-      // タイムアウト待ち → turn_result が通知される
-      const hostTimeoutPromise = waitForEvent<any>(host, ServerEvents.BATTLE_COMMAND_TIMEOUT, 2000);
-      const hostResultPromise = waitForEvent<any>(host, ServerEvents.BATTLE_TURN_RESULT, 2000);
+      // タイムアウト待ち → command_timeout + turn_result が通知される
+      const hostTimeoutPromise = waitForEvent<any>(host, ServerEvents.BATTLE_COMMAND_TIMEOUT, 3000);
+      const hostResultPromise = waitForEvent<any>(host, ServerEvents.BATTLE_TURN_RESULT, 3000);
 
       const timeoutData = await hostTimeoutPromise;
       expect(timeoutData.roomId).toBe(roomId);
@@ -334,8 +314,8 @@ describe('ConnectionManager (Battle)', () => {
       // バトル開始
       const hostStartedPromise = waitForEvent<any>(host, ServerEvents.BATTLE_STARTED);
       const guestStartedPromise = waitForEvent<any>(guest, ServerEvents.BATTLE_STARTED);
-      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1.id });
-      guest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2.id });
+      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1Id });
+      guest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2Id });
       await hostStartedPromise;
       await guestStartedPromise;
 
