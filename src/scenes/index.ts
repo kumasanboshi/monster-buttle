@@ -26,6 +26,14 @@ export { TITLE_TEXT, TITLE_BUTTONS } from './titleConfig';
 export type { TitleButtonConfig } from './titleConfig';
 
 export {
+  ModeSelectState,
+  MODE_SELECT_LAYOUT,
+  MODE_SELECT_LABELS,
+  MODE_SELECT_COLORS,
+  ERROR_MESSAGES,
+} from './modeSelectConfig';
+
+export {
   INITIAL_MONSTER_ID,
   UNLOCK_ORDER,
   getUnlockedMonsterIds,

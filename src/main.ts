@@ -7,6 +7,7 @@ import { BattleScene } from './scenes/BattleScene';
 import { ResultScene } from './scenes/ResultScene';
 import { DifficultySelectScene } from './scenes/DifficultySelectScene';
 import { SettingsScene } from './scenes/SettingsScene';
+import { ModeSelectScene } from './scenes/ModeSelectScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -20,7 +21,7 @@ const config: Phaser.Types.Core.GameConfig = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
   },
-  scene: [BootScene, TitleScene, CharacterSelectScene, DifficultySelectScene, BattleScene, ResultScene, SettingsScene],
+  scene: [BootScene, TitleScene, ModeSelectScene, CharacterSelectScene, DifficultySelectScene, BattleScene, ResultScene, SettingsScene],
   render: {
     pixelArt: DEFAULT_GAME_CONFIG.pixelArt,
   },
