@@ -105,6 +105,11 @@ export class SocketClient {
     this.socket.emit(ClientEvents.BATTLE_SURRENDER, { roomId });
   }
 
+  /** コールバックを部分的に更新する */
+  updateCallbacks(callbacks: Partial<SocketClientCallbacks>): void {
+    this.callbacks = { ...this.callbacks, ...callbacks };
+  }
+
   private setupListeners(): void {
     if (!this.socket) return;
 

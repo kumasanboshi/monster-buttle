@@ -34,6 +34,8 @@ import { checkVictoryAfterTurn } from '../battle/victoryCondition';
 import { GameMode } from '../types/GameMode';
 import { TutorialManager } from '../battle/TutorialManager';
 import { GAME_HEIGHT } from './gameConfig';
+import { SocketClient } from '../network/SocketClient';
+import { BattleResult } from '../types/BattleState';
 
 /** BattleSceneに渡されるデータ */
 export interface BattleSceneData {
@@ -43,6 +45,14 @@ export interface BattleSceneData {
   mode?: GameMode;
   stageNumber?: number;
   clearedStages?: number;
+  // ネットワークモード用
+  isNetworkMode?: boolean;
+  roomId?: string;
+  socketClient?: SocketClient;
+  playerNumber?: 1 | 2;
+  playerMonster?: Monster;
+  enemyMonster?: Monster;
+  initialBattleState?: BattleState;
 }
 
 /**
@@ -101,6 +111,14 @@ export class BattleScene extends BaseScene {
   private stageNumber?: number;
   private clearedStages?: number;
 
+  // ネットワークモード
+  private isNetworkMode = false;
+  private roomId?: string;
+  private socketClient?: SocketClient;
+  private playerNumber?: 1 | 2;
+  private isWaitingForOpponent = false;
+  private waitingText?: Phaser.GameObjects.Text;
+
   // チュートリアル
   private tutorialManager!: TutorialManager;
   private tutorialPopupOverlay?: Phaser.GameObjects.Rectangle;
@@ -116,7 +134,16 @@ export class BattleScene extends BaseScene {
     this.stageNumber = data?.stageNumber;
     this.clearedStages = data?.clearedStages;
 
-    if (this.gameMode === GameMode.CHALLENGE && this.stageNumber) {
+    // ネットワークモード設定
+    this.isNetworkMode = data?.isNetworkMode === true;
+    this.roomId = data?.roomId;
+    this.socketClient = data?.socketClient;
+    this.playerNumber = data?.playerNumber;
+    this.isWaitingForOpponent = false;
+
+    if (this.isNetworkMode) {
+      this.setupNetworkMode(data!);
+    } else if (this.gameMode === GameMode.CHALLENGE && this.stageNumber) {
       this.setupChallengeMode(data);
     } else {
       this.enemyAILevel = data?.aiLevel ?? AILevel.LV2;
@@ -124,22 +151,43 @@ export class BattleScene extends BaseScene {
     }
 
     // 初期状態設定
-    this.currentDistance = BATTLE_INITIAL.initialDistance;
-    this.currentPlayerStance = BATTLE_INITIAL.initialStance;
-    this.currentEnemyStance = BATTLE_INITIAL.initialStance;
-    this.remainingTime = BATTLE_INITIAL.initialTime;
-    this.playerCurrentHp = this.playerMonster.stats.hp;
-    this.enemyCurrentHp = this.enemyMonster.stats.hp;
+    if (this.isNetworkMode && data?.initialBattleState) {
+      const state = data.initialBattleState;
+      // Player2視点の場合、自分がplayer2、敵がplayer1
+      if (this.playerNumber === 2) {
+        this.currentDistance = state.currentDistance;
+        this.currentPlayerStance = state.player2.currentStance;
+        this.currentEnemyStance = state.player1.currentStance;
+        this.remainingTime = state.remainingTime;
+        this.playerCurrentHp = state.player2.currentHp;
+        this.enemyCurrentHp = state.player1.currentHp;
+      } else {
+        this.currentDistance = state.currentDistance;
+        this.currentPlayerStance = state.player1.currentStance;
+        this.currentEnemyStance = state.player2.currentStance;
+        this.remainingTime = state.remainingTime;
+        this.playerCurrentHp = state.player1.currentHp;
+        this.enemyCurrentHp = state.player2.currentHp;
+      }
+      this.battleState = state;
+    } else {
+      this.currentDistance = BATTLE_INITIAL.initialDistance;
+      this.currentPlayerStance = BATTLE_INITIAL.initialStance;
+      this.currentEnemyStance = BATTLE_INITIAL.initialStance;
+      this.remainingTime = BATTLE_INITIAL.initialTime;
+      this.playerCurrentHp = this.playerMonster.stats.hp;
+      this.enemyCurrentHp = this.enemyMonster.stats.hp;
+      this.battleState = this.buildBattleState();
+    }
 
-    // バトル状態を構築
-    this.battleState = this.buildBattleState();
     this.turnHistory = [];
     this.isPlayingEffects = false;
 
     // CommandSelectionManagerを初期化
+    const playerSide = this.isNetworkMode && this.playerNumber === 2 ? 'player2' : 'player1';
     this.commandManager = new CommandSelectionManager(
       this.battleState,
-      'player1',
+      playerSide,
       this.playerMonster
     );
 
@@ -163,6 +211,11 @@ export class BattleScene extends BaseScene {
       this.gameMode ?? GameMode.FREE_CPU
     );
     this.startTutorialTurnIfNeeded(this.battleState.currentTurn);
+
+    // ネットワークモード: イベントリスナー設定
+    if (this.isNetworkMode && this.socketClient) {
+      this.setupNetworkListeners();
+    }
   }
 
   private setupChallengeMode(data?: BattleSceneData): void {
@@ -188,6 +241,14 @@ export class BattleScene extends BaseScene {
       throw new Error(`Failed to create monster ${stage.enemyMonsterId} with growth stage ${growthStages}`);
     }
     this.enemyMonster = foundEnemy;
+  }
+
+  private setupNetworkMode(data: BattleSceneData): void {
+    if (!data.playerMonster || !data.enemyMonster) {
+      throw new Error('Network mode requires playerMonster and enemyMonster');
+    }
+    this.playerMonster = data.playerMonster;
+    this.enemyMonster = data.enemyMonster;
   }
 
   private setupNormalMode(data?: BattleSceneData): void {
@@ -500,10 +561,25 @@ export class BattleScene extends BaseScene {
 
   private onConfirmClick(): void {
     if (this.isPlayingEffects) return;
+    if (this.isWaitingForOpponent) return;
 
     const playerCommands = this.commandManager.confirmSelection();
     if (!playerCommands) return;
 
+    // ネットワークモード: サーバーにコマンド送信
+    if (this.isNetworkMode && this.socketClient && this.roomId) {
+      this.socketClient.submitCommands(this.roomId, playerCommands);
+      this.isWaitingForOpponent = true;
+      this.setCommandUIEnabled(false);
+      this.showWaitingMessage('相手のコマンド選択を待っています...');
+      return;
+    }
+
+    // ローカルモード: CPU対戦処理
+    this.processLocalTurn(playerCommands);
+  }
+
+  private processLocalTurn(playerCommands: TurnCommands): void {
     // チュートリアル固定ターン: TutorialManagerから敵コマンドを取得
     // 通常ターン: AIコマンド生成
     const currentTurn = this.battleState.currentTurn;
@@ -718,6 +794,121 @@ export class BattleScene extends BaseScene {
   public updateTime(time: number): void {
     this.remainingTime = Math.max(0, time);
     this.updateTimeDisplay();
+  }
+
+  // --- ネットワークモード ---
+
+  private setupNetworkListeners(): void {
+    if (!this.socketClient) return;
+
+    this.socketClient.updateCallbacks({
+      onTurnResult: (payload) => this.handleNetworkTurnResult(payload),
+      onBattleFinished: (payload) => this.handleNetworkBattleFinished(payload),
+      onOpponentDisconnected: () => this.handleOpponentDisconnected(),
+      onCommandTimeout: (payload) => this.handleCommandTimeout(payload),
+    });
+  }
+
+  private handleNetworkTurnResult(payload: import('../../shared/types/SocketEvents').TurnResultPayload): void {
+    if (payload.roomId !== this.roomId) return;
+
+    this.isWaitingForOpponent = false;
+    this.hideWaitingMessage();
+
+    const { turnResult, newState } = payload;
+
+    // エフェクト解決
+    const distanceBefore = this.battleState.currentDistance;
+    const effectSequence = resolveBattleEffects(turnResult, distanceBefore);
+
+    // エフェクト再生中はコマンド入力を無効化
+    this.isPlayingEffects = true;
+    this.setCommandUIEnabled(false);
+
+    // エフェクト再生 → UI更新
+    this.effectPlayer.playSequence(effectSequence).then(() => {
+      this.applyNetworkTurnResult(newState, turnResult);
+    }).catch((error) => {
+      console.error('Effect playback error:', error);
+      this.applyNetworkTurnResult(newState, turnResult);
+    });
+  }
+
+  private applyNetworkTurnResult(newState: BattleState, turnResult: TurnResult): void {
+    this.battleState = newState;
+    this.turnHistory.push(turnResult);
+
+    // Player視点でHP/スタンスを更新
+    if (this.playerNumber === 2) {
+      this.updateHp(newState.player2.currentHp, newState.player1.currentHp);
+      this.updateStance(turnResult.player2StanceAfter, turnResult.player1StanceAfter);
+    } else {
+      this.updateHp(newState.player1.currentHp, newState.player2.currentHp);
+      this.updateStance(turnResult.player1StanceAfter, turnResult.player2StanceAfter);
+    }
+    this.updateDistance(newState.currentDistance);
+    this.updateTime(newState.remainingTime);
+
+    // バトル終了はサーバーからの BATTLE_FINISHED で処理するため、ここでは次ターン準備のみ
+    if (!newState.isFinished) {
+      const playerSide = this.playerNumber === 2 ? 'player2' : 'player1';
+      this.commandManager = new CommandSelectionManager(
+        this.battleState,
+        playerSide,
+        this.playerMonster
+      );
+
+      this.isPlayingEffects = false;
+      this.setCommandUIEnabled(true);
+      this.updateCommandUI();
+    }
+  }
+
+  private handleNetworkBattleFinished(payload: import('../../shared/types/SocketEvents').BattleFinishedPayload): void {
+    if (payload.roomId !== this.roomId) return;
+
+    this.isWaitingForOpponent = false;
+    this.hideWaitingMessage();
+    this.setCommandUIEnabled(false);
+
+    this.transitionTo(SceneKey.RESULT, {
+      battleResult: payload.result,
+      mode: this.gameMode,
+      monsterId: this.playerMonster.id,
+    });
+  }
+
+  private handleOpponentDisconnected(): void {
+    this.isWaitingForOpponent = false;
+    this.hideWaitingMessage();
+    this.showWaitingMessage('相手が切断しました...');
+    // BATTLE_FINISHED イベントで結果画面に遷移する
+  }
+
+  private handleCommandTimeout(payload: import('../../shared/types/SocketEvents').CommandTimeoutPayload): void {
+    if (payload.roomId !== this.roomId) return;
+    // タイムアウト通知はサーバーが自動でコマンド提出し、
+    // TURN_RESULT が続けて送られるので、ここでは特別な処理は不要
+  }
+
+  private showWaitingMessage(message: string): void {
+    this.hideWaitingMessage();
+    this.waitingText = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, message, {
+        fontSize: '20px',
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif',
+        fontStyle: 'bold',
+        backgroundColor: '#000000aa',
+        padding: { x: 20, y: 10 },
+      })
+      .setOrigin(0.5)
+      .setDepth(50);
+  }
+
+  private hideWaitingMessage(): void {
+    this.waitingText?.destroy();
+    this.waitingText = undefined;
   }
 
   // --- チュートリアル ---
