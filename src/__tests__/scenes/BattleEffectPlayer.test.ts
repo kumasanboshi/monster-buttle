@@ -176,6 +176,52 @@ describe('BattleEffectPlayer', () => {
       await player.playSequence(sequence);
 
       expect(scene.tweens.add).toHaveBeenCalled();
+      // Image無しの場合、Text2つ分のTween
+      expect(scene.tweens.add).toHaveBeenCalledTimes(2);
+    });
+
+    it('DISTANCE_MOVEでImage有りの場合、Image分もTweenが呼ばれる', async () => {
+      // Image付きのtargetsを作成
+      const targetsWithImages: EffectTargets = {
+        ...createMockTargets(),
+        playerImage: createMockText(200, 250) as any,
+        enemyImage: createMockText(600, 250) as any,
+      };
+      const playerWithImages = new BattleEffectPlayer(scene as any, targetsWithImages);
+
+      const sequence: BattleEffectSequence = [
+        [{
+          type: BattleEffectType.DISTANCE_MOVE,
+          target: 'player',
+          distanceFrom: DistanceType.MID,
+          distanceTo: DistanceType.NEAR,
+        }],
+      ];
+      await playerWithImages.playSequence(sequence);
+
+      // Text2つ + Image2つ = 4つのTween
+      expect(scene.tweens.add).toHaveBeenCalledTimes(4);
+    });
+
+    it('DISTANCE_MOVEでImage片方のみの場合、3つのTweenが呼ばれる', async () => {
+      const targetsWithOneImage: EffectTargets = {
+        ...createMockTargets(),
+        playerImage: createMockText(200, 250) as any,
+      };
+      const playerWithOneImage = new BattleEffectPlayer(scene as any, targetsWithOneImage);
+
+      const sequence: BattleEffectSequence = [
+        [{
+          type: BattleEffectType.DISTANCE_MOVE,
+          target: 'player',
+          distanceFrom: DistanceType.MID,
+          distanceTo: DistanceType.NEAR,
+        }],
+      ];
+      await playerWithOneImage.playSequence(sequence);
+
+      // Text2つ + Image1つ = 3つのTween
+      expect(scene.tweens.add).toHaveBeenCalledTimes(3);
     });
 
     it('複数フェーズが順次実行される', async () => {
