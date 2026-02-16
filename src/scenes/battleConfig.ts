@@ -167,6 +167,70 @@ export const COMMAND_BUTTON_ROWS: CommandType[][] = [
   [CommandType.REFLECTOR, CommandType.STANCE_A, CommandType.STANCE_B],
 ];
 
+/** コマンドボタンレイアウトの型 */
+export interface CommandButtonLayout {
+  buttonWidth: number;
+  buttonHeight: number;
+  buttonSpacing: number;
+  row1Y: number;
+  row2Y: number;
+  row1StartX: number;
+  row2StartX: number;
+  selectionY: number;
+  confirmY: number;
+  cancelX: number;
+  cancelY: number;
+}
+
+/**
+ * デバイスに応じたコマンドボタンレイアウトを返す
+ * モバイルではタッチしやすい大きめサイズに調整
+ */
+export function getCommandButtonLayout(isMobile: boolean): CommandButtonLayout {
+  if (!isMobile) {
+    return {
+      buttonWidth: COMMAND_UI_LAYOUT.buttonWidth,
+      buttonHeight: COMMAND_UI_LAYOUT.buttonHeight,
+      buttonSpacing: COMMAND_UI_LAYOUT.buttonSpacing,
+      row1Y: COMMAND_UI_LAYOUT.row1Y,
+      row2Y: COMMAND_UI_LAYOUT.row2Y,
+      row1StartX: COMMAND_UI_LAYOUT.row1StartX,
+      row2StartX: COMMAND_UI_LAYOUT.row2StartX,
+      selectionY: COMMAND_UI_LAYOUT.selectionY,
+      confirmY: COMMAND_UI_LAYOUT.confirmY,
+      cancelX: COMMAND_UI_LAYOUT.cancelX,
+      cancelY: COMMAND_UI_LAYOUT.cancelY,
+    };
+  }
+
+  // モバイル用: ボタンを大きく、間隔を広げる
+  const buttonWidth = 95;
+  const buttonHeight = 40;
+  const buttonSpacing = 105;
+  const row1Y = 480;
+  const row2Y = 528;
+  const row1StartX = 120;
+  const row2StartX = 172;
+  const selectionY = 570;
+  const confirmY = 570;
+  const cancelX = 660;
+  const cancelY = 528;
+
+  return {
+    buttonWidth,
+    buttonHeight,
+    buttonSpacing,
+    row1Y,
+    row2Y,
+    row1StartX,
+    row2StartX,
+    selectionY,
+    confirmY,
+    cancelX,
+    cancelY,
+  };
+}
+
 /** エフェクト再生用定数 */
 export const EFFECT_CONFIG = {
   /** ダメージ数値の表示時間（ms） */
