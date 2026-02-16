@@ -38,6 +38,8 @@ import { TutorialManager } from '../battle/TutorialManager';
 import { GAME_HEIGHT } from './gameConfig';
 import { SocketClient } from '../network/SocketClient';
 import { BattleResult } from '../types/BattleState';
+import { playBgm, playSe } from '../utils/audioManager';
+import { AudioKey } from '../constants/audioKeys';
 
 /** BattleSceneに渡されるデータ */
 export interface BattleSceneData {
@@ -221,6 +223,9 @@ export class BattleScene extends BaseScene {
 
     // モバイル横画面推奨プロンプト
     this.setupOrientationPrompt();
+
+    // バトルBGM再生
+    playBgm(this.sound, AudioKey.BGM_BATTLE);
   }
 
   private setupChallengeMode(data?: BattleSceneData): void {
@@ -556,6 +561,7 @@ export class BattleScene extends BaseScene {
 
     const success = this.commandManager.selectCommand(command);
     if (success) {
+      playSe(this.sound, AudioKey.SE_SELECT);
       this.updateCommandUI();
     }
   }
