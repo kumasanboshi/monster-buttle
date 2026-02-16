@@ -8,6 +8,7 @@ import {
   SETTINGS_COLORS,
   SETTINGS_LABELS,
 } from './settingsConfig';
+import { setBgmVolume } from '../utils/audioManager';
 
 /** スライダーUIの内部構造 */
 interface SliderUI {
@@ -270,6 +271,7 @@ export class SettingsScene extends BaseScene {
 
     if (slider === this.bgmSlider) {
       this.settings.bgmVolume = value;
+      setBgmVolume(value);
     } else if (slider === this.seSlider) {
       this.settings.seVolume = value;
     }

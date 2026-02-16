@@ -24,6 +24,15 @@ jest.mock('phaser', () => ({
         setOrigin: jest.fn().mockReturnThis(),
       }),
     };
+    sound = {
+      add: jest.fn().mockReturnValue({
+        play: jest.fn(),
+        stop: jest.fn(),
+        destroy: jest.fn(),
+        setVolume: jest.fn(),
+        setLoop: jest.fn(),
+      }),
+    };
     constructor(config: { key: string }) {
       this.scene.key = config.key;
     }

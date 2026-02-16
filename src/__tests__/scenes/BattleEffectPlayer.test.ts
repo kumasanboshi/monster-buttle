@@ -56,6 +56,20 @@ function createMockRectangle() {
   };
 }
 
+/** Phaser.Sound のモック */
+function createMockSoundManager() {
+  const mockSound = {
+    play: jest.fn(),
+    stop: jest.fn(),
+    destroy: jest.fn(),
+    setVolume: jest.fn(),
+    setLoop: jest.fn(),
+  };
+  return {
+    add: jest.fn().mockReturnValue(mockSound),
+  };
+}
+
 /** Phaser.Sceneのモック */
 function createMockScene() {
   const mockTweens = createMockTweens();
@@ -66,6 +80,7 @@ function createMockScene() {
       }),
     },
     tweens: mockTweens,
+    sound: createMockSoundManager(),
   };
 }
 
