@@ -2,6 +2,8 @@ import { BaseScene } from './BaseScene';
 import { SceneKey } from './sceneKeys';
 import { GAME_WIDTH, GAME_HEIGHT } from './gameConfig';
 import { TITLE_TEXT, TITLE_BUTTONS } from './titleConfig';
+import { playBgm } from '../utils/audioManager';
+import { AudioKey } from '../constants/audioKeys';
 
 /**
  * タイトル画面シーン
@@ -16,6 +18,7 @@ export class TitleScene extends BaseScene {
   create(): void {
     this.createTitle();
     this.createButtons();
+    playBgm(this.sound, AudioKey.BGM_TITLE);
   }
 
   private createTitle(): void {

@@ -11,6 +11,8 @@ import {
 } from './resultConfig';
 import { updateClearedStages } from '../utils/gameProgressManager';
 import { getChallengeStage, getNextStageNumber } from '../constants/challengeConfig';
+import { stopBgm, playSe } from '../utils/audioManager';
+import { AudioKey } from '../constants/audioKeys';
 
 /** ResultSceneに渡されるデータ */
 export interface ResultSceneData {
@@ -58,6 +60,14 @@ export class ResultScene extends BaseScene {
     ) {
       const updated = updateClearedStages(this.stageNumber);
       this.clearedStages = updated.clearedStages;
+    }
+
+    // BGMを停止し、結果に応じたSEを再生
+    stopBgm();
+    if (this.resultType === BattleResultType.PLAYER1_WIN) {
+      playSe(this.sound, AudioKey.SE_VICTORY);
+    } else if (this.resultType === BattleResultType.PLAYER2_WIN) {
+      playSe(this.sound, AudioKey.SE_DEFEAT);
     }
 
     this.createResultDisplay(battleResult?.resultType);

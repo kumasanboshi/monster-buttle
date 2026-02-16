@@ -4,6 +4,8 @@ import { DistanceType } from '../types/Distance';
 import { DISTANCE_CHARACTER_POSITIONS } from './battleConfig';
 import { EFFECT_CONFIG } from './battleConfig';
 import { loadSettings, getEffectSpeedMultiplier } from '../utils/settingsManager';
+import { playSe } from '../utils/audioManager';
+import { AudioKey } from '../constants/audioKeys';
 
 /**
  * エフェクト再生に必要なターゲットオブジェクト
@@ -120,6 +122,8 @@ export class BattleEffectPlayer {
     const targetObj = this.getTargetText(effect.target);
     const originalX = targetObj.x;
 
+    playSe(this.scene.sound, AudioKey.SE_ATTACK);
+
     return new Promise<void>(resolve => {
       // フラッシュ: 白く光らせる
       targetObj.setTint(EFFECT_CONFIG.weaponFlashColor);
@@ -145,6 +149,8 @@ export class BattleEffectPlayer {
    */
   private playSpecialAttack(effect: BattleEffect): Promise<void> {
     const targetObj = this.getTargetText(effect.target);
+
+    playSe(this.scene.sound, AudioKey.SE_ATTACK);
 
     return new Promise<void>(resolve => {
       targetObj.setTint(EFFECT_CONFIG.specialPulseColor);
