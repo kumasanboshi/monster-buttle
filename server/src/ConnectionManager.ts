@@ -160,6 +160,7 @@ export class ConnectionManager {
     if (!room) return;
 
     const isHost = room.host.socketId === socket.id;
+    this.pendingMonsterSelections.delete(room.roomId);
     this.roomManager.leaveRoom(room.roomId, socket.id);
     socket.leave(room.roomId);
 
@@ -325,6 +326,9 @@ export class ConnectionManager {
     if (!room) return;
 
     const isHost = room.host.socketId === socket.id;
+
+    // モンスター選択中の切断 → 選択をクリア
+    this.pendingMonsterSelections.delete(room.roomId);
 
     // バトル中の切断処理
     const battleRoom = this.battleManager.getRoom(room.roomId);

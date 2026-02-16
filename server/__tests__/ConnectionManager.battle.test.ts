@@ -334,4 +334,113 @@ describe('ConnectionManager (Battle)', () => {
       host.disconnect();
     });
   });
+
+  describe('モンスター選択中の切断/退室', () => {
+    it('モンスター選択中にゲストが切断するとpendingMonsterSelectionsがクリアされる', async () => {
+      const { host, guest, roomId } = await createRoomWithPlayers();
+
+      // ホストだけモンスター選択を送信（バトルはまだ始まらない）
+      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1Id });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // ゲスト切断
+      const opponentLeftPromise = waitForEvent<any>(host, ServerEvents.ROOM_OPPONENT_LEFT);
+      guest.disconnect();
+      await opponentLeftPromise;
+
+      // 新しいゲストが参加
+      const newGuest = await connectClient();
+      const joinedPromise = waitForEvent<any>(newGuest, ServerEvents.ROOM_JOINED);
+      const opponentJoinedPromise = waitForEvent<any>(host, ServerEvents.ROOM_OPPONENT_JOINED);
+      newGuest.emit(ClientEvents.ROOM_JOIN, { roomId });
+      await joinedPromise;
+      await opponentJoinedPromise;
+
+      // 新ゲストだけモンスター選択 → 前のホスト選択が残っていたらバトルが始まってしまう（バグ）
+      // 正しくクリアされていれば、バトルは始まらない
+      let battleStarted = false;
+      newGuest.on(ServerEvents.BATTLE_STARTED, () => { battleStarted = true; });
+      host.on(ServerEvents.BATTLE_STARTED, () => { battleStarted = true; });
+
+      newGuest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2Id });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      expect(battleStarted).toBe(false);
+
+      host.disconnect();
+      newGuest.disconnect();
+    });
+
+    it('モンスター選択中にゲストが退室するとpendingMonsterSelectionsがクリアされる', async () => {
+      const { host, guest, roomId } = await createRoomWithPlayers();
+
+      // ホストだけモンスター選択を送信
+      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1Id });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // ゲスト退室（room:leave）
+      const opponentLeftPromise = waitForEvent<any>(host, ServerEvents.ROOM_OPPONENT_LEFT);
+      guest.emit(ClientEvents.ROOM_LEAVE);
+      await opponentLeftPromise;
+
+      // 新しいゲストが参加
+      const newGuest = await connectClient();
+      const joinedPromise = waitForEvent<any>(newGuest, ServerEvents.ROOM_JOINED);
+      const opponentJoinedPromise = waitForEvent<any>(host, ServerEvents.ROOM_OPPONENT_JOINED);
+      newGuest.emit(ClientEvents.ROOM_JOIN, { roomId });
+      await joinedPromise;
+      await opponentJoinedPromise;
+
+      // 新ゲストだけモンスター選択 → バトルが始まらないことを確認
+      let battleStarted = false;
+      newGuest.on(ServerEvents.BATTLE_STARTED, () => { battleStarted = true; });
+      host.on(ServerEvents.BATTLE_STARTED, () => { battleStarted = true; });
+
+      newGuest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2Id });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      expect(battleStarted).toBe(false);
+
+      host.disconnect();
+      newGuest.disconnect();
+      guest.disconnect();
+    });
+
+    it('モンスター選択中にゲスト切断後、新ゲスト参加で両者再選択するとバトルが正常に開始する', async () => {
+      const { host, guest, roomId } = await createRoomWithPlayers();
+
+      // ホストだけモンスター選択を送信
+      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1Id });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // ゲスト切断
+      const opponentLeftPromise = waitForEvent<any>(host, ServerEvents.ROOM_OPPONENT_LEFT);
+      guest.disconnect();
+      await opponentLeftPromise;
+
+      // 新しいゲストが参加
+      const newGuest = await connectClient();
+      const joinedPromise = waitForEvent<any>(newGuest, ServerEvents.ROOM_JOINED);
+      const opponentJoinedPromise = waitForEvent<any>(host, ServerEvents.ROOM_OPPONENT_JOINED);
+      newGuest.emit(ClientEvents.ROOM_JOIN, { roomId });
+      await joinedPromise;
+      await opponentJoinedPromise;
+
+      // 両者がモンスター選択を再送信 → バトルが正常に開始する
+      const hostStartedPromise = waitForEvent<any>(host, ServerEvents.BATTLE_STARTED);
+      const guestStartedPromise = waitForEvent<any>(newGuest, ServerEvents.BATTLE_STARTED);
+      host.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster1Id });
+      newGuest.emit(ClientEvents.BATTLE_START, { roomId, monsterId: monster2Id });
+
+      const hostData = await hostStartedPromise;
+      const guestData = await guestStartedPromise;
+
+      expect(hostData.roomId).toBe(roomId);
+      expect(hostData.initialState).toBeDefined();
+      expect(guestData.roomId).toBe(roomId);
+
+      host.disconnect();
+      newGuest.disconnect();
+    });
+  });
 });
