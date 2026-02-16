@@ -23,8 +23,42 @@ describe('ASSET_MANIFEST', () => {
     expect(Array.isArray(ASSET_MANIFEST.assets)).toBe(true);
   });
 
-  it('初期状態では空配列であること（アセット未作成）', () => {
-    expect(ASSET_MANIFEST.assets).toHaveLength(0);
+  it('オーディオアセットが6件定義されていること', () => {
+    const audioAssets = ASSET_MANIFEST.assets.filter(a => a.type === AssetType.AUDIO);
+    expect(audioAssets).toHaveLength(6);
+  });
+
+  it('BGMアセットが正しいパスで定義されていること', () => {
+    const bgmTitle = ASSET_MANIFEST.assets.find(a => a.key === 'bgm_title');
+    const bgmBattle = ASSET_MANIFEST.assets.find(a => a.key === 'bgm_battle');
+    expect(bgmTitle).toBeDefined();
+    expect(bgmTitle!.path).toBe('assets/audio/bgm/title.mp3');
+    expect(bgmTitle!.type).toBe(AssetType.AUDIO);
+    expect(bgmBattle).toBeDefined();
+    expect(bgmBattle!.path).toBe('assets/audio/bgm/battle.mp3');
+    expect(bgmBattle!.type).toBe(AssetType.AUDIO);
+  });
+
+  it('SEアセットが正しいパスで定義されていること', () => {
+    const seKeys = ['se_attack', 'se_select', 'se_victory', 'se_defeat'];
+    const sePaths = [
+      'assets/audio/se/attack.mp3',
+      'assets/audio/se/select.mp3',
+      'assets/audio/se/victory.mp3',
+      'assets/audio/se/defeat.mp3',
+    ];
+    seKeys.forEach((key, i) => {
+      const asset = ASSET_MANIFEST.assets.find(a => a.key === key);
+      expect(asset).toBeDefined();
+      expect(asset!.path).toBe(sePaths[i]);
+      expect(asset!.type).toBe(AssetType.AUDIO);
+    });
+  });
+
+  it('マニフェストのバリデーションが通ること', () => {
+    const result = validateManifest(ASSET_MANIFEST);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
   });
 });
 
