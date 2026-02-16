@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import { detectDevice, isPortraitOrientation, DeviceInfo } from '../../utils/deviceDetector';
 
 // window/navigator のモックヘルパー
