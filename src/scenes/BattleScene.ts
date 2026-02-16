@@ -14,7 +14,9 @@ import {
   COMMAND_BUTTON_ROWS,
   formatTime,
   clampHp,
+  getCommandButtonLayout,
 } from './battleConfig';
+import { detectDevice } from '../utils/deviceDetector';
 import { DistanceType } from '../types/Distance';
 import { StanceType } from '../types/Stance';
 import { CommandType } from '../types/Command';
@@ -216,6 +218,9 @@ export class BattleScene extends BaseScene {
     if (this.isNetworkMode && this.socketClient) {
       this.setupNetworkListeners();
     }
+
+    // モバイル横画面推奨プロンプト
+    this.setupOrientationPrompt();
   }
 
   private setupChallengeMode(data?: BattleSceneData): void {
@@ -452,7 +457,9 @@ export class BattleScene extends BaseScene {
   }
 
   private createCommandUI(): void {
-    const { row1Y, row2Y, buttonWidth, buttonHeight, buttonSpacing, row1StartX, row2StartX } = COMMAND_UI_LAYOUT;
+    const deviceInfo = detectDevice();
+    const layout = getCommandButtonLayout(deviceInfo.isMobile);
+    const { row1Y, row2Y, buttonWidth, buttonHeight, buttonSpacing, row1StartX, row2StartX } = layout;
     const stanceLabels = this.commandManager.getStanceLabels();
 
     // コマンドボタン生成
@@ -487,8 +494,8 @@ export class BattleScene extends BaseScene {
     // キャンセルボタン
     this.cancelButtonBg = this.add
       .rectangle(
-        COMMAND_UI_LAYOUT.cancelX,
-        COMMAND_UI_LAYOUT.cancelY,
+        layout.cancelX,
+        layout.cancelY,
         buttonWidth,
         buttonHeight,
         COMMAND_UI_COLORS.cancelButton
@@ -497,7 +504,7 @@ export class BattleScene extends BaseScene {
       .on('pointerdown', () => this.onCancelClick());
 
     this.cancelButtonText = this.add
-      .text(COMMAND_UI_LAYOUT.cancelX, COMMAND_UI_LAYOUT.cancelY, '戻す', {
+      .text(layout.cancelX, layout.cancelY, '戻す', {
         fontSize: '14px',
         color: '#ffffff',
         fontFamily: 'Arial, sans-serif',
@@ -507,7 +514,7 @@ export class BattleScene extends BaseScene {
 
     // 選択表示
     this.selectionText1st = this.add
-      .text(200, COMMAND_UI_LAYOUT.selectionY, '1st: ---', {
+      .text(200, layout.selectionY, '1st: ---', {
         fontSize: '16px',
         color: COMMAND_UI_COLORS.selectionText,
         fontFamily: 'Arial, sans-serif',
@@ -515,7 +522,7 @@ export class BattleScene extends BaseScene {
       .setOrigin(0.5);
 
     this.selectionText2nd = this.add
-      .text(380, COMMAND_UI_LAYOUT.selectionY, '2nd: ---', {
+      .text(380, layout.selectionY, '2nd: ---', {
         fontSize: '16px',
         color: COMMAND_UI_COLORS.selectionText,
         fontFamily: 'Arial, sans-serif',
@@ -524,12 +531,12 @@ export class BattleScene extends BaseScene {
 
     // 決定ボタン
     this.confirmButtonBg = this.add
-      .rectangle(580, COMMAND_UI_LAYOUT.confirmY, 100, buttonHeight, COMMAND_UI_COLORS.confirmDisabled)
+      .rectangle(580, layout.confirmY, 100, buttonHeight, COMMAND_UI_COLORS.confirmDisabled)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.onConfirmClick());
 
     this.confirmButtonText = this.add
-      .text(580, COMMAND_UI_LAYOUT.confirmY, '決定', {
+      .text(580, layout.confirmY, '決定', {
         fontSize: '16px',
         color: '#ffffff',
         fontFamily: 'Arial, sans-serif',
