@@ -36,11 +36,17 @@ export interface AssetManifest {
 }
 
 /**
- * 第1フェーズのアセットマニフェスト
- * 現時点ではプレースホルダー（アセットが未作成のため空）
+ * アセットマニフェスト
  */
 export const ASSET_MANIFEST: AssetManifest = {
-  assets: [],
+  assets: [
+    { key: 'bgm_title', type: AssetType.AUDIO, path: 'assets/audio/bgm/title.mp3' },
+    { key: 'bgm_battle', type: AssetType.AUDIO, path: 'assets/audio/bgm/battle.mp3' },
+    { key: 'se_attack', type: AssetType.AUDIO, path: 'assets/audio/se/attack.mp3' },
+    { key: 'se_select', type: AssetType.AUDIO, path: 'assets/audio/se/select.mp3' },
+    { key: 'se_victory', type: AssetType.AUDIO, path: 'assets/audio/se/victory.mp3' },
+    { key: 'se_defeat', type: AssetType.AUDIO, path: 'assets/audio/se/defeat.mp3' },
+  ],
 };
 
 /**
