@@ -280,7 +280,7 @@ export class BattleEffectPlayer {
 
     return new Promise<void>(resolve => {
       let completed = 0;
-      const totalExpected = 2;
+      const totalExpected = 2 + (playerImage ? 1 : 0) + (enemyImage ? 1 : 0);
       const onOneComplete = () => {
         completed++;
         if (completed >= totalExpected) resolve();
@@ -303,13 +303,14 @@ export class BattleEffectPlayer {
         onComplete: onOneComplete,
       });
 
-      // Image移動（存在する場合のみ、完了カウントには含めない）
+      // Image移動（存在する場合、完了カウントに含める）
       if (playerImage) {
         this.scene.tweens.add({
           targets: playerImage,
           x: newPositions.playerX,
           duration: EFFECT_CONFIG.distanceMoveDuration * this.speedMultiplier,
           ease: 'Power2',
+          onComplete: onOneComplete,
         });
       }
 
@@ -319,6 +320,7 @@ export class BattleEffectPlayer {
           x: newPositions.enemyX,
           duration: EFFECT_CONFIG.distanceMoveDuration * this.speedMultiplier,
           ease: 'Power2',
+          onComplete: onOneComplete,
         });
       }
     });

@@ -407,8 +407,9 @@ export class BattleScene extends BaseScene {
         .setOrigin(0.5);
     }
 
-    // 名前テキスト（画像の下に配置）
-    const textY = this.playerCharacterImage ? characterY + 40 : characterY;
+    // 名前テキスト（どちらかでも画像があれば下に配置）
+    const hasAnyImage = this.playerCharacterImage || this.enemyCharacterImage;
+    const textY = hasAnyImage ? characterY + 40 : characterY;
 
     this.playerCharacterText = this.add
       .text(positions.playerX, textY, this.playerMonster.name, {
