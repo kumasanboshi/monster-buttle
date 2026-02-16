@@ -13,6 +13,8 @@ import { AudioKey } from '../constants/audioKeys';
 export interface EffectTargets {
   playerText: Phaser.GameObjects.Text;
   enemyText: Phaser.GameObjects.Text;
+  playerImage?: Phaser.GameObjects.Image;
+  enemyImage?: Phaser.GameObjects.Image;
   playerHpBarFill: Phaser.GameObjects.Rectangle;
   enemyHpBarFill: Phaser.GameObjects.Rectangle;
 }
@@ -83,10 +85,21 @@ export class BattleEffectPlayer {
   }
 
   /**
+   * ターゲットに対応するエフェクト対象オブジェクトを取得
+   * Imageがあればそちらを優先、なければTextにフォールバック
+   */
+  private getTargetObject(target: EffectTarget): Phaser.GameObjects.Image | Phaser.GameObjects.Text {
+    if (target === 'player') {
+      return this.targets.playerImage ?? this.targets.playerText;
+    }
+    return this.targets.enemyImage ?? this.targets.enemyText;
+  }
+
+  /**
    * ダメージ数値表示: テキスト生成→上に浮かびながらフェードアウト
    */
   private playDamageNumber(effect: BattleEffect): Promise<void> {
-    const targetObj = this.getTargetText(effect.target);
+    const targetObj = this.getTargetObject(effect.target);
     const damageText = this.scene.add.text(
       targetObj.x,
       targetObj.y - 30,
@@ -119,7 +132,7 @@ export class BattleEffectPlayer {
    * 武器攻撃エフェクト: 白フラッシュ + シェイク
    */
   private playWeaponAttack(effect: BattleEffect): Promise<void> {
-    const targetObj = this.getTargetText(effect.target);
+    const targetObj = this.getTargetObject(effect.target);
     const originalX = targetObj.x;
 
     playSe(this.scene.sound, AudioKey.SE_ATTACK);
@@ -148,7 +161,7 @@ export class BattleEffectPlayer {
    * 特殊攻撃エフェクト: 紫パルス + スケール拡大縮小
    */
   private playSpecialAttack(effect: BattleEffect): Promise<void> {
-    const targetObj = this.getTargetText(effect.target);
+    const targetObj = this.getTargetObject(effect.target);
 
     playSe(this.scene.sound, AudioKey.SE_ATTACK);
 
@@ -175,7 +188,7 @@ export class BattleEffectPlayer {
    * リフレクター発動: 青シールドフラッシュ + "REFLECT" テキスト
    */
   private playReflector(effect: BattleEffect): Promise<void> {
-    const targetObj = this.getTargetText(effect.target);
+    const targetObj = this.getTargetObject(effect.target);
     const reflectText = this.scene.add.text(
       targetObj.x,
       targetObj.y - 40,
@@ -211,7 +224,7 @@ export class BattleEffectPlayer {
    * 回避エフェクト: 横ステップ + "MISS" テキスト
    */
   private playEvasion(effect: BattleEffect): Promise<void> {
-    const targetObj = this.getTargetText(effect.target);
+    const targetObj = this.getTargetObject(effect.target);
     const originalX = targetObj.x;
     const missText = this.scene.add.text(
       targetObj.x,
@@ -254,6 +267,7 @@ export class BattleEffectPlayer {
 
   /**
    * 距離移動アニメーション: キャラクター位置のTween移動
+   * Image+Text両方を同時に移動させる
    */
   private playDistanceMove(effect: BattleEffect): Promise<void> {
     if (!effect.distanceTo) return Promise.resolve();
@@ -261,14 +275,18 @@ export class BattleEffectPlayer {
     const newPositions = DISTANCE_CHARACTER_POSITIONS[effect.distanceTo];
     const playerText = this.targets.playerText;
     const enemyText = this.targets.enemyText;
+    const playerImage = this.targets.playerImage;
+    const enemyImage = this.targets.enemyImage;
 
     return new Promise<void>(resolve => {
       let completed = 0;
+      const totalExpected = 2;
       const onOneComplete = () => {
         completed++;
-        if (completed >= 2) resolve();
+        if (completed >= totalExpected) resolve();
       };
 
+      // Text移動
       this.scene.tweens.add({
         targets: playerText,
         x: newPositions.playerX,
@@ -284,6 +302,25 @@ export class BattleEffectPlayer {
         ease: 'Power2',
         onComplete: onOneComplete,
       });
+
+      // Image移動（存在する場合のみ、完了カウントには含めない）
+      if (playerImage) {
+        this.scene.tweens.add({
+          targets: playerImage,
+          x: newPositions.playerX,
+          duration: EFFECT_CONFIG.distanceMoveDuration * this.speedMultiplier,
+          ease: 'Power2',
+        });
+      }
+
+      if (enemyImage) {
+        this.scene.tweens.add({
+          targets: enemyImage,
+          x: newPositions.enemyX,
+          duration: EFFECT_CONFIG.distanceMoveDuration * this.speedMultiplier,
+          ease: 'Power2',
+        });
+      }
     });
   }
 }
