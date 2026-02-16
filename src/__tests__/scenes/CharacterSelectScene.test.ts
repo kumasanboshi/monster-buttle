@@ -31,6 +31,13 @@ jest.mock('phaser', () => ({
         add: jest.fn(),
         list: [],
       }),
+      image: jest.fn().mockReturnValue({
+        setOrigin: jest.fn().mockReturnThis(),
+        setScale: jest.fn().mockReturnThis(),
+      }),
+    };
+    textures = {
+      exists: jest.fn().mockReturnValue(false),
     };
     input = {
       on: jest.fn(),
