@@ -94,11 +94,11 @@ describe('TutorialManager', () => {
       });
     });
 
-    it('ターン5: スタンスA・武器攻撃', () => {
+    it('ターン5: スタンスA・特殊攻撃', () => {
       const cmds = manager.getPlayerCommands(5);
       expect(cmds).toEqual({
         first: { type: CommandType.STANCE_A },
-        second: { type: CommandType.WEAPON_ATTACK },
+        second: { type: CommandType.SPECIAL_ATTACK },
       });
     });
 

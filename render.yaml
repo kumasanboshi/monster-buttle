@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: monster-buttle-server
+    runtime: node
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: node dist/server/src/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        sync: false  # Render Dashboard で手動設定

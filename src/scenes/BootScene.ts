@@ -1,6 +1,7 @@
 import { BaseScene } from './BaseScene';
 import { SceneKey } from './sceneKeys';
 import { ASSET_MANIFEST, AssetType, SpritesheetAssetEntry } from './assetManifest';
+import { PlaceholderGenerator } from './PlaceholderGenerator';
 
 /**
  * 起動シーン
@@ -12,6 +13,11 @@ export class BootScene extends BaseScene {
   }
 
   preload(): void {
+    // 音声ファイルのロード失敗を無視（プレースホルダー音声対応）
+    this.load.on('loaderror', (file: { type: string }) => {
+      if (file.type === 'audio') return;
+    });
+
     for (const asset of ASSET_MANIFEST.assets) {
       switch (asset.type) {
         case AssetType.IMAGE:
@@ -36,6 +42,10 @@ export class BootScene extends BaseScene {
   }
 
   create(): void {
+    // プレースホルダーテクスチャをランタイム生成
+    const generator = new PlaceholderGenerator(this);
+    generator.generateAll();
+
     this.transitionTo(SceneKey.TITLE);
   }
 }

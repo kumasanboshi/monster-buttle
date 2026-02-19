@@ -46,9 +46,9 @@ describe('TUTORIAL_TURNS', () => {
     expect(t.popupMessage).toBe('リフレクターで特殊攻撃を跳ね返せ');
   });
 
-  it('ターン5: スタンスA・武器攻撃 vs 前進・前進', () => {
+  it('ターン5: スタンスA・特殊攻撃 vs 前進・前進', () => {
     const t = TUTORIAL_TURNS[4];
-    expect(t.playerCommands).toEqual({ first: CommandType.STANCE_A, second: CommandType.WEAPON_ATTACK });
+    expect(t.playerCommands).toEqual({ first: CommandType.STANCE_A, second: CommandType.SPECIAL_ATTACK });
     expect(t.enemyCommands).toEqual({ first: CommandType.ADVANCE, second: CommandType.ADVANCE });
     expect(t.popupMessage).toBe('スタンス切替で攻撃力UP');
   });

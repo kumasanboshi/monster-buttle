@@ -41,6 +41,7 @@ import { SocketClient } from '../network/SocketClient';
 import { BattleResult } from '../types/BattleState';
 import { playBgm, playSe } from '../utils/audioManager';
 import { AudioKey } from '../constants/audioKeys';
+import { getMonsterBattleKey } from '../constants/imageKeys';
 
 /** BattleSceneに渡されるデータ */
 export interface BattleSceneData {
@@ -89,6 +90,8 @@ export class BattleScene extends BaseScene {
   // UIオブジェクト - キャラ表示
   private playerCharacterText!: Phaser.GameObjects.Text;
   private enemyCharacterText!: Phaser.GameObjects.Text;
+  private playerCharacterImage?: Phaser.GameObjects.Image;
+  private enemyCharacterImage?: Phaser.GameObjects.Image;
 
   // UIオブジェクト - ステータス
   private distanceText!: Phaser.GameObjects.Text;
@@ -221,6 +224,8 @@ export class BattleScene extends BaseScene {
     this.effectPlayer = new BattleEffectPlayer(this, {
       playerText: this.playerCharacterText,
       enemyText: this.enemyCharacterText,
+      playerImage: this.playerCharacterImage,
+      enemyImage: this.enemyCharacterImage,
       playerHpBarFill: this.playerHpBarFill,
       enemyHpBarFill: this.enemyHpBarFill,
     });
@@ -402,8 +407,28 @@ export class BattleScene extends BaseScene {
     const { characterY } = BATTLE_LAYOUT;
     const positions = DISTANCE_CHARACTER_POSITIONS[this.currentDistance];
 
+    // モンスタースプライト画像（テクスチャが存在する場合のみ）
+    const playerTextureKey = getMonsterBattleKey(this.playerMonster.id);
+    const enemyTextureKey = getMonsterBattleKey(this.enemyMonster.id);
+
+    if (this.textures.exists(playerTextureKey)) {
+      this.playerCharacterImage = this.add
+        .image(positions.playerX, characterY - 20, playerTextureKey)
+        .setOrigin(0.5);
+    }
+
+    if (this.textures.exists(enemyTextureKey)) {
+      this.enemyCharacterImage = this.add
+        .image(positions.enemyX, characterY - 20, enemyTextureKey)
+        .setOrigin(0.5);
+    }
+
+    // 名前テキスト（どちらかでも画像があれば下に配置）
+    const hasAnyImage = this.playerCharacterImage || this.enemyCharacterImage;
+    const textY = hasAnyImage ? characterY + 40 : characterY;
+
     this.playerCharacterText = this.add
-      .text(positions.playerX, characterY, this.playerMonster.name, {
+      .text(positions.playerX, textY, this.playerMonster.name, {
         fontSize: '28px',
         color: '#88ccff',
         fontFamily: 'Arial, sans-serif',
@@ -412,7 +437,7 @@ export class BattleScene extends BaseScene {
       .setOrigin(0.5);
 
     this.enemyCharacterText = this.add
-      .text(positions.enemyX, characterY, this.enemyMonster.name, {
+      .text(positions.enemyX, textY, this.enemyMonster.name, {
         fontSize: '28px',
         color: '#ff8888',
         fontFamily: 'Arial, sans-serif',
@@ -422,7 +447,7 @@ export class BattleScene extends BaseScene {
 
     // 距離矢印
     this.add
-      .text(GAME_WIDTH / 2, characterY + 40, '← 距離 →', {
+      .text(GAME_WIDTH / 2, characterY + 60, '← 距離 →', {
         fontSize: '14px',
         color: '#888888',
         fontFamily: 'Arial, sans-serif',
@@ -786,6 +811,13 @@ export class BattleScene extends BaseScene {
     const positions = DISTANCE_CHARACTER_POSITIONS[this.currentDistance];
     this.playerCharacterText.x = positions.playerX;
     this.enemyCharacterText.x = positions.enemyX;
+
+    if (this.playerCharacterImage) {
+      this.playerCharacterImage.x = positions.playerX;
+    }
+    if (this.enemyCharacterImage) {
+      this.enemyCharacterImage.x = positions.enemyX;
+    }
   }
 
   private updateTimeDisplay(): void {

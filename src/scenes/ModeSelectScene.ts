@@ -19,7 +19,7 @@ import { GameMode } from '../types/GameMode';
 import { ErrorCode } from '../../shared/types/SocketEvents';
 import { RoomInfo } from '../../shared/types/RoomTypes';
 
-const SERVER_URL = 'http://localhost:3001';
+const SERVER_URL = process.env.VITE_SERVER_URL || 'http://localhost:3001';
 
 export class ModeSelectScene extends BaseScene {
   private socketClient: SocketClient;

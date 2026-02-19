@@ -53,7 +53,7 @@ export const TUTORIAL_TURNS: TutorialTurnDef[] = [
   },
   {
     turn: 5,
-    playerCommands: { first: CommandType.STANCE_A, second: CommandType.WEAPON_ATTACK },
+    playerCommands: { first: CommandType.STANCE_A, second: CommandType.SPECIAL_ATTACK },
     enemyCommands: { first: CommandType.ADVANCE, second: CommandType.ADVANCE },
     popupMessage: 'スタンス切替で攻撃力UP',
   },

@@ -129,25 +129,18 @@ describe('CommandSelectionManager', () => {
       expect(validCommands).toContain(CommandType.STANCE_B);
     });
 
-    it('中距離では武器攻撃が無効', () => {
-      const manager = new CommandSelectionManager(
-        createTestState({ currentDistance: DistanceType.MID }),
-        'player1',
-        createTestMonster()
-      );
-      expect(manager.getValidCommands()).not.toContain(CommandType.WEAPON_ATTACK);
+    it('武器攻撃は全距離で選択可能（命中判定は解決時）', () => {
+      for (const distance of [DistanceType.NEAR, DistanceType.MID, DistanceType.FAR]) {
+        const manager = new CommandSelectionManager(
+          createTestState({ currentDistance: distance }),
+          'player1',
+          createTestMonster()
+        );
+        expect(manager.getValidCommands()).toContain(CommandType.WEAPON_ATTACK);
+      }
     });
 
-    it('近距離では武器攻撃が有効', () => {
-      const manager = new CommandSelectionManager(
-        createTestState({ currentDistance: DistanceType.NEAR }),
-        'player1',
-        createTestMonster()
-      );
-      expect(manager.getValidCommands()).toContain(CommandType.WEAPON_ATTACK);
-    });
-
-    it('リフレクター残り回数0では無効', () => {
+    it('リフレクター残り回数0でも有効（無効化のみで使用可能）', () => {
       const manager = new CommandSelectionManager(
         createTestState({
           player1: {
@@ -161,19 +154,16 @@ describe('CommandSelectionManager', () => {
         'player1',
         createTestMonster() // maxReflectCount: 2
       );
-      expect(manager.getValidCommands()).not.toContain(CommandType.REFLECTOR);
+      expect(manager.getValidCommands()).toContain(CommandType.REFLECTOR);
     });
 
-    it('無効なコマンドは選択できない', () => {
+    it('全7コマンドが有効として返される', () => {
       const manager = new CommandSelectionManager(
         createTestState({ currentDistance: DistanceType.MID }),
         'player1',
         createTestMonster()
       );
-      // 中距離では武器攻撃は無効
-      const result = manager.selectCommand(CommandType.WEAPON_ATTACK);
-      expect(result).toBe(false);
-      expect(manager.getSelection().first).toBeNull();
+      expect(manager.getValidCommands()).toHaveLength(7);
     });
   });
 

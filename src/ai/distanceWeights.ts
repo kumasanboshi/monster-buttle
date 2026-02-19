@@ -6,8 +6,8 @@ import { CommandType, DistanceType } from '../types';
  * 種族傾向の重みに掛け合わせて使用する。
  * 1.0 = 基準、>1.0 = 距離的に有利、<1.0 = 距離的に不利
  *
- * 注意: WEAPON_ATTACKはgetValidCommandsで近距離のみに制限されるため、
- * MID/FARでの値は実際には使用されないが、完全性のため定義している。
+ * 注意: WEAPON_ATTACKは全距離で選択可能。命中判定はコマンド解決時に行う。
+ * MID/FARでは空振りリスクがあるが、AIの重みで自然に調整される。
  */
 export type DistanceWeightModifiers = Record<CommandType, number>;
 
