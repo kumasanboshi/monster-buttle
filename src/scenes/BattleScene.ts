@@ -443,9 +443,9 @@ export class BattleScene extends BaseScene {
       })
       .setOrigin(0.5);
 
-    // 残り時間
+    // 残り時間（画面上部中央）
     this.timeText = this.add
-      .text(GAME_WIDTH / 2, statusY + 35, '', {
+      .text(GAME_WIDTH / 2, BATTLE_LAYOUT.timeY, '', {
         fontSize: '24px',
         color: BATTLE_COLORS.timeText,
         fontFamily: 'Arial, sans-serif',

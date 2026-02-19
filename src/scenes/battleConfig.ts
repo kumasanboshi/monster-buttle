@@ -19,6 +19,8 @@ export interface BattleLayoutConfig {
   characterY: number;
   /** ステータス表示エリアのY座標 */
   statusY: number;
+  /** 残り時間表示のY座標 */
+  timeY: number;
 }
 
 /** バトル画面レイアウト */
@@ -30,6 +32,7 @@ export const BATTLE_LAYOUT: BattleLayoutConfig = {
   enemyHpBarX: GAME_WIDTH - 30 - 250, // 520
   characterY: 250,
   statusY: 430,
+  timeY: 60,
 };
 
 /** バトル画面の色設定 */
