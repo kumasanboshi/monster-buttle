@@ -112,11 +112,11 @@ function createTestBattleState(p1Hp: number, p2Hp: number): BattleState {
 }
 
 function createWinResult(p1Hp = 100, p2Hp = 0): BattleResult {
-  return { resultType: BattleResultType.PLAYER1_WIN, finalState: createTestBattleState(p1Hp, p2Hp) };
+  return { resultType: BattleResultType.PLAYER1_WIN, finalState: createTestBattleState(p1Hp, p2Hp), turnHistory: [], reason: 'hp0' };
 }
 
 function createLoseResult(): BattleResult {
-  return { resultType: BattleResultType.PLAYER2_WIN, finalState: createTestBattleState(0, 100) };
+  return { resultType: BattleResultType.PLAYER2_WIN, finalState: createTestBattleState(0, 100), turnHistory: [], reason: 'hp0' };
 }
 
 describe('ResultScene - CHALLENGE勝利時の成長差分表示', () => {

@@ -8,6 +8,8 @@ export interface ResultLayoutConfig {
   resultTextY: number;
   /** HP表示エリアのY座標 */
   hpDisplayY: number;
+  /** 成長差分表示エリアの開始Y座標（CHALLENGEモード勝利時） */
+  growthDisplayY: number;
   /** ボタン開始Y座標 */
   buttonStartY: number;
   /** ボタン間隔 */
@@ -18,8 +20,9 @@ export interface ResultLayoutConfig {
 export const RESULT_LAYOUT: ResultLayoutConfig = {
   resultTextY: 150,
   hpDisplayY: 250,
-  buttonStartY: 400,
-  buttonSpacing: 60,
+  growthDisplayY: 310,
+  buttonStartY: 470,
+  buttonSpacing: 50,
 };
 
 /** リザルト画面の色設定 */

@@ -66,6 +66,39 @@ export function getMonsterWithFinalStats(monsterId: string): Monster | undefined
   };
 }
 
+/** パラメータ成長差分の型 */
+export interface StatsDiff {
+  hp: { before: number; after: number; gain: number };
+  strength: { before: number; after: number; gain: number };
+  special: { before: number; after: number; gain: number };
+  speed: { before: number; after: number; gain: number };
+  toughness: { before: number; after: number; gain: number };
+}
+
+/**
+ * ステージクリア前後のパラメータ差分を計算する
+ * stagesAfter: クリア後のclearedStages（1以上）
+ * stagesAfter=0 の場合は before=after=基礎値（gain=0）
+ */
+export function calculateStatsDiff(monsterId: string, stagesAfter: number): StatsDiff | undefined {
+  const base = MONSTER_DATABASE.find((m) => m.id === monsterId);
+  if (!base) return undefined;
+
+  const abilityUp = ABILITY_UP_VALUES[monsterId];
+  if (!abilityUp) return undefined;
+
+  const before = calculateGrownStats(base.stats, abilityUp, Math.max(0, stagesAfter - 1));
+  const after = calculateGrownStats(base.stats, abilityUp, stagesAfter);
+
+  return {
+    hp:        { before: before.hp,        after: after.hp,        gain: after.hp        - before.hp },
+    strength:  { before: before.strength,  after: after.strength,  gain: after.strength  - before.strength },
+    special:   { before: before.special,   after: after.special,   gain: after.special   - before.special },
+    speed:     { before: before.speed,     after: after.speed,     gain: after.speed     - before.speed },
+    toughness: { before: before.toughness, after: after.toughness, gain: after.toughness - before.toughness },
+  };
+}
+
 /**
  * 全モンスターの最終パラメータ版データベース
  */
