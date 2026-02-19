@@ -6,7 +6,7 @@
 
 import { BaseScene } from './BaseScene';
 import { SceneKey } from './sceneKeys';
-import { GAME_WIDTH } from './gameConfig';
+import { GAME_WIDTH, GAME_HEIGHT } from './gameConfig';
 import {
   ModeSelectState,
   MODE_SELECT_LAYOUT,
@@ -16,6 +16,7 @@ import {
 } from './modeSelectConfig';
 import { SocketClient } from '../network/SocketClient';
 import { GameMode } from '../types/GameMode';
+import { BackgroundImageKey } from '../constants/imageKeys';
 import { ErrorCode } from '../../shared/types/SocketEvents';
 import { RoomInfo } from '../../shared/types/RoomTypes';
 
@@ -51,6 +52,9 @@ export class ModeSelectScene extends BaseScene {
 
   create(): void {
     this.cameras.main.setBackgroundColor(MODE_SELECT_COLORS.background);
+    if (this.textures.exists(BackgroundImageKey.MODE_SELECT)) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, BackgroundImageKey.MODE_SELECT).setOrigin(0.5);
+    }
     this.connectToServer();
     this.showMainMenu();
   }

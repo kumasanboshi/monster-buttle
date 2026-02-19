@@ -1,6 +1,7 @@
 import {
   MonsterImageKey,
   UIImageKey,
+  BackgroundImageKey,
   getMonsterBattleKey,
   getMonsterPortraitKey,
 } from '../constants/imageKeys';
@@ -58,5 +59,20 @@ describe('getMonsterPortraitKey', () => {
     expect(getMonsterPortraitKey('morsu')).toBe('monster_morsu_portrait');
     expect(getMonsterPortraitKey('graon')).toBe('monster_graon_portrait');
     expect(getMonsterPortraitKey('igna')).toBe('monster_igna_portrait');
+  });
+});
+
+describe('BackgroundImageKey', () => {
+  it('6件の背景画像キーが定義されていること', () => {
+    expect(Object.keys(BackgroundImageKey)).toHaveLength(6);
+  });
+
+  it('各キーが bg_{scene} 形式であること', () => {
+    expect(BackgroundImageKey.TITLE).toBe('bg_title');
+    expect(BackgroundImageKey.BATTLE).toBe('bg_battle');
+    expect(BackgroundImageKey.CHARACTER_SELECT).toBe('bg_character_select');
+    expect(BackgroundImageKey.MODE_SELECT).toBe('bg_mode_select');
+    expect(BackgroundImageKey.RESULT).toBe('bg_result');
+    expect(BackgroundImageKey.SETTINGS).toBe('bg_settings');
   });
 });

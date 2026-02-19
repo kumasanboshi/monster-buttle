@@ -40,12 +40,40 @@ export interface AssetManifest {
  */
 export const ASSET_MANIFEST: AssetManifest = {
   assets: [
+    // オーディオ
     { key: 'bgm_title', type: AssetType.AUDIO, path: 'assets/audio/bgm/title.mp3' },
     { key: 'bgm_battle', type: AssetType.AUDIO, path: 'assets/audio/bgm/battle.mp3' },
     { key: 'se_attack', type: AssetType.AUDIO, path: 'assets/audio/se/attack.mp3' },
     { key: 'se_select', type: AssetType.AUDIO, path: 'assets/audio/se/select.mp3' },
     { key: 'se_victory', type: AssetType.AUDIO, path: 'assets/audio/se/victory.mp3' },
     { key: 'se_defeat', type: AssetType.AUDIO, path: 'assets/audio/se/defeat.mp3' },
+    // モンスター画像（バトル用）
+    { key: 'monster_zaag_battle', type: AssetType.IMAGE, path: 'assets/images/monsters/zaag.png' },
+    { key: 'monster_gardan_battle', type: AssetType.IMAGE, path: 'assets/images/monsters/gardan.png' },
+    { key: 'monster_roona_battle', type: AssetType.IMAGE, path: 'assets/images/monsters/roona.png' },
+    { key: 'monster_zephyr_battle', type: AssetType.IMAGE, path: 'assets/images/monsters/zephyr.png' },
+    { key: 'monster_balga_battle', type: AssetType.IMAGE, path: 'assets/images/monsters/balga.png' },
+    { key: 'monster_morsu_battle', type: AssetType.IMAGE, path: 'assets/images/monsters/morsu.png' },
+    { key: 'monster_graon_battle', type: AssetType.IMAGE, path: 'assets/images/monsters/graon.png' },
+    { key: 'monster_igna_battle', type: AssetType.IMAGE, path: 'assets/images/monsters/igna.png' },
+    // モンスター画像（ポートレート用 — バトルと同じファイルを使用）
+    { key: 'monster_zaag_portrait', type: AssetType.IMAGE, path: 'assets/images/monsters/zaag.png' },
+    { key: 'monster_gardan_portrait', type: AssetType.IMAGE, path: 'assets/images/monsters/gardan.png' },
+    { key: 'monster_roona_portrait', type: AssetType.IMAGE, path: 'assets/images/monsters/roona.png' },
+    { key: 'monster_zephyr_portrait', type: AssetType.IMAGE, path: 'assets/images/monsters/zephyr.png' },
+    { key: 'monster_balga_portrait', type: AssetType.IMAGE, path: 'assets/images/monsters/balga.png' },
+    { key: 'monster_morsu_portrait', type: AssetType.IMAGE, path: 'assets/images/monsters/morsu.png' },
+    { key: 'monster_graon_portrait', type: AssetType.IMAGE, path: 'assets/images/monsters/graon.png' },
+    { key: 'monster_igna_portrait', type: AssetType.IMAGE, path: 'assets/images/monsters/igna.png' },
+    // UIアイコン
+    { key: 'ui_lock_icon', type: AssetType.IMAGE, path: 'assets/images/monsters/lock.png' },
+    // 背景画像
+    { key: 'bg_title',            type: AssetType.IMAGE, path: 'assets/images/backgrounds/bg_title.png' },
+    { key: 'bg_battle',           type: AssetType.IMAGE, path: 'assets/images/backgrounds/bg_battle.png' },
+    { key: 'bg_character_select', type: AssetType.IMAGE, path: 'assets/images/backgrounds/bg_character_select.png' },
+    { key: 'bg_mode_select',      type: AssetType.IMAGE, path: 'assets/images/backgrounds/bg_mode_select.png' },
+    { key: 'bg_result',           type: AssetType.IMAGE, path: 'assets/images/backgrounds/bg_result.png' },
+    { key: 'bg_settings',         type: AssetType.IMAGE, path: 'assets/images/backgrounds/bg_settings.png' },
   ],
 };
 

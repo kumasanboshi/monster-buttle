@@ -4,6 +4,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from './gameConfig';
 import { TITLE_TEXT, TITLE_BUTTONS } from './titleConfig';
 import { playBgm } from '../utils/audioManager';
 import { AudioKey } from '../constants/audioKeys';
+import { BackgroundImageKey } from '../constants/imageKeys';
 
 /**
  * タイトル画面シーン
@@ -16,6 +17,9 @@ export class TitleScene extends BaseScene {
   }
 
   create(): void {
+    if (this.textures.exists(BackgroundImageKey.TITLE)) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, BackgroundImageKey.TITLE).setOrigin(0.5);
+    }
     this.createTitle();
     this.createButtons();
     playBgm(this.sound, AudioKey.BGM_TITLE);

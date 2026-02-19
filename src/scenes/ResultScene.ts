@@ -13,6 +13,7 @@ import { updateClearedStages } from '../utils/gameProgressManager';
 import { getChallengeStage, getNextStageNumber } from '../constants/challengeConfig';
 import { stopBgm, playSe } from '../utils/audioManager';
 import { AudioKey } from '../constants/audioKeys';
+import { BackgroundImageKey } from '../constants/imageKeys';
 
 /** ResultSceneに渡されるデータ */
 export interface ResultSceneData {
@@ -45,6 +46,9 @@ export class ResultScene extends BaseScene {
   }
 
   create(data?: ResultSceneData): void {
+    if (this.textures.exists(BackgroundImageKey.RESULT)) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, BackgroundImageKey.RESULT).setOrigin(0.5);
+    }
     const battleResult = data?.battleResult;
     this.gameMode = data?.mode;
     this.stageNumber = data?.stageNumber;

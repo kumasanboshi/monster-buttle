@@ -41,7 +41,7 @@ import { SocketClient } from '../network/SocketClient';
 import { BattleResult } from '../types/BattleState';
 import { playBgm, playSe } from '../utils/audioManager';
 import { AudioKey } from '../constants/audioKeys';
-import { getMonsterBattleKey } from '../constants/imageKeys';
+import { getMonsterBattleKey, BackgroundImageKey } from '../constants/imageKeys';
 
 /** BattleSceneに渡されるデータ */
 export interface BattleSceneData {
@@ -150,6 +150,9 @@ export class BattleScene extends BaseScene {
   }
 
   create(data?: BattleSceneData): void {
+    if (this.textures.exists(BackgroundImageKey.BATTLE)) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, BackgroundImageKey.BATTLE).setOrigin(0.5);
+    }
     this.gameMode = data?.mode;
     this.stageNumber = data?.stageNumber;
     this.clearedStages = data?.clearedStages;
