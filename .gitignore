@@ -68,6 +68,12 @@ __pycache__/
 venv/
 .venv/
 
+# Vercel
+.vercel
+
+# Claude Code
+.claude/settings.local.json
+
 # Misc
 *.bak
 *.tmp
