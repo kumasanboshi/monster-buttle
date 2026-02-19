@@ -259,6 +259,22 @@ export const EFFECT_CONFIG = {
   distanceMoveDuration: 400,
 } as const;
 
+/** ギブアップ確認ダイアログのメッセージ */
+export const SURRENDER_MESSAGES = {
+  /** ギブアップボタンのラベル */
+  buttonLabel: 'ギブアップ',
+  /** 確認ダイアログのタイトル */
+  confirmTitle: 'ギブアップしますか？',
+  /** 確認ダイアログ本文（CPUモード） */
+  confirmBody: '負けとなりバトルを終了します。',
+  /** 確認ダイアログ本文（通信対戦モード） */
+  onlineConfirmBody: '対戦相手の勝利となります。',
+  /** 「はい」ボタンラベル */
+  confirmYes: 'はい',
+  /** 「いいえ」ボタンラベル */
+  confirmNo: 'いいえ',
+} as const;
+
 /**
  * 秒数を「M:SS」形式にフォーマット
  */
