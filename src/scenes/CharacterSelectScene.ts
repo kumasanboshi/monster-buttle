@@ -13,6 +13,7 @@ import {
 import { MONSTER_DATABASE } from '../constants/monsters';
 import { GameMode } from '../types/GameMode';
 import { loadGameProgress } from '../utils/gameProgressManager';
+import { getMonsterPortraitKey, UIImageKey } from '../constants/imageKeys';
 import { getNextStageNumber } from '../constants/challengeConfig';
 
 /** CharacterSelectSceneに渡されるデータ */
@@ -115,10 +116,18 @@ export class CharacterSelectScene extends BaseScene {
       container.add(bg);
 
       if (isUnlocked) {
+        // ポートレート画像
+        const portraitKey = getMonsterPortraitKey(monster.id);
+        if (this.textures.exists(portraitKey)) {
+          const portrait = this.add.image(0, -18, portraitKey).setOrigin(0.5);
+          portrait.setScale(0.7);
+          container.add(portrait);
+        }
+
         // キャラ名
         const nameText = this.add
-          .text(0, -20, monster.name, {
-            fontSize: '18px',
+          .text(0, 18, monster.name, {
+            fontSize: '16px',
             color: THEME_COLORS[monster.id] || '#ffffff',
             fontFamily: 'Arial, sans-serif',
             fontStyle: 'bold',
@@ -128,23 +137,13 @@ export class CharacterSelectScene extends BaseScene {
 
         // 魂格名
         const speciesText = this.add
-          .text(0, 5, monster.species, {
-            fontSize: '14px',
+          .text(0, 35, monster.species, {
+            fontSize: '12px',
             color: '#aaaaaa',
             fontFamily: 'Arial, sans-serif',
           })
           .setOrigin(0.5);
         container.add(speciesText);
-
-        // HP表示
-        const hpText = this.add
-          .text(0, 25, `HP:${monster.stats.hp}`, {
-            fontSize: '12px',
-            color: '#88ff88',
-            fontFamily: 'Arial, sans-serif',
-          })
-          .setOrigin(0.5);
-        container.add(hpText);
 
         // インタラクティブ設定
         bg.setInteractive({ useHandCursor: true });
@@ -154,13 +153,18 @@ export class CharacterSelectScene extends BaseScene {
           bg.setFillStyle(this.selectedMonsterId === monster.id ? 0x555577 : 0x333355);
         });
       } else {
-        // ロック表示
-        const lockText = this.add
-          .text(0, -10, '🔒', {
-            fontSize: '24px',
-          })
-          .setOrigin(0.5);
-        container.add(lockText);
+        // ロックアイコン（テクスチャ生成済みならImage、なければテキスト）
+        if (this.textures.exists(UIImageKey.LOCK_ICON)) {
+          const lockIcon = this.add.image(0, -10, UIImageKey.LOCK_ICON).setOrigin(0.5);
+          container.add(lockIcon);
+        } else {
+          const lockText = this.add
+            .text(0, -10, '🔒', {
+              fontSize: '24px',
+            })
+            .setOrigin(0.5);
+          container.add(lockText);
+        }
 
         const lockedLabel = this.add
           .text(0, 20, '未解放', {

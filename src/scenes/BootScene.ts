@@ -1,6 +1,7 @@
 import { BaseScene } from './BaseScene';
 import { SceneKey } from './sceneKeys';
 import { ASSET_MANIFEST, AssetType, SpritesheetAssetEntry } from './assetManifest';
+import { PlaceholderGenerator } from './PlaceholderGenerator';
 
 /**
  * 起動シーン
@@ -41,6 +42,10 @@ export class BootScene extends BaseScene {
   }
 
   create(): void {
+    // プレースホルダーテクスチャをランタイム生成
+    const generator = new PlaceholderGenerator(this);
+    generator.generateAll();
+
     this.transitionTo(SceneKey.TITLE);
   }
 }
