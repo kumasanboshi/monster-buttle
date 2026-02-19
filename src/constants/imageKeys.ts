@@ -31,6 +31,18 @@ export const UIImageKey = {
 } as const;
 
 /**
+ * 背景画像テクスチャキー
+ */
+export const BackgroundImageKey = {
+  TITLE: 'bg_title',
+  BATTLE: 'bg_battle',
+  CHARACTER_SELECT: 'bg_character_select',
+  MODE_SELECT: 'bg_mode_select',
+  RESULT: 'bg_result',
+  SETTINGS: 'bg_settings',
+} as const;
+
+/**
  * モンスターIDからバトルテクスチャキーを取得
  */
 export function getMonsterBattleKey(monsterId: string): string {

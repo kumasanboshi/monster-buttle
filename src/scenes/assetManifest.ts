@@ -67,6 +67,13 @@ export const ASSET_MANIFEST: AssetManifest = {
     { key: 'monster_igna_portrait', type: AssetType.IMAGE, path: 'assets/images/monsters/igna.png' },
     // UIアイコン
     { key: 'ui_lock_icon', type: AssetType.IMAGE, path: 'assets/images/monsters/lock.png' },
+    // 背景画像
+    { key: 'bg_title',            type: AssetType.IMAGE, path: 'assets/images/backgrounds/bg_title.png' },
+    { key: 'bg_battle',           type: AssetType.IMAGE, path: 'assets/images/backgrounds/bg_battle.png' },
+    { key: 'bg_character_select', type: AssetType.IMAGE, path: 'assets/images/backgrounds/bg_character_select.png' },
+    { key: 'bg_mode_select',      type: AssetType.IMAGE, path: 'assets/images/backgrounds/bg_mode_select.png' },
+    { key: 'bg_result',           type: AssetType.IMAGE, path: 'assets/images/backgrounds/bg_result.png' },
+    { key: 'bg_settings',         type: AssetType.IMAGE, path: 'assets/images/backgrounds/bg_settings.png' },
   ],
 };
 
