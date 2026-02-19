@@ -1,6 +1,6 @@
 import { BaseScene } from './BaseScene';
 import { SceneKey } from './sceneKeys';
-import { GAME_WIDTH } from './gameConfig';
+import { GAME_WIDTH, GAME_HEIGHT } from './gameConfig';
 import { Settings, EffectSpeed } from '../types/Settings';
 import { loadSettings, saveSettings } from '../utils/settingsManager';
 import {
@@ -9,6 +9,7 @@ import {
   SETTINGS_LABELS,
 } from './settingsConfig';
 import { setBgmVolume } from '../utils/audioManager';
+import { BackgroundImageKey } from '../constants/imageKeys';
 
 /** スライダーUIの内部構造 */
 interface SliderUI {
@@ -37,6 +38,9 @@ export class SettingsScene extends BaseScene {
   }
 
   create(): void {
+    if (this.textures.exists(BackgroundImageKey.SETTINGS)) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, BackgroundImageKey.SETTINGS).setOrigin(0.5);
+    }
     this.settings = loadSettings();
     this.draggingSlider = null;
 

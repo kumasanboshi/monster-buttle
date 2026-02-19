@@ -13,7 +13,7 @@ import {
 import { MONSTER_DATABASE } from '../constants/monsters';
 import { GameMode } from '../types/GameMode';
 import { loadGameProgress } from '../utils/gameProgressManager';
-import { getMonsterPortraitKey, UIImageKey } from '../constants/imageKeys';
+import { getMonsterPortraitKey, UIImageKey, BackgroundImageKey } from '../constants/imageKeys';
 import { getNextStageNumber } from '../constants/challengeConfig';
 
 /** CharacterSelectSceneに渡されるデータ */
@@ -46,6 +46,9 @@ export class CharacterSelectScene extends BaseScene {
   }
 
   create(data?: CharacterSelectSceneData): void {
+    if (this.textures.exists(BackgroundImageKey.CHARACTER_SELECT)) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, BackgroundImageKey.CHARACTER_SELECT).setOrigin(0.5);
+    }
     this.mode = data?.mode;
     this.step = data?.step;
     this.playerMonsterId = data?.playerMonsterId;
