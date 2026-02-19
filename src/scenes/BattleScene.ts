@@ -417,13 +417,15 @@ export class BattleScene extends BaseScene {
     if (this.textures.exists(playerTextureKey)) {
       this.playerCharacterImage = this.add
         .image(positions.playerX, characterY - 20, playerTextureKey)
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setDisplaySize(100, 100);
     }
 
     if (this.textures.exists(enemyTextureKey)) {
       this.enemyCharacterImage = this.add
         .image(positions.enemyX, characterY - 20, enemyTextureKey)
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setDisplaySize(100, 100);
     }
 
     // 名前テキスト（どちらかでも画像があれば下に配置）

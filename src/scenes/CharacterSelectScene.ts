@@ -122,8 +122,7 @@ export class CharacterSelectScene extends BaseScene {
         // ポートレート画像
         const portraitKey = getMonsterPortraitKey(monster.id);
         if (this.textures.exists(portraitKey)) {
-          const portrait = this.add.image(0, -18, portraitKey).setOrigin(0.5);
-          portrait.setScale(0.7);
+          const portrait = this.add.image(0, -18, portraitKey).setOrigin(0.5).setDisplaySize(60, 60);
           container.add(portrait);
         }
 
