@@ -19,6 +19,8 @@ export interface BattleLayoutConfig {
   characterY: number;
   /** ステータス表示エリアのY座標 */
   statusY: number;
+  /** 残り時間表示のY座標 */
+  timeY: number;
 }
 
 /** バトル画面レイアウト */
@@ -30,6 +32,7 @@ export const BATTLE_LAYOUT: BattleLayoutConfig = {
   enemyHpBarX: GAME_WIDTH - 30 - 250, // 520
   characterY: 250,
   statusY: 430,
+  timeY: 60,
 };
 
 /** バトル画面の色設定 */
@@ -257,6 +260,22 @@ export const EFFECT_CONFIG = {
   evasionTextColor: '#aaaaaa',
   /** 距離移動アニメーションの時間（ms） */
   distanceMoveDuration: 400,
+} as const;
+
+/** ギブアップ確認ダイアログのメッセージ */
+export const SURRENDER_MESSAGES = {
+  /** ギブアップボタンのラベル */
+  buttonLabel: 'ギブアップ',
+  /** 確認ダイアログのタイトル */
+  confirmTitle: 'ギブアップしますか？',
+  /** 確認ダイアログ本文（CPUモード） */
+  confirmBody: '負けとなりバトルを終了します。',
+  /** 確認ダイアログ本文（通信対戦モード） */
+  onlineConfirmBody: '対戦相手の勝利となります。',
+  /** 「はい」ボタンラベル */
+  confirmYes: 'はい',
+  /** 「いいえ」ボタンラベル */
+  confirmNo: 'いいえ',
 } as const;
 
 /**

@@ -12,6 +12,7 @@ import {
   COMMAND_UI_LAYOUT,
   COMMAND_UI_COLORS,
   COMMAND_BUTTON_ROWS,
+  SURRENDER_MESSAGES,
   formatTime,
   clampHp,
   getCommandButtonLayout,
@@ -32,7 +33,7 @@ import { processTurn } from '../battle/turnProcessor';
 import { resolveBattleEffects } from '../battle/effectResolver';
 import { BattleEffectPlayer } from './BattleEffectPlayer';
 import { selectCommands, AILevel } from '../ai';
-import { checkVictoryAfterTurn } from '../battle/victoryCondition';
+import { checkVictoryAfterTurn, checkVictoryOnGiveUp } from '../battle/victoryCondition';
 import { GameMode } from '../types/GameMode';
 import { TutorialManager } from '../battle/TutorialManager';
 import { GAME_HEIGHT } from './gameConfig';
@@ -123,6 +124,18 @@ export class BattleScene extends BaseScene {
   private isWaitingForOpponent = false;
   private waitingText?: Phaser.GameObjects.Text;
 
+  // ギブアップUI
+  private surrenderButtonBg!: Phaser.GameObjects.Rectangle;
+  private surrenderButtonText!: Phaser.GameObjects.Text;
+  private surrenderConfirmOverlay?: Phaser.GameObjects.Rectangle;
+  private surrenderConfirmPanel?: Phaser.GameObjects.Rectangle;
+  private surrenderConfirmTitle?: Phaser.GameObjects.Text;
+  private surrenderConfirmBody?: Phaser.GameObjects.Text;
+  private surrenderConfirmYesBg?: Phaser.GameObjects.Rectangle;
+  private surrenderConfirmYesText?: Phaser.GameObjects.Text;
+  private surrenderConfirmNoBg?: Phaser.GameObjects.Rectangle;
+  private surrenderConfirmNoText?: Phaser.GameObjects.Text;
+
   // チュートリアル
   private tutorialManager!: TutorialManager;
   private tutorialPopupOverlay?: Phaser.GameObjects.Rectangle;
@@ -200,6 +213,9 @@ export class BattleScene extends BaseScene {
     this.createCharacterDisplays();
     this.createStatusDisplays();
     this.createCommandUI();
+
+    // ギブアップボタン生成
+    this.createSurrenderButton();
 
     // エフェクトプレイヤーを初期化（UI生成後）
     this.effectPlayer = new BattleEffectPlayer(this, {
@@ -427,9 +443,9 @@ export class BattleScene extends BaseScene {
       })
       .setOrigin(0.5);
 
-    // 残り時間
+    // 残り時間（画面上部中央）
     this.timeText = this.add
-      .text(GAME_WIDTH / 2, statusY + 35, '', {
+      .text(GAME_WIDTH / 2, BATTLE_LAYOUT.timeY, '', {
         fontSize: '24px',
         color: BATTLE_COLORS.timeText,
         fontFamily: 'Arial, sans-serif',
@@ -1050,5 +1066,180 @@ export class BattleScene extends BaseScene {
       button.bg.disableInteractive();
     });
     this.cancelButtonBg.disableInteractive();
+  }
+
+  // --- ギブアップ ---
+
+  /**
+   * ギブアップボタンを生成する
+   */
+  private createSurrenderButton(): void {
+    const x = 740;
+    const y = GAME_HEIGHT - 15;
+    const width = 100;
+    const height = 28;
+
+    this.surrenderButtonBg = this.add
+      .rectangle(x, y, width, height, 0x664444)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.onSurrenderClick());
+
+    this.surrenderButtonText = this.add
+      .text(x, y, SURRENDER_MESSAGES.buttonLabel, {
+        fontSize: '13px',
+        color: '#cccccc',
+        fontFamily: 'Arial, sans-serif',
+      })
+      .setOrigin(0.5);
+  }
+
+  /**
+   * ギブアップボタンクリック処理
+   */
+  private onSurrenderClick(): void {
+    if (this.isPlayingEffects) return;
+    if (this.battleState?.isFinished) return;
+
+    this.showSurrenderConfirmDialog();
+  }
+
+  /**
+   * ギブアップ確認ダイアログを表示する
+   */
+  private showSurrenderConfirmDialog(): void {
+    const body = this.isNetworkMode
+      ? SURRENDER_MESSAGES.onlineConfirmBody
+      : SURRENDER_MESSAGES.confirmBody;
+
+    // 半透明オーバーレイ
+    this.surrenderConfirmOverlay = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6)
+      .setDepth(80)
+      .setInteractive();
+
+    // パネル背景
+    this.surrenderConfirmPanel = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 320, 180, 0x222233)
+      .setDepth(81)
+      .setStrokeStyle(2, 0x888888);
+
+    // タイトル
+    this.surrenderConfirmTitle = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50, SURRENDER_MESSAGES.confirmTitle, {
+        fontSize: '20px',
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+      .setDepth(82);
+
+    // 本文
+    this.surrenderConfirmBody = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 15, body, {
+        fontSize: '14px',
+        color: '#cccccc',
+        fontFamily: 'Arial, sans-serif',
+        align: 'center',
+      })
+      .setOrigin(0.5)
+      .setDepth(82);
+
+    // 「はい」ボタン
+    this.surrenderConfirmYesBg = this.add
+      .rectangle(GAME_WIDTH / 2 - 60, GAME_HEIGHT / 2 + 45, 90, 34, 0x884444)
+      .setDepth(82)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.onSurrenderConfirm());
+
+    this.surrenderConfirmYesText = this.add
+      .text(GAME_WIDTH / 2 - 60, GAME_HEIGHT / 2 + 45, SURRENDER_MESSAGES.confirmYes, {
+        fontSize: '16px',
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+      .setDepth(83);
+
+    // 「いいえ」ボタン
+    this.surrenderConfirmNoBg = this.add
+      .rectangle(GAME_WIDTH / 2 + 60, GAME_HEIGHT / 2 + 45, 90, 34, 0x445588)
+      .setDepth(82)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.dismissSurrenderDialog());
+
+    this.surrenderConfirmNoText = this.add
+      .text(GAME_WIDTH / 2 + 60, GAME_HEIGHT / 2 + 45, SURRENDER_MESSAGES.confirmNo, {
+        fontSize: '16px',
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+      .setDepth(83);
+
+    // ダイアログ表示中はコマンドUI・ギブアップボタンを無効化
+    this.setCommandUIEnabled(false);
+    this.surrenderButtonBg.disableInteractive();
+  }
+
+  /**
+   * ギブアップ確認ダイアログを閉じる
+   */
+  private dismissSurrenderDialog(): void {
+    this.surrenderConfirmOverlay?.destroy();
+    this.surrenderConfirmPanel?.destroy();
+    this.surrenderConfirmTitle?.destroy();
+    this.surrenderConfirmBody?.destroy();
+    this.surrenderConfirmYesBg?.destroy();
+    this.surrenderConfirmYesText?.destroy();
+    this.surrenderConfirmNoBg?.destroy();
+    this.surrenderConfirmNoText?.destroy();
+    this.surrenderConfirmOverlay = undefined;
+    this.surrenderConfirmPanel = undefined;
+    this.surrenderConfirmTitle = undefined;
+    this.surrenderConfirmBody = undefined;
+    this.surrenderConfirmYesBg = undefined;
+    this.surrenderConfirmYesText = undefined;
+    this.surrenderConfirmNoBg = undefined;
+    this.surrenderConfirmNoText = undefined;
+
+    // コマンドUIとギブアップボタンを再有効化
+    if (!this.battleState?.isFinished && !this.isPlayingEffects) {
+      this.setCommandUIEnabled(true);
+      this.surrenderButtonBg.setInteractive({ useHandCursor: true });
+    }
+  }
+
+  /**
+   * ギブアップ確定処理
+   */
+  private onSurrenderConfirm(): void {
+    this.dismissSurrenderDialog();
+
+    if (this.isNetworkMode && this.socketClient && this.roomId) {
+      // 通信対戦: サーバーにsurrender送信
+      this.socketClient.surrender(this.roomId);
+      this.setCommandUIEnabled(false);
+      this.surrenderButtonBg.disableInteractive();
+      this.showWaitingMessage('ギブアップ処理中...');
+      // サーバーからの BATTLE_FINISHED で結果画面に遷移
+    } else {
+      // CPUモード: ローカルでギブアップ処理
+      const giveUpPlayer: 1 | 2 = 1; // プレイヤーは常にplayer1
+      const battleResult = checkVictoryOnGiveUp(this.battleState, giveUpPlayer);
+      this.battleState = battleResult.finalState;
+      battleResult.turnHistory = this.turnHistory;
+      this.setCommandUIEnabled(false);
+      this.surrenderButtonBg.disableInteractive();
+      this.transitionTo(SceneKey.RESULT, {
+        battleResult,
+        mode: this.gameMode,
+        stageNumber: this.stageNumber,
+        clearedStages: this.clearedStages,
+        monsterId: this.playerMonster.id,
+      });
+    }
   }
 }
