@@ -158,7 +158,7 @@ export class CharacterSelectScene extends BaseScene {
       } else {
         // ロックアイコン（テクスチャ生成済みならImage、なければテキスト）
         if (this.textures.exists(UIImageKey.LOCK_ICON)) {
-          const lockIcon = this.add.image(0, -10, UIImageKey.LOCK_ICON).setOrigin(0.5);
+          const lockIcon = this.add.image(0, -10, UIImageKey.LOCK_ICON).setOrigin(0.5).setDisplaySize(40, 40);
           container.add(lockIcon);
         } else {
           const lockText = this.add
