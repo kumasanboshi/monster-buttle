@@ -29,15 +29,19 @@ export function playBgm(soundManager: SoundManager, key: string): void {
     currentBgm = null;
   }
 
-  const settings = loadSettings();
-  const volume = settings.bgmVolume / 100;
+  try {
+    const settings = loadSettings();
+    const volume = settings.bgmVolume / 100;
 
-  const sound = soundManager.add(key);
-  sound.setLoop(true);
-  sound.setVolume(volume);
-  sound.play();
+    const sound = soundManager.add(key);
+    sound.setLoop(true);
+    sound.setVolume(volume);
+    sound.play();
 
-  currentBgm = sound;
+    currentBgm = sound;
+  } catch {
+    // 音声がキャッシュにない場合は無視（プレースホルダー音声対応）
+  }
 }
 
 /**
@@ -65,12 +69,16 @@ export function setBgmVolume(volume: number): void {
  * SEをワンショット再生する
  */
 export function playSe(soundManager: SoundManager, key: string): void {
-  const settings = loadSettings();
-  const volume = settings.seVolume / 100;
+  try {
+    const settings = loadSettings();
+    const volume = settings.seVolume / 100;
 
-  const sound = soundManager.add(key);
-  sound.setVolume(volume);
-  sound.play();
+    const sound = soundManager.add(key);
+    sound.setVolume(volume);
+    sound.play();
+  } catch {
+    // 音声がキャッシュにない場合は無視（プレースホルダー音声対応）
+  }
 }
 
 /**
