@@ -13,10 +13,8 @@ export class BootScene extends BaseScene {
   }
 
   preload(): void {
-    // 音声ファイルのロード失敗を無視（プレースホルダー音声対応）
-    this.load.on('loaderror', (file: { type: string }) => {
-      if (file.type === 'audio') return;
-    });
+    // アセットのロード失敗を無視（PlaceholderGeneratorがフォールバック生成）
+    this.load.on('loaderror', () => {});
 
     for (const asset of ASSET_MANIFEST.assets) {
       switch (asset.type) {

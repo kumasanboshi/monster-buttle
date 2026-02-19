@@ -52,14 +52,20 @@ export class PlaceholderGenerator {
   }
 
   /**
-   * 全テクスチャを生成する
+   * 全テクスチャを生成する（実画像がロード済みの場合はスキップ）
    */
   generateAll(): void {
     ALL_MONSTER_IDS.forEach((id) => {
-      this.generateMonsterBattleSprite(id);
-      this.generateMonsterPortrait(id);
+      if (!this.scene.textures.exists(getMonsterBattleKey(id))) {
+        this.generateMonsterBattleSprite(id);
+      }
+      if (!this.scene.textures.exists(getMonsterPortraitKey(id))) {
+        this.generateMonsterPortrait(id);
+      }
     });
-    this.generateLockIcon();
+    if (!this.scene.textures.exists(UIImageKey.LOCK_ICON)) {
+      this.generateLockIcon();
+    }
   }
 
   /**
