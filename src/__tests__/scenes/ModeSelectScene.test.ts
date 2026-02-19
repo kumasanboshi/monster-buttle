@@ -63,6 +63,9 @@ jest.mock('phaser', () => ({
         setBackgroundColor: jest.fn(),
       },
     };
+    textures = {
+      exists: jest.fn().mockReturnValue(false),
+    };
     constructor(config: { key: string }) {
       this.scene.key = config.key;
     }

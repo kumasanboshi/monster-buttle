@@ -49,6 +49,9 @@ jest.mock('phaser', () => ({
     input = {
       on: jest.fn(),
     };
+    textures = {
+      exists: jest.fn().mockReturnValue(false),
+    };
     constructor(config: { key: string }) {
       this.scene.key = config.key;
     }
