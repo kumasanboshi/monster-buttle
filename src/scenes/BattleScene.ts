@@ -1179,8 +1179,9 @@ export class BattleScene extends BaseScene {
       .setOrigin(0.5)
       .setDepth(83);
 
-    // ダイアログ表示中はコマンドUIを無効化
+    // ダイアログ表示中はコマンドUI・ギブアップボタンを無効化
     this.setCommandUIEnabled(false);
+    this.surrenderButtonBg.disableInteractive();
   }
 
   /**
@@ -1204,9 +1205,10 @@ export class BattleScene extends BaseScene {
     this.surrenderConfirmNoBg = undefined;
     this.surrenderConfirmNoText = undefined;
 
-    // コマンドUIを再有効化
+    // コマンドUIとギブアップボタンを再有効化
     if (!this.battleState?.isFinished && !this.isPlayingEffects) {
       this.setCommandUIEnabled(true);
+      this.surrenderButtonBg.setInteractive({ useHandCursor: true });
     }
   }
 
@@ -1227,6 +1229,7 @@ export class BattleScene extends BaseScene {
       // CPUモード: ローカルでギブアップ処理
       const giveUpPlayer: 1 | 2 = 1; // プレイヤーは常にplayer1
       const battleResult = checkVictoryOnGiveUp(this.battleState, giveUpPlayer);
+      this.battleState = battleResult.finalState;
       battleResult.turnHistory = this.turnHistory;
       this.setCommandUIEnabled(false);
       this.surrenderButtonBg.disableInteractive();
