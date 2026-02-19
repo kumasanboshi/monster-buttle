@@ -162,6 +162,8 @@ export class BattleEffectPlayer {
    */
   private playSpecialAttack(effect: BattleEffect): Promise<void> {
     const targetObj = this.getTargetObject(effect.target);
+    const originalScaleX = targetObj.scaleX;
+    const originalScaleY = targetObj.scaleY;
 
     playSe(this.scene.sound, AudioKey.SE_ATTACK);
 
@@ -170,14 +172,15 @@ export class BattleEffectPlayer {
 
       this.scene.tweens.add({
         targets: targetObj,
-        scaleX: 1.3,
-        scaleY: 1.3,
+        scaleX: originalScaleX * 1.3,
+        scaleY: originalScaleY * 1.3,
         duration: EFFECT_CONFIG.specialAttackDuration * this.speedMultiplier / 2,
         yoyo: true,
         ease: 'Sine.inOut',
         onComplete: () => {
           targetObj.clearTint();
-          targetObj.setScale(1);
+          targetObj.scaleX = originalScaleX;
+          targetObj.scaleY = originalScaleY;
           resolve();
         },
       });
