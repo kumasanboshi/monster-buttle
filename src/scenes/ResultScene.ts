@@ -14,6 +14,7 @@ import { getChallengeStage, getNextStageNumber } from '../constants/challengeCon
 import { stopBgm, playSe } from '../utils/audioManager';
 import { AudioKey } from '../constants/audioKeys';
 import { BackgroundImageKey } from '../constants/imageKeys';
+import { calculateStatsDiff } from '../constants/monsterStats';
 
 /** ResultSceneに渡されるデータ */
 export interface ResultSceneData {
@@ -76,6 +77,7 @@ export class ResultScene extends BaseScene {
 
     this.createResultDisplay(battleResult?.resultType);
     this.createHpDisplay(battleResult);
+    this.createGrowthDisplay();
     this.createButtons();
   }
 
@@ -114,6 +116,51 @@ export class ResultScene extends BaseScene {
         }
       )
       .setOrigin(0.5);
+  }
+
+  /** CHALLENGE勝利時にパラメータ成長差分を表示 */
+  private createGrowthDisplay(): void {
+    if (
+      this.gameMode !== GameMode.CHALLENGE ||
+      this.resultType !== BattleResultType.PLAYER1_WIN ||
+      !this.monsterId ||
+      !this.clearedStages
+    ) return;
+
+    const diff = calculateStatsDiff(this.monsterId, this.clearedStages);
+    if (!diff) return;
+
+    const startY = RESULT_LAYOUT.growthDisplayY;
+    const lineH = 25;
+
+    this.add.text(GAME_WIDTH / 2, startY, 'キャラ成長！', {
+      fontSize: '18px',
+      color: '#ffdd44',
+      fontFamily: 'Arial, sans-serif',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    const lines = [
+      { label: 'HP',    d: diff.hp },
+      { label: '腕力',  d: diff.strength },
+      { label: '特殊',  d: diff.special },
+      { label: '素早さ', d: diff.speed },
+      { label: '丈夫さ', d: diff.toughness },
+    ];
+
+    lines.forEach((line, i) => {
+      const gainStr = line.d.gain > 0 ? `+${line.d.gain}` : `${line.d.gain}`;
+      this.add.text(
+        GAME_WIDTH / 2,
+        startY + lineH + i * lineH,
+        `${line.label}: ${line.d.before} → ${line.d.after}（${gainStr}）`,
+        {
+          fontSize: '15px',
+          color: line.d.gain > 0 ? '#88ff88' : '#ffffff',
+          fontFamily: 'Arial, sans-serif',
+        }
+      ).setOrigin(0.5);
+    });
   }
 
   /** ボタンを生成 */

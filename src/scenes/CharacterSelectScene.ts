@@ -11,10 +11,12 @@ import {
   CharacterSelectStep,
 } from './characterSelectConfig';
 import { MONSTER_DATABASE } from '../constants/monsters';
+import { Monster } from '../types/Monster';
 import { GameMode } from '../types/GameMode';
 import { loadGameProgress } from '../utils/gameProgressManager';
 import { getMonsterPortraitKey, UIImageKey, BackgroundImageKey } from '../constants/imageKeys';
 import { getNextStageNumber } from '../constants/challengeConfig';
+import { getMonsterWithGrownStats, getMonsterWithFinalStats } from '../constants/monsterStats';
 
 /** CharacterSelectSceneに渡されるデータ */
 export interface CharacterSelectSceneData {
@@ -53,10 +55,10 @@ export class CharacterSelectScene extends BaseScene {
     this.step = data?.step;
     this.playerMonsterId = data?.playerMonsterId;
 
-    // CHALLENGEモード：進捗からステージ番号を決定
+    // CHALLENGEモード：進捗からステージ番号を決定（dataに値があればそちらを優先）
     if (this.mode === GameMode.CHALLENGE) {
       const progress = loadGameProgress();
-      this.clearedStages = progress.clearedStages;
+      this.clearedStages = data?.clearedStages ?? progress.clearedStages;
       this.stageNumber = data?.stageNumber ?? getNextStageNumber(progress.clearedStages) ?? undefined;
     }
 
@@ -288,12 +290,22 @@ export class CharacterSelectScene extends BaseScene {
     this.updateGridSelection(monsterId);
   }
 
+  private getDisplayMonster(monsterId: string): Monster | undefined {
+    if (this.mode === GameMode.CHALLENGE) {
+      return getMonsterWithGrownStats(monsterId, this.clearedStages ?? 0);
+    }
+    if (this.mode === GameMode.FREE_CPU) {
+      return getMonsterWithFinalStats(monsterId);
+    }
+    return MONSTER_DATABASE.find((m) => m.id === monsterId);
+  }
+
   private updateParameterDisplay(monsterId: string): void {
     // 既存のパラメータテキストを削除
     this.parameterTexts.forEach((t) => t.destroy());
     this.parameterTexts = [];
 
-    const monster = MONSTER_DATABASE.find((m) => m.id === monsterId);
+    const monster = this.getDisplayMonster(monsterId);
     if (!monster) return;
 
     const panelX = GAME_WIDTH - 220;
