@@ -60,6 +60,23 @@ describe('ASSET_MANIFEST', () => {
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
+
+  it('背景画像アセットが6件定義されていること', () => {
+    const bgAssets = ASSET_MANIFEST.assets.filter(
+      a => a.type === AssetType.IMAGE && a.key.startsWith('bg_')
+    );
+    expect(bgAssets).toHaveLength(6);
+  });
+
+  it('各背景画像のパスが assets/images/backgrounds/bg_{scene}.png 形式であること', () => {
+    const bgKeys = ['bg_title', 'bg_battle', 'bg_character_select', 'bg_mode_select', 'bg_result', 'bg_settings'];
+    bgKeys.forEach(key => {
+      const asset = ASSET_MANIFEST.assets.find(a => a.key === key);
+      expect(asset).toBeDefined();
+      expect(asset!.type).toBe(AssetType.IMAGE);
+      expect(asset!.path).toBe(`assets/images/backgrounds/${key}.png`);
+    });
+  });
 });
 
 describe('getAssetsByType', () => {
