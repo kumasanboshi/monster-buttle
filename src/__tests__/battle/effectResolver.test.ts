@@ -212,6 +212,79 @@ describe('resolveBattleEffects', () => {
       expect(damageEffects[0].target).toBe('player'); // 反射ダメージはP1に
       expect(damageEffects[0].value).toBe(15);
     });
+
+    it('残回数0でSPECIAL_ATTACKをブロックした場合REFLECTOR_BLOCK(target:enemy)を生成する', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.SPECIAL_ATTACK,
+        player2Command: CommandType.REFLECTOR,
+        distanceAfter: DistanceType.MID,
+        // 残回数0: 双方ダメージなし、反射なし
+        player1Damage: makeDamageInfo({ damage: 0, isReflected: false }),
+        player2Damage: makeDamageInfo({ damage: 0 }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const blockEffects = findEffects(phase1Effects, BattleEffectType.REFLECTOR_BLOCK);
+      expect(blockEffects.length).toBe(1);
+      expect(blockEffects[0].target).toBe('enemy'); // ブロックしたのはP2
+
+      // 反射成功エフェクトは生成しない
+      const reflectorEffects = findEffects(phase1Effects, BattleEffectType.REFLECTOR);
+      expect(reflectorEffects.length).toBe(0);
+    });
+
+    it('P2がSPECIAL_ATTACKでP1がREFLECTOR残回数0の場合REFLECTOR_BLOCK(target:player)を生成する', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.REFLECTOR,
+        player2Command: CommandType.SPECIAL_ATTACK,
+        distanceAfter: DistanceType.MID,
+        player2Damage: makeDamageInfo({ damage: 0, isReflected: false }),
+        player1Damage: makeDamageInfo({ damage: 0 }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const blockEffects = findEffects(phase1Effects, BattleEffectType.REFLECTOR_BLOCK);
+      expect(blockEffects.length).toBe(1);
+      expect(blockEffects[0].target).toBe('player'); // ブロックしたのはP1
+    });
+
+    it('反射成功の場合はREFLECTOR_BLOCKを生成しない', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.SPECIAL_ATTACK,
+        player2Command: CommandType.REFLECTOR,
+        distanceAfter: DistanceType.MID,
+        player1Damage: makeDamageInfo({ damage: 15, isReflected: true }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const blockEffects = findEffects(phase1Effects, BattleEffectType.REFLECTOR_BLOCK);
+      expect(blockEffects.length).toBe(0);
+    });
+
+    it('WEAPON_ATTACKがREFLECTORを使った相手に当たった場合REFLECTOR_BLOCKは生成しない', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.WEAPON_ATTACK,
+        player2Command: CommandType.REFLECTOR,
+        distanceAfter: DistanceType.MID,
+        player2Damage: makeDamageInfo({ damage: 20 }), // 武器は貫通してダメージ
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const blockEffects = findEffects(phase1Effects, BattleEffectType.REFLECTOR_BLOCK);
+      expect(blockEffects.length).toBe(0);
+    });
   });
 
   describe('フェーズ順序', () => {

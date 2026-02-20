@@ -21,6 +21,8 @@ export enum BattleEffectType {
   STANCE_CHANGE = 'STANCE_CHANGE',
   /** リフレクター構えエフェクト（攻撃が来なかった場合） */
   REFLECTOR_DEPLOY = 'REFLECTOR_DEPLOY',
+  /** リフレクター残回数切れブロックエフェクト（特殊を無効化したが反射できなかった場合） */
+  REFLECTOR_BLOCK = 'REFLECTOR_BLOCK',
 }
 
 /** エフェクトのターゲット */

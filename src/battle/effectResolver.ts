@@ -106,7 +106,7 @@ function resolvePlayerAttackEffects(
   attackerTarget: EffectTarget,
   effects: BattleEffect[]
 ): void {
-  // リフレクター判定: 攻撃者が特殊攻撃 & 攻撃者が反射ダメージを受けた
+  // リフレクター反射成功: 攻撃者が特殊攻撃 & 反射ダメージを受けた
   if (attackerCmd === CommandType.SPECIAL_ATTACK && damageToAttacker.isReflected) {
     effects.push({
       type: BattleEffectType.REFLECTOR,
@@ -119,6 +119,15 @@ function resolvePlayerAttackEffects(
         value: damageToAttacker.damage,
       });
     }
+    return;
+  }
+
+  // リフレクター残回数切れブロック: 特殊攻撃を無効化したが反射できなかった
+  if (attackerCmd === CommandType.SPECIAL_ATTACK && defenderCmd === CommandType.REFLECTOR && !damageToAttacker.isReflected) {
+    effects.push({
+      type: BattleEffectType.REFLECTOR_BLOCK,
+      target: defenderTarget, // ブロックしたのは防御側
+    });
     return;
   }
 
