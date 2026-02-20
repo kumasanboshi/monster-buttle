@@ -274,6 +274,16 @@ export const EFFECT_CONFIG = {
   stanceDefensiveColor: 0x4488ff,
   /** 通常スタンスのティント色 */
   stanceNormalColor: 0xaaaaaa,
+  /** リフレクター構えの表示時間（ms） */
+  reflectorDeployDuration: 600,
+  /** リフレクター構えテキスト色 */
+  reflectorDeployTextColor: '#88bbff',
+  /** 武器スラッシュの色 */
+  slashColor: 0xffffff,
+  /** 特殊攻撃光球の色 */
+  orbColor: 0xcc44ff,
+  /** 特殊攻撃光球の輝き色 */
+  orbGlowColor: 0xff88ff,
 } as const;
 
 /** ギブアップ確認ダイアログのメッセージ */

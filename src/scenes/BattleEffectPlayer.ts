@@ -75,6 +75,8 @@ export class BattleEffectPlayer {
         return this.playDistanceMove(effect);
       case BattleEffectType.STANCE_CHANGE:
         return this.playStanceChange(effect);
+      case BattleEffectType.REFLECTOR_DEPLOY:
+        return this.playReflectorDeploy(effect);
       default:
         return Promise.resolve();
     }
@@ -139,7 +141,7 @@ export class BattleEffectPlayer {
   }
 
   /**
-   * 武器攻撃エフェクト: 攻撃者ダッシュ → 白フラッシュ + シェイク → 攻撃者リターン
+   * 武器攻撃エフェクト: 攻撃者ダッシュ → スラッシュ線 + シェイク → 攻撃者リターン
    */
   private playWeaponAttack(effect: BattleEffect): Promise<void> {
     const targetObj = this.getTargetObject(effect.target);
@@ -159,16 +161,38 @@ export class BattleEffectPlayer {
         duration: EFFECT_CONFIG.weaponDashDuration * this.speedMultiplier,
         ease: 'Power2.in',
         onComplete: () => {
-          targetObj.setTint(EFFECT_CONFIG.weaponFlashColor);
+          // スラッシュGraphics描画
+          const slash = this.scene.add.graphics();
+          slash.lineStyle(3, EFFECT_CONFIG.slashColor, 1);
+          slash.beginPath();
+          slash.moveTo(targetObj.x - 25, targetObj.y - 35);
+          slash.lineTo(targetObj.x + 20, targetObj.y + 10);
+          slash.moveTo(targetObj.x - 15, targetObj.y - 45);
+          slash.lineTo(targetObj.x + 30, targetObj.y);
+          slash.strokePath();
 
           let done = 0;
           const checkDone = () => {
             done++;
-            if (done >= 2) {
+            if (done >= 3) {
               targetObj.clearTint();
               resolve();
             }
           };
+
+          // スラッシュフェードアウト
+          this.scene.tweens.add({
+            targets: slash,
+            alpha: 0,
+            duration: EFFECT_CONFIG.weaponAttackDuration * this.speedMultiplier / 2,
+            ease: 'Power2',
+            onComplete: () => {
+              slash.destroy();
+              checkDone();
+            },
+          });
+
+          targetObj.setTint(EFFECT_CONFIG.weaponFlashColor);
 
           // Tween 2: 攻撃者リターン
           this.scene.tweens.add({
@@ -185,7 +209,7 @@ export class BattleEffectPlayer {
             x: originalTargetX + 8,
             duration: EFFECT_CONFIG.weaponAttackDuration * this.speedMultiplier / 4,
             yoyo: true,
-            repeat: 3,
+            repeat: 1,
             ease: 'Sine.inOut',
             onComplete: () => {
               targetObj.x = originalTargetX;
@@ -198,7 +222,7 @@ export class BattleEffectPlayer {
   }
 
   /**
-   * 特殊攻撃エフェクト: プロジェクタイル飛翔 → 衝撃パルス
+   * 特殊攻撃エフェクト: 光球プロジェクタイル飛翔 → 衝撃パルス
    */
   private playSpecialAttack(effect: BattleEffect): Promise<void> {
     const targetObj = this.getTargetObject(effect.target);
@@ -209,29 +233,24 @@ export class BattleEffectPlayer {
     playSe(this.scene.sound, AudioKey.SE_ATTACK);
 
     return new Promise<void>(resolve => {
-      // プロジェクタイル生成（攻撃者位置）
-      const projectile = this.scene.add.text(
-        attackerObj.x,
-        attackerObj.y,
-        '★',
-        {
-          fontSize: '22px',
-          color: EFFECT_CONFIG.specialProjectileColor,
-          fontFamily: 'Arial, sans-serif',
-          fontStyle: 'bold',
-        }
-      );
-      projectile.setOrigin(0.5);
+      // 光球プロジェクタイル（Graphics円）を生成
+      const orb = this.scene.add.graphics();
+      orb.fillStyle(EFFECT_CONFIG.orbGlowColor, 0.5);
+      orb.fillCircle(0, 0, 14);
+      orb.fillStyle(EFFECT_CONFIG.orbColor, 1);
+      orb.fillCircle(0, 0, 8);
+      orb.x = attackerObj.x;
+      orb.y = attackerObj.y;
 
-      // Tween 1: プロジェクタイルがターゲットへ飛翔
+      // Tween 1: 光球がターゲットへ飛翔
       this.scene.tweens.add({
-        targets: projectile,
+        targets: orb,
         x: targetObj.x,
         y: targetObj.y,
         duration: EFFECT_CONFIG.specialProjectileDuration * this.speedMultiplier,
         ease: 'Power2.in',
         onComplete: () => {
-          projectile.destroy();
+          orb.destroy();
           targetObj.setTint(EFFECT_CONFIG.specialPulseColor);
 
           // Tween 2: 衝撃パルス
@@ -393,6 +412,41 @@ export class BattleEffectPlayer {
           onComplete: onOneComplete,
         });
       }
+    });
+  }
+
+  /**
+   * リフレクター構えエフェクト: 淡い青盾テキスト（攻撃が来なかった場合）
+   */
+  private playReflectorDeploy(effect: BattleEffect): Promise<void> {
+    const targetObj = this.getTargetObject(effect.target);
+    const deployText = this.scene.add.text(
+      targetObj.x,
+      targetObj.y - 40,
+      '🛡️',
+      {
+        fontSize: '22px',
+        color: EFFECT_CONFIG.reflectorDeployTextColor,
+        fontFamily: 'Arial, sans-serif',
+      }
+    );
+    deployText.setOrigin(0.5);
+
+    return new Promise<void>(resolve => {
+      targetObj.setTint(EFFECT_CONFIG.reflectorShieldColor);
+
+      this.scene.tweens.add({
+        targets: deployText,
+        alpha: 0,
+        y: deployText.y - 15,
+        duration: EFFECT_CONFIG.reflectorDeployDuration * this.speedMultiplier,
+        ease: 'Power2',
+        onComplete: () => {
+          targetObj.clearTint();
+          deployText.destroy();
+          resolve();
+        },
+      });
     });
   }
 

@@ -19,6 +19,8 @@ export enum BattleEffectType {
   DISTANCE_MOVE = 'DISTANCE_MOVE',
   /** スタンス変更エフェクト */
   STANCE_CHANGE = 'STANCE_CHANGE',
+  /** リフレクター構えエフェクト（攻撃が来なかった場合） */
+  REFLECTOR_DEPLOY = 'REFLECTOR_DEPLOY',
 }
 
 /** エフェクトのターゲット */
