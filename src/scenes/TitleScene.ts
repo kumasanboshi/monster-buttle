@@ -17,6 +17,8 @@ export class TitleScene extends BaseScene {
   }
 
   create(): void {
+    this.cameras.main.fadeIn(500, 0, 0, 0);
+
     if (this.textures.exists(BackgroundImageKey.TITLE)) {
       this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, BackgroundImageKey.TITLE).setOrigin(0.5);
     }
