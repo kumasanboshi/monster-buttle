@@ -209,7 +209,7 @@ export class BattleEffectPlayer {
             x: originalTargetX + 8,
             duration: EFFECT_CONFIG.weaponAttackDuration * this.speedMultiplier / 4,
             yoyo: true,
-            repeat: 3,
+            repeat: 1,
             ease: 'Sine.inOut',
             onComplete: () => {
               targetObj.x = originalTargetX;
@@ -239,10 +239,8 @@ export class BattleEffectPlayer {
       orb.fillCircle(0, 0, 14);
       orb.fillStyle(EFFECT_CONFIG.orbColor, 1);
       orb.fillCircle(0, 0, 8);
-      // GraphicsはGameObjectとして位置を持つため、コンテナ代わりにtextで位置を管理する
-      // orbをテキスト位置に配置
-      (orb as any).x = attackerObj.x;
-      (orb as any).y = attackerObj.y;
+      orb.x = attackerObj.x;
+      orb.y = attackerObj.y;
 
       // Tween 1: 光球がターゲットへ飛翔
       this.scene.tweens.add({
