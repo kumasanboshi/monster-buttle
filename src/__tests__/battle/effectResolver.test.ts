@@ -410,6 +410,72 @@ describe('resolveBattleEffects', () => {
     });
   });
 
+  describe('リフレクター構えエフェクト', () => {
+    it('P1がREFLECTORを使いP2が攻撃しなかった場合REFLECTOR_DEPLOY(target:player)を生成する', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.REFLECTOR,
+        player2Command: CommandType.ADVANCE,
+        distanceAfter: DistanceType.MID,
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const deployEffects = findEffects(phase1Effects, BattleEffectType.REFLECTOR_DEPLOY);
+      expect(deployEffects.length).toBe(1);
+      expect(deployEffects[0].target).toBe('player');
+    });
+
+    it('P2がREFLECTORを使いP1が攻撃しなかった場合REFLECTOR_DEPLOY(target:enemy)を生成する', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.ADVANCE,
+        player2Command: CommandType.REFLECTOR,
+        distanceAfter: DistanceType.MID,
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const deployEffects = findEffects(phase1Effects, BattleEffectType.REFLECTOR_DEPLOY);
+      expect(deployEffects.length).toBe(1);
+      expect(deployEffects[0].target).toBe('enemy');
+    });
+
+    it('P1がREFLECTORを使いP2がSPECIAL_ATTACKを使った場合REFLECTOR_DEPLOYは生成しない', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.REFLECTOR,
+        player2Command: CommandType.SPECIAL_ATTACK,
+        distanceAfter: DistanceType.MID,
+        player1Damage: makeDamageInfo({ damage: 15, isReflected: true }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const deployEffects = findEffects(phase1Effects, BattleEffectType.REFLECTOR_DEPLOY);
+      expect(deployEffects.length).toBe(0);
+    });
+
+    it('P1がREFLECTORを使いP2がWEAPON_ATTACKを使った場合REFLECTOR_DEPLOYは生成しない', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.REFLECTOR,
+        player2Command: CommandType.WEAPON_ATTACK,
+        distanceAfter: DistanceType.MID,
+        player1Damage: makeDamageInfo({ damage: 10 }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const deployEffects = findEffects(phase1Effects, BattleEffectType.REFLECTOR_DEPLOY);
+      expect(deployEffects.length).toBe(0);
+    });
+  });
+
   describe('敵攻撃エフェクト', () => {
     it('P2の武器攻撃でプレイヤーにダメージ → targetはplayer', () => {
       const phase1 = makePhase({

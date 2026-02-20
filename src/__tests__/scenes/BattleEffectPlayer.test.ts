@@ -71,6 +71,27 @@ function createMockSoundManager() {
   };
 }
 
+/** Phaser.GameObjects.Graphicsのモック */
+function createMockGraphics() {
+  return {
+    x: 0,
+    y: 0,
+    alpha: 1,
+    lineStyle: jest.fn().mockReturnThis(),
+    fillStyle: jest.fn().mockReturnThis(),
+    fillCircle: jest.fn().mockReturnThis(),
+    strokeCircle: jest.fn().mockReturnThis(),
+    moveTo: jest.fn().mockReturnThis(),
+    lineTo: jest.fn().mockReturnThis(),
+    strokePath: jest.fn().mockReturnThis(),
+    beginPath: jest.fn().mockReturnThis(),
+    closePath: jest.fn().mockReturnThis(),
+    setAlpha: jest.fn().mockReturnThis(),
+    setBlendMode: jest.fn().mockReturnThis(),
+    destroy: jest.fn(),
+  };
+}
+
 /** Phaser.Sceneのモック */
 function createMockScene() {
   const mockTweens = createMockTweens();
@@ -78,6 +99,9 @@ function createMockScene() {
     add: {
       text: jest.fn().mockImplementation((_x: number, _y: number, _text: string) => {
         return createMockText(_x, _y);
+      }),
+      graphics: jest.fn().mockImplementation(() => {
+        return createMockGraphics();
       }),
     },
     tweens: mockTweens,
@@ -293,6 +317,44 @@ describe('BattleEffectPlayer', () => {
 
       // 2つのフェーズで合計2回以上Tweenが呼ばれる
       expect(scene.tweens.add.mock.calls.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('WEAPON_ATTACKでGraphicsが生成される（スラッシュエフェクト）', async () => {
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.WEAPON_ATTACK, target: 'enemy' }],
+      ];
+      await player.playSequence(sequence);
+
+      expect(scene.add.graphics).toHaveBeenCalled();
+    });
+
+    it('SPECIAL_ATTACKでGraphicsが生成される（光球エフェクト）', async () => {
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.SPECIAL_ATTACK, target: 'enemy' }],
+      ];
+      await player.playSequence(sequence);
+
+      expect(scene.add.graphics).toHaveBeenCalled();
+    });
+
+    it('REFLECTOR_DEPLOYエフェクトでテキスト生成とTweenが呼ばれる', async () => {
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.REFLECTOR_DEPLOY, target: 'player' }],
+      ];
+      await player.playSequence(sequence);
+
+      expect(scene.add.text).toHaveBeenCalled();
+      expect(scene.tweens.add).toHaveBeenCalled();
+    });
+
+    it('REFLECTOR_DEPLOYエフェクト（enemy）でテキスト生成とTweenが呼ばれる', async () => {
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.REFLECTOR_DEPLOY, target: 'enemy' }],
+      ];
+      await player.playSequence(sequence);
+
+      expect(scene.add.text).toHaveBeenCalled();
+      expect(scene.tweens.add).toHaveBeenCalled();
     });
   });
 
