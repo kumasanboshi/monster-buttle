@@ -284,6 +284,12 @@ export const EFFECT_CONFIG = {
   orbColor: 0xcc44ff,
   /** 特殊攻撃光球の輝き色 */
   orbGlowColor: 0xff88ff,
+  /** リフレクター残回数切れブロックの表示時間（ms） */
+  reflectorBlockDuration: 600,
+  /** リフレクター残回数切れブロックのテキスト色 */
+  reflectorBlockTextColor: '#aabbcc',
+  /** リフレクター残回数切れブロックのティント色 */
+  reflectorBlockTintColor: 0x7799bb,
 } as const;
 
 /** ギブアップ確認ダイアログのメッセージ */

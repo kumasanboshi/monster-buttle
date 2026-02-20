@@ -77,6 +77,8 @@ export class BattleEffectPlayer {
         return this.playStanceChange(effect);
       case BattleEffectType.REFLECTOR_DEPLOY:
         return this.playReflectorDeploy(effect);
+      case BattleEffectType.REFLECTOR_BLOCK:
+        return this.playReflectorBlock(effect);
       default:
         return Promise.resolve();
     }
@@ -501,6 +503,42 @@ export class BattleEffectPlayer {
         onComplete: () => {
           targetObj.clearTint();
           stanceLabel.destroy();
+          resolve();
+        },
+      });
+    });
+  }
+
+  /**
+   * リフレクター残回数切れブロックエフェクト: 淡い灰青テキスト（特殊をブロックしたが反射できなかった場合）
+   */
+  private playReflectorBlock(effect: BattleEffect): Promise<void> {
+    const targetObj = this.getTargetObject(effect.target);
+    const blockText = this.scene.add.text(
+      targetObj.x,
+      targetObj.y - 40,
+      'GUARD',
+      {
+        fontSize: '20px',
+        color: EFFECT_CONFIG.reflectorBlockTextColor,
+        fontFamily: 'Arial, sans-serif',
+        fontStyle: 'bold',
+      }
+    );
+    blockText.setOrigin(0.5);
+
+    return new Promise<void>(resolve => {
+      targetObj.setTint(EFFECT_CONFIG.reflectorBlockTintColor);
+
+      this.scene.tweens.add({
+        targets: blockText,
+        alpha: 0,
+        y: blockText.y - 15,
+        duration: EFFECT_CONFIG.reflectorBlockDuration * this.speedMultiplier,
+        ease: 'Power2',
+        onComplete: () => {
+          targetObj.clearTint();
+          blockText.destroy();
           resolve();
         },
       });
