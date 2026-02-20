@@ -356,6 +356,26 @@ describe('BattleEffectPlayer', () => {
       expect(scene.add.text).toHaveBeenCalled();
       expect(scene.tweens.add).toHaveBeenCalled();
     });
+
+    it('REFLECTOR_BLOCKエフェクトでテキスト生成とTweenが呼ばれる', async () => {
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.REFLECTOR_BLOCK, target: 'enemy' }],
+      ];
+      await player.playSequence(sequence);
+
+      expect(scene.add.text).toHaveBeenCalled();
+      expect(scene.tweens.add).toHaveBeenCalled();
+    });
+
+    it('REFLECTOR_BLOCKエフェクト（player）でテキスト生成とTweenが呼ばれる', async () => {
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.REFLECTOR_BLOCK, target: 'player' }],
+      ];
+      await player.playSequence(sequence);
+
+      expect(scene.add.text).toHaveBeenCalled();
+      expect(scene.tweens.add).toHaveBeenCalled();
+    });
   });
 
   describe('演出速度の反映', () => {
