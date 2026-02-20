@@ -316,6 +316,100 @@ describe('resolveBattleEffects', () => {
     });
   });
 
+  describe('スタンス変更エフェクト', () => {
+    it('P1がSTANCE_Aを使った場合STANCE_CHANGE(target:player)を生成する', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.STANCE_A,
+        player2Command: CommandType.ADVANCE,
+        distanceAfter: DistanceType.MID,
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2, {
+        player1StanceAfter: StanceType.OFFENSIVE,
+      });
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const stanceEffects = findEffects(phase1Effects, BattleEffectType.STANCE_CHANGE);
+      expect(stanceEffects.length).toBe(1);
+      expect(stanceEffects[0].target).toBe('player');
+      expect(stanceEffects[0].stanceTo).toBe(StanceType.OFFENSIVE);
+    });
+
+    it('P1がSTANCE_Bを使った場合STANCE_CHANGE(target:player)を生成する', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.STANCE_B,
+        player2Command: CommandType.ADVANCE,
+        distanceAfter: DistanceType.MID,
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2, {
+        player1StanceAfter: StanceType.DEFENSIVE,
+      });
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const stanceEffects = findEffects(phase1Effects, BattleEffectType.STANCE_CHANGE);
+      expect(stanceEffects.length).toBe(1);
+      expect(stanceEffects[0].target).toBe('player');
+      expect(stanceEffects[0].stanceTo).toBe(StanceType.DEFENSIVE);
+    });
+
+    it('P2がSTANCE_Aを使った場合STANCE_CHANGE(target:enemy)を生成する', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.ADVANCE,
+        player2Command: CommandType.STANCE_A,
+        distanceAfter: DistanceType.MID,
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2, {
+        player2StanceAfter: StanceType.OFFENSIVE,
+      });
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const stanceEffects = findEffects(phase1Effects, BattleEffectType.STANCE_CHANGE);
+      expect(stanceEffects.length).toBe(1);
+      expect(stanceEffects[0].target).toBe('enemy');
+      expect(stanceEffects[0].stanceTo).toBe(StanceType.OFFENSIVE);
+    });
+
+    it('スタンス変更なしの場合STANCE_CHANGEは生成しない', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.WEAPON_ATTACK,
+        player2Command: CommandType.ADVANCE,
+        distanceAfter: DistanceType.MID,
+        player2Damage: makeDamageInfo({ damage: 20 }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      for (const phaseEffects of sequence) {
+        const stanceEffects = findEffects(phaseEffects, BattleEffectType.STANCE_CHANGE);
+        expect(stanceEffects.length).toBe(0);
+      }
+    });
+
+    it('2ndフェーズのSTANCE_BはPhase2のエフェクトとして生成する', () => {
+      const phase1 = makePhase();
+      const phase2 = makePhase({
+        player1Command: CommandType.STANCE_B,
+        player2Command: CommandType.ADVANCE,
+        distanceAfter: DistanceType.MID,
+      });
+      const turnResult = makeTurnResult(phase1, phase2, {
+        player1StanceAfter: StanceType.DEFENSIVE,
+      });
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase2Effects = sequence[1];
+      const stanceEffects = findEffects(phase2Effects, BattleEffectType.STANCE_CHANGE);
+      expect(stanceEffects.length).toBe(1);
+      expect(stanceEffects[0].target).toBe('player');
+    });
+  });
+
   describe('敵攻撃エフェクト', () => {
     it('P2の武器攻撃でプレイヤーにダメージ → targetはplayer', () => {
       const phase1 = makePhase({
