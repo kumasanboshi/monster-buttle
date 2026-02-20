@@ -151,14 +151,18 @@ describe('SettingsScene', () => {
       expect(label).toBeDefined();
     });
 
-    it('通常/高速ボタンが表示されること', () => {
+    it('遅い/通常/高速ボタンが表示されること', () => {
       setupScene();
+      const slowBtn = addTextCalls.find(
+        (call) => call.text === SETTINGS_LABELS.effectSpeedSlow
+      );
       const normalBtn = addTextCalls.find(
         (call) => call.text === SETTINGS_LABELS.effectSpeedNormal
       );
       const fastBtn = addTextCalls.find(
         (call) => call.text === SETTINGS_LABELS.effectSpeedFast
       );
+      expect(slowBtn).toBeDefined();
       expect(normalBtn).toBeDefined();
       expect(fastBtn).toBeDefined();
     });

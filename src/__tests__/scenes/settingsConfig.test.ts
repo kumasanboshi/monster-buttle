@@ -63,6 +63,7 @@ describe('SETTINGS_LABELS', () => {
     expect(SETTINGS_LABELS.bgmVolume.length).toBeGreaterThan(0);
     expect(SETTINGS_LABELS.seVolume.length).toBeGreaterThan(0);
     expect(SETTINGS_LABELS.effectSpeed.length).toBeGreaterThan(0);
+    expect(SETTINGS_LABELS.effectSpeedSlow.length).toBeGreaterThan(0);
     expect(SETTINGS_LABELS.effectSpeedNormal.length).toBeGreaterThan(0);
     expect(SETTINGS_LABELS.effectSpeedFast.length).toBeGreaterThan(0);
     expect(SETTINGS_LABELS.back.length).toBeGreaterThan(0);
