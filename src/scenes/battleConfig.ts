@@ -237,29 +237,35 @@ export function getCommandButtonLayout(isMobile: boolean): CommandButtonLayout {
 /** エフェクト再生用定数 */
 export const EFFECT_CONFIG = {
   /** ダメージ数値の表示時間（ms） */
-  damageNumberDuration: 800,
+  damageNumberDuration: 1000,
   /** ダメージ数値の色 */
   damageNumberColor: '#ff4444',
   /** 武器攻撃エフェクトの時間（ms） */
-  weaponAttackDuration: 400,
+  weaponAttackDuration: 600,
   /** 武器攻撃フラッシュ色 */
   weaponFlashColor: 0xffffff,
+  /** 攻撃者ダッシュの時間（ms） */
+  weaponDashDuration: 200,
   /** 特殊攻撃エフェクトの時間（ms） */
-  specialAttackDuration: 500,
+  specialAttackDuration: 800,
   /** 特殊攻撃パルス色 */
   specialPulseColor: 0xaa44ff,
+  /** 特殊攻撃プロジェクタイルのフライト時間（ms） */
+  specialProjectileDuration: 350,
+  /** 特殊攻撃プロジェクタイルの色 */
+  specialProjectileColor: '#cc44ff',
   /** リフレクターエフェクトの時間（ms） */
-  reflectorDuration: 600,
+  reflectorDuration: 800,
   /** リフレクターシールド色 */
   reflectorShieldColor: 0x4488ff,
   /** リフレクターテキスト色 */
   reflectorTextColor: '#4488ff',
   /** 回避エフェクトの時間（ms） */
-  evasionDuration: 500,
+  evasionDuration: 700,
   /** 回避テキスト色 */
   evasionTextColor: '#aaaaaa',
   /** 距離移動アニメーションの時間（ms） */
-  distanceMoveDuration: 400,
+  distanceMoveDuration: 600,
   /** スタンス変更エフェクトの時間（ms） */
   stanceChangeDuration: 700,
   /** 攻勢スタンスのティント色 */
