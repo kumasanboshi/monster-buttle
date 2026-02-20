@@ -1,4 +1,4 @@
-import { CommandType, DistanceType, TurnResult, CommandPhaseResult, DamageInfo } from '../types';
+import { CommandType, DistanceType, TurnResult, CommandPhaseResult, DamageInfo, StanceType } from '../types';
 import { BattleEffect, BattleEffectType, BattleEffectSequence, EffectTarget } from '../types/BattleEffect';
 
 /**
@@ -22,7 +22,8 @@ function getAttackEffectType(cmd: CommandType): BattleEffectType | null {
  */
 function resolvePhaseEffects(
   phase: CommandPhaseResult,
-  distanceBefore: DistanceType
+  distanceBefore: DistanceType,
+  stanceAfter: { player1: StanceType, player2: StanceType }
 ): BattleEffect[] {
   const effects: BattleEffect[] = [];
 
@@ -36,7 +37,25 @@ function resolvePhaseEffects(
     });
   }
 
-  // 2. P1のコマンドによるエフェクト
+  // 2. P1のスタンス変更エフェクト
+  if (phase.player1Command === CommandType.STANCE_A || phase.player1Command === CommandType.STANCE_B) {
+    effects.push({
+      type: BattleEffectType.STANCE_CHANGE,
+      target: 'player',
+      stanceTo: stanceAfter.player1,
+    });
+  }
+
+  // 3. P2のスタンス変更エフェクト
+  if (phase.player2Command === CommandType.STANCE_A || phase.player2Command === CommandType.STANCE_B) {
+    effects.push({
+      type: BattleEffectType.STANCE_CHANGE,
+      target: 'enemy',
+      stanceTo: stanceAfter.player2,
+    });
+  }
+
+  // 4. P1のコマンドによる攻撃エフェクト
   resolvePlayerAttackEffects(
     phase.player1Command,
     phase.player2Command,
@@ -47,7 +66,7 @@ function resolvePhaseEffects(
     effects
   );
 
-  // 3. P2のコマンドによるエフェクト
+  // 5. P2のコマンドによる攻撃エフェクト
   resolvePlayerAttackEffects(
     phase.player2Command,
     phase.player1Command,
@@ -126,8 +145,13 @@ export function resolveBattleEffects(
 ): BattleEffectSequence {
   const [phase1, phase2] = turnResult.phases;
 
-  const phase1Effects = resolvePhaseEffects(phase1, currentDistance);
-  const phase2Effects = resolvePhaseEffects(phase2, phase1.distanceAfter);
+  const stanceAfter = {
+    player1: turnResult.player1StanceAfter,
+    player2: turnResult.player2StanceAfter,
+  };
+
+  const phase1Effects = resolvePhaseEffects(phase1, currentDistance, stanceAfter);
+  const phase2Effects = resolvePhaseEffects(phase2, phase1.distanceAfter, stanceAfter);
 
   return [phase1Effects, phase2Effects];
 }

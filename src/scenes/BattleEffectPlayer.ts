@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BattleEffect, BattleEffectType, BattleEffectSequence, EffectTarget } from '../types/BattleEffect';
 import { DistanceType } from '../types/Distance';
+import { StanceType } from '../types/Stance';
 import { DISTANCE_CHARACTER_POSITIONS } from './battleConfig';
 import { EFFECT_CONFIG } from './battleConfig';
 import { loadSettings, getEffectSpeedMultiplier } from '../utils/settingsManager';
@@ -72,6 +73,8 @@ export class BattleEffectPlayer {
         return this.playEvasion(effect);
       case BattleEffectType.DISTANCE_MOVE:
         return this.playDistanceMove(effect);
+      case BattleEffectType.STANCE_CHANGE:
+        return this.playStanceChange(effect);
       default:
         return Promise.resolve();
     }
@@ -326,6 +329,63 @@ export class BattleEffectPlayer {
           onComplete: onOneComplete,
         });
       }
+    });
+  }
+
+  /**
+   * スタンス変更エフェクト: カラーティント + スタンス名テキスト
+   */
+  private playStanceChange(effect: BattleEffect): Promise<void> {
+    const targetObj = this.getTargetObject(effect.target);
+
+    let tintColor: number;
+    let stanceText: string;
+    let textColor: string;
+
+    switch (effect.stanceTo) {
+      case StanceType.OFFENSIVE:
+        tintColor = EFFECT_CONFIG.stanceOffensiveColor;
+        stanceText = '攻勢！';
+        textColor = '#ff8800';
+        break;
+      case StanceType.DEFENSIVE:
+        tintColor = EFFECT_CONFIG.stanceDefensiveColor;
+        stanceText = '守勢！';
+        textColor = '#4488ff';
+        break;
+      default:
+        tintColor = EFFECT_CONFIG.stanceNormalColor;
+        stanceText = '通常';
+        textColor = '#aaaaaa';
+    }
+
+    const stanceLabel = this.scene.add.text(
+      targetObj.x,
+      targetObj.y - 30,
+      stanceText,
+      {
+        fontSize: '20px',
+        color: textColor,
+        fontFamily: 'Arial, sans-serif',
+        fontStyle: 'bold',
+      }
+    );
+    stanceLabel.setOrigin(0.5);
+    targetObj.setTint(tintColor);
+
+    return new Promise<void>(resolve => {
+      this.scene.tweens.add({
+        targets: stanceLabel,
+        alpha: 0,
+        y: stanceLabel.y - 20,
+        duration: EFFECT_CONFIG.stanceChangeDuration * this.speedMultiplier,
+        ease: 'Power2',
+        onComplete: () => {
+          targetObj.clearTint();
+          stanceLabel.destroy();
+          resolve();
+        },
+      });
     });
   }
 }

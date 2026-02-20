@@ -260,6 +260,14 @@ export const EFFECT_CONFIG = {
   evasionTextColor: '#aaaaaa',
   /** 距離移動アニメーションの時間（ms） */
   distanceMoveDuration: 400,
+  /** スタンス変更エフェクトの時間（ms） */
+  stanceChangeDuration: 700,
+  /** 攻勢スタンスのティント色 */
+  stanceOffensiveColor: 0xff6600,
+  /** 守勢スタンスのティント色 */
+  stanceDefensiveColor: 0x4488ff,
+  /** 通常スタンスのティント色 */
+  stanceNormalColor: 0xaaaaaa,
 } as const;
 
 /** ギブアップ確認ダイアログのメッセージ */

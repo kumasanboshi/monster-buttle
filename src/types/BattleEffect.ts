@@ -1,4 +1,5 @@
 import { DistanceType } from './Distance';
+import { StanceType } from './Stance';
 
 /**
  * バトルエフェクトの種類
@@ -16,6 +17,8 @@ export enum BattleEffectType {
   EVASION = 'EVASION',
   /** 距離移動アニメーション */
   DISTANCE_MOVE = 'DISTANCE_MOVE',
+  /** スタンス変更エフェクト */
+  STANCE_CHANGE = 'STANCE_CHANGE',
 }
 
 /** エフェクトのターゲット */
@@ -35,6 +38,8 @@ export interface BattleEffect {
   distanceFrom?: DistanceType;
   /** 距離移動の終了距離 */
   distanceTo?: DistanceType;
+  /** スタンス変更後のスタンス */
+  stanceTo?: StanceType;
 }
 
 /**
