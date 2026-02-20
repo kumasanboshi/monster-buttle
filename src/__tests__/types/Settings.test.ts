@@ -18,7 +18,7 @@ describe('DEFAULT_SETTINGS', () => {
   });
 
   it('effectSpeedが有効な値であること', () => {
-    expect([EffectSpeed.NORMAL, EffectSpeed.FAST]).toContain(
+    expect([EffectSpeed.NORMAL, EffectSpeed.FAST, EffectSpeed.SLOW]).toContain(
       DEFAULT_SETTINGS.effectSpeed
     );
   });
@@ -57,8 +57,14 @@ describe('isValidSettings', () => {
 
   it('effectSpeedが無効な値の場合falseを返すこと', () => {
     expect(
-      isValidSettings({ bgmVolume: 80, seVolume: 60, effectSpeed: 'slow' })
+      isValidSettings({ bgmVolume: 80, seVolume: 60, effectSpeed: 'medium' })
     ).toBe(false);
+  });
+
+  it('effectSpeedが"slow"の場合trueを返すこと', () => {
+    expect(
+      isValidSettings({ bgmVolume: 80, seVolume: 60, effectSpeed: 'slow' })
+    ).toBe(true);
   });
 
   it('プロパティが欠けている場合falseを返すこと', () => {
@@ -101,8 +107,16 @@ describe('isValidEffectSpeed', () => {
     expect(isValidEffectSpeed(EffectSpeed.FAST)).toBe(true);
   });
 
+  it('EffectSpeed.SLOWをtrueと判定すること', () => {
+    expect(isValidEffectSpeed(EffectSpeed.SLOW)).toBe(true);
+  });
+
+  it('"slow"をtrueと判定すること', () => {
+    expect(isValidEffectSpeed('slow')).toBe(true);
+  });
+
   it('他の文字列をfalseと判定すること', () => {
-    expect(isValidEffectSpeed('slow')).toBe(false);
+    expect(isValidEffectSpeed('medium')).toBe(false);
     expect(isValidEffectSpeed('')).toBe(false);
     expect(isValidEffectSpeed('NORMAL')).toBe(false);
   });

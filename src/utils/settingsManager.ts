@@ -50,6 +50,8 @@ export function saveSettings(settings: Settings): void {
  */
 export function getEffectSpeedMultiplier(speed: EffectSpeed): number {
   switch (speed) {
+    case EffectSpeed.SLOW:
+      return 2.0;
     case EffectSpeed.NORMAL:
       return 1.0;
     case EffectSpeed.FAST:

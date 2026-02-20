@@ -113,4 +113,8 @@ describe('getEffectSpeedMultiplier', () => {
   it('FASTの場合0.5を返すこと', () => {
     expect(getEffectSpeedMultiplier(EffectSpeed.FAST)).toBe(0.5);
   });
+
+  it('SLOWの場合2.0を返すこと', () => {
+    expect(getEffectSpeedMultiplier(EffectSpeed.SLOW)).toBe(2.0);
+  });
 });

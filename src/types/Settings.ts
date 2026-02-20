@@ -2,6 +2,8 @@
  * 演出速度
  */
 export enum EffectSpeed {
+  /** 低速 */
+  SLOW = 'slow',
   /** 通常速度 */
   NORMAL = 'normal',
   /** 高速 */
@@ -38,7 +40,7 @@ export function clampVolume(volume: number): number {
  * 有効な演出速度かどうかを判定する
  */
 export function isValidEffectSpeed(speed: string): speed is EffectSpeed {
-  return speed === EffectSpeed.NORMAL || speed === EffectSpeed.FAST;
+  return speed === EffectSpeed.SLOW || speed === EffectSpeed.NORMAL || speed === EffectSpeed.FAST;
 }
 
 /**
