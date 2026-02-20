@@ -99,6 +99,13 @@ export class BattleEffectPlayer {
   }
 
   /**
+   * 攻撃者（defenderの反対側）のオブジェクトを取得
+   */
+  private getAttackerObject(defenderTarget: EffectTarget): Phaser.GameObjects.Image | Phaser.GameObjects.Text {
+    return this.getTargetObject(defenderTarget === 'enemy' ? 'player' : 'enemy');
+  }
+
+  /**
    * ダメージ数値表示: テキスト生成→上に浮かびながらフェードアウト
    */
   private playDamageNumber(effect: BattleEffect): Promise<void> {
@@ -132,59 +139,116 @@ export class BattleEffectPlayer {
   }
 
   /**
-   * 武器攻撃エフェクト: 白フラッシュ + シェイク
+   * 武器攻撃エフェクト: 攻撃者ダッシュ → 白フラッシュ + シェイク → 攻撃者リターン
    */
   private playWeaponAttack(effect: BattleEffect): Promise<void> {
     const targetObj = this.getTargetObject(effect.target);
-    const originalX = targetObj.x;
+    const attackerObj = this.getAttackerObject(effect.target);
+    const originalAttackerX = attackerObj.x;
+    const originalTargetX = targetObj.x;
+    // 攻撃者が相手に向かって35%の距離をダッシュ
+    const dashX = originalAttackerX + (originalTargetX - originalAttackerX) * 0.35;
 
     playSe(this.scene.sound, AudioKey.SE_ATTACK);
 
     return new Promise<void>(resolve => {
-      // フラッシュ: 白く光らせる
-      targetObj.setTint(EFFECT_CONFIG.weaponFlashColor);
-
+      // Tween 1: 攻撃者ダッシュ
       this.scene.tweens.add({
-        targets: targetObj,
-        x: originalX + 5,
-        duration: EFFECT_CONFIG.weaponAttackDuration * this.speedMultiplier / 4,
-        yoyo: true,
-        repeat: 3,
-        ease: 'Sine.inOut',
+        targets: attackerObj,
+        x: dashX,
+        duration: EFFECT_CONFIG.weaponDashDuration * this.speedMultiplier,
+        ease: 'Power2.in',
         onComplete: () => {
-          targetObj.clearTint();
-          targetObj.x = originalX;
-          resolve();
+          targetObj.setTint(EFFECT_CONFIG.weaponFlashColor);
+
+          let done = 0;
+          const checkDone = () => {
+            done++;
+            if (done >= 2) {
+              targetObj.clearTint();
+              resolve();
+            }
+          };
+
+          // Tween 2: 攻撃者リターン
+          this.scene.tweens.add({
+            targets: attackerObj,
+            x: originalAttackerX,
+            duration: EFFECT_CONFIG.weaponAttackDuration * this.speedMultiplier / 2,
+            ease: 'Power2.out',
+            onComplete: checkDone,
+          });
+
+          // Tween 3: ターゲットシェイク
+          this.scene.tweens.add({
+            targets: targetObj,
+            x: originalTargetX + 8,
+            duration: EFFECT_CONFIG.weaponAttackDuration * this.speedMultiplier / 4,
+            yoyo: true,
+            repeat: 3,
+            ease: 'Sine.inOut',
+            onComplete: () => {
+              targetObj.x = originalTargetX;
+              checkDone();
+            },
+          });
         },
       });
     });
   }
 
   /**
-   * 特殊攻撃エフェクト: 紫パルス + スケール拡大縮小
+   * 特殊攻撃エフェクト: プロジェクタイル飛翔 → 衝撃パルス
    */
   private playSpecialAttack(effect: BattleEffect): Promise<void> {
     const targetObj = this.getTargetObject(effect.target);
+    const attackerObj = this.getAttackerObject(effect.target);
     const originalScaleX = targetObj.scaleX;
     const originalScaleY = targetObj.scaleY;
 
     playSe(this.scene.sound, AudioKey.SE_ATTACK);
 
     return new Promise<void>(resolve => {
-      targetObj.setTint(EFFECT_CONFIG.specialPulseColor);
+      // プロジェクタイル生成（攻撃者位置）
+      const projectile = this.scene.add.text(
+        attackerObj.x,
+        attackerObj.y,
+        '★',
+        {
+          fontSize: '22px',
+          color: EFFECT_CONFIG.specialProjectileColor,
+          fontFamily: 'Arial, sans-serif',
+          fontStyle: 'bold',
+        }
+      );
+      projectile.setOrigin(0.5);
 
+      // Tween 1: プロジェクタイルがターゲットへ飛翔
       this.scene.tweens.add({
-        targets: targetObj,
-        scaleX: originalScaleX * 1.3,
-        scaleY: originalScaleY * 1.3,
-        duration: EFFECT_CONFIG.specialAttackDuration * this.speedMultiplier / 2,
-        yoyo: true,
-        ease: 'Sine.inOut',
+        targets: projectile,
+        x: targetObj.x,
+        y: targetObj.y,
+        duration: EFFECT_CONFIG.specialProjectileDuration * this.speedMultiplier,
+        ease: 'Power2.in',
         onComplete: () => {
-          targetObj.clearTint();
-          targetObj.scaleX = originalScaleX;
-          targetObj.scaleY = originalScaleY;
-          resolve();
+          projectile.destroy();
+          targetObj.setTint(EFFECT_CONFIG.specialPulseColor);
+
+          // Tween 2: 衝撃パルス
+          this.scene.tweens.add({
+            targets: targetObj,
+            scaleX: originalScaleX * 1.3,
+            scaleY: originalScaleY * 1.3,
+            duration: EFFECT_CONFIG.specialAttackDuration * this.speedMultiplier / 2,
+            yoyo: true,
+            ease: 'Sine.inOut',
+            onComplete: () => {
+              targetObj.clearTint();
+              targetObj.scaleX = originalScaleX;
+              targetObj.scaleY = originalScaleY;
+              resolve();
+            },
+          });
         },
       });
     });
