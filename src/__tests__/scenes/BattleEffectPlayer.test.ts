@@ -1,6 +1,7 @@
 import { BattleEffectPlayer, EffectTargets } from '../../scenes/BattleEffectPlayer';
 import { BattleEffectType, BattleEffectSequence } from '../../types/BattleEffect';
 import { DistanceType } from '../../types/Distance';
+import { StanceType } from '../../types/Stance';
 import { EFFECT_CONFIG } from '../../scenes/battleConfig';
 
 // localStorageモック
@@ -222,6 +223,36 @@ describe('BattleEffectPlayer', () => {
 
       // Text2つ + Image1つ = 3つのTween
       expect(scene.tweens.add).toHaveBeenCalledTimes(3);
+    });
+
+    it('STANCE_CHANGEエフェクト（攻勢）でテキスト生成とTweenが呼ばれる', async () => {
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.STANCE_CHANGE, target: 'player', stanceTo: StanceType.OFFENSIVE }],
+      ];
+      await player.playSequence(sequence);
+
+      expect(scene.add.text).toHaveBeenCalled();
+      expect(scene.tweens.add).toHaveBeenCalled();
+    });
+
+    it('STANCE_CHANGEエフェクト（守勢）でテキスト生成とTweenが呼ばれる', async () => {
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.STANCE_CHANGE, target: 'enemy', stanceTo: StanceType.DEFENSIVE }],
+      ];
+      await player.playSequence(sequence);
+
+      expect(scene.add.text).toHaveBeenCalled();
+      expect(scene.tweens.add).toHaveBeenCalled();
+    });
+
+    it('STANCE_CHANGEエフェクト（通常）でテキスト生成とTweenが呼ばれる', async () => {
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.STANCE_CHANGE, target: 'player', stanceTo: StanceType.NORMAL }],
+      ];
+      await player.playSequence(sequence);
+
+      expect(scene.add.text).toHaveBeenCalled();
+      expect(scene.tweens.add).toHaveBeenCalled();
     });
 
     it('複数フェーズが順次実行される', async () => {
