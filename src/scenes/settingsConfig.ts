@@ -71,6 +71,7 @@ export const SETTINGS_LABELS = {
   bgmVolume: 'BGM音量',
   seVolume: 'SE音量',
   effectSpeed: '演出速度',
+  effectSpeedSlow: '遅い',
   effectSpeedNormal: '通常',
   effectSpeedFast: '高速',
   back: '戻る',

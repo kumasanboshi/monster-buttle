@@ -29,6 +29,7 @@ export class SettingsScene extends BaseScene {
   private settings!: Settings;
   private bgmSlider!: SliderUI;
   private seSlider!: SliderUI;
+  private slowBtnBg!: Phaser.GameObjects.Rectangle;
   private normalBtnBg!: Phaser.GameObjects.Rectangle;
   private fastBtnBg!: Phaser.GameObjects.Rectangle;
   private draggingSlider: SliderUI | null = null;
@@ -136,33 +137,41 @@ export class SettingsScene extends BaseScene {
       })
       .setOrigin(0.5);
 
-    const btnWidth = 100;
+    const btnWidth = 90;
     const btnHeight = 36;
-    const btnSpacing = 120;
-    const baseX = SETTINGS_LAYOUT.sliderBarX + 50;
+    const btnSpacing = 110;
+    const baseX = SETTINGS_LAYOUT.sliderBarX + 45;
+
+    const makeBtn = (x: number, label: string, active: boolean): Phaser.GameObjects.Rectangle => {
+      const bg = this.add
+        .rectangle(
+          x,
+          y,
+          btnWidth,
+          btnHeight,
+          active ? SETTINGS_COLORS.effectSpeedButtonActive : SETTINGS_COLORS.effectSpeedButton
+        )
+        .setInteractive({ useHandCursor: true });
+      this.add
+        .text(x, y, label, {
+          fontSize: '18px',
+          color: SETTINGS_COLORS.buttonText,
+          fontFamily: 'Arial, sans-serif',
+        })
+        .setOrigin(0.5);
+      return bg;
+    };
+
+    // 遅いボタン
+    this.slowBtnBg = makeBtn(baseX, SETTINGS_LABELS.effectSpeedSlow, this.settings.effectSpeed === EffectSpeed.SLOW);
+    this.slowBtnBg.on('pointerdown', () => {
+      this.settings.effectSpeed = EffectSpeed.SLOW;
+      this.updateEffectSpeedButtons();
+      this.saveCurrentSettings();
+    });
 
     // 通常ボタン
-    const isNormal = this.settings.effectSpeed === EffectSpeed.NORMAL;
-    this.normalBtnBg = this.add
-      .rectangle(
-        baseX,
-        y,
-        btnWidth,
-        btnHeight,
-        isNormal
-          ? SETTINGS_COLORS.effectSpeedButtonActive
-          : SETTINGS_COLORS.effectSpeedButton
-      )
-      .setInteractive({ useHandCursor: true });
-
-    this.add
-      .text(baseX, y, SETTINGS_LABELS.effectSpeedNormal, {
-        fontSize: '18px',
-        color: SETTINGS_COLORS.buttonText,
-        fontFamily: 'Arial, sans-serif',
-      })
-      .setOrigin(0.5);
-
+    this.normalBtnBg = makeBtn(baseX + btnSpacing, SETTINGS_LABELS.effectSpeedNormal, this.settings.effectSpeed === EffectSpeed.NORMAL);
     this.normalBtnBg.on('pointerdown', () => {
       this.settings.effectSpeed = EffectSpeed.NORMAL;
       this.updateEffectSpeedButtons();
@@ -170,26 +179,7 @@ export class SettingsScene extends BaseScene {
     });
 
     // 高速ボタン
-    this.fastBtnBg = this.add
-      .rectangle(
-        baseX + btnSpacing,
-        y,
-        btnWidth,
-        btnHeight,
-        !isNormal
-          ? SETTINGS_COLORS.effectSpeedButtonActive
-          : SETTINGS_COLORS.effectSpeedButton
-      )
-      .setInteractive({ useHandCursor: true });
-
-    this.add
-      .text(baseX + btnSpacing, y, SETTINGS_LABELS.effectSpeedFast, {
-        fontSize: '18px',
-        color: SETTINGS_COLORS.buttonText,
-        fontFamily: 'Arial, sans-serif',
-      })
-      .setOrigin(0.5);
-
+    this.fastBtnBg = makeBtn(baseX + btnSpacing * 2, SETTINGS_LABELS.effectSpeedFast, this.settings.effectSpeed === EffectSpeed.FAST);
     this.fastBtnBg.on('pointerdown', () => {
       this.settings.effectSpeed = EffectSpeed.FAST;
       this.updateEffectSpeedButtons();
@@ -283,14 +273,19 @@ export class SettingsScene extends BaseScene {
 
   /** 演出速度ボタンの表示を更新 */
   private updateEffectSpeedButtons(): void {
-    const isNormal = this.settings.effectSpeed === EffectSpeed.NORMAL;
+    const speed = this.settings.effectSpeed;
+    this.slowBtnBg.setFillStyle(
+      speed === EffectSpeed.SLOW
+        ? SETTINGS_COLORS.effectSpeedButtonActive
+        : SETTINGS_COLORS.effectSpeedButton
+    );
     this.normalBtnBg.setFillStyle(
-      isNormal
+      speed === EffectSpeed.NORMAL
         ? SETTINGS_COLORS.effectSpeedButtonActive
         : SETTINGS_COLORS.effectSpeedButton
     );
     this.fastBtnBg.setFillStyle(
-      !isNormal
+      speed === EffectSpeed.FAST
         ? SETTINGS_COLORS.effectSpeedButtonActive
         : SETTINGS_COLORS.effectSpeedButton
     );
