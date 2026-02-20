@@ -245,9 +245,6 @@ export class BattleScene extends BaseScene {
       this.setupNetworkListeners();
     }
 
-    // モバイル横画面推奨プロンプト
-    this.setupOrientationPrompt();
-
     // バトルBGM再生
     playBgm(this.sound, AudioKey.BGM_BATTLE);
   }
