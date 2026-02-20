@@ -37,7 +37,21 @@ function resolvePhaseEffects(
     });
   }
 
-  // 2. P1のスタンス変更エフェクト
+  // 2. リフレクター構えエフェクト（攻撃が来なかった場合のみ）
+  if (phase.player1Command === CommandType.REFLECTOR && !isAttackCommand(phase.player2Command)) {
+    effects.push({
+      type: BattleEffectType.REFLECTOR_DEPLOY,
+      target: 'player',
+    });
+  }
+  if (phase.player2Command === CommandType.REFLECTOR && !isAttackCommand(phase.player1Command)) {
+    effects.push({
+      type: BattleEffectType.REFLECTOR_DEPLOY,
+      target: 'enemy',
+    });
+  }
+
+  // 3. P1のスタンス変更エフェクト
   if (phase.player1Command === CommandType.STANCE_A || phase.player1Command === CommandType.STANCE_B) {
     effects.push({
       type: BattleEffectType.STANCE_CHANGE,
@@ -46,7 +60,7 @@ function resolvePhaseEffects(
     });
   }
 
-  // 3. P2のスタンス変更エフェクト
+  // 4. P2のスタンス変更エフェクト
   if (phase.player2Command === CommandType.STANCE_A || phase.player2Command === CommandType.STANCE_B) {
     effects.push({
       type: BattleEffectType.STANCE_CHANGE,
@@ -55,7 +69,7 @@ function resolvePhaseEffects(
     });
   }
 
-  // 4. P1のコマンドによる攻撃エフェクト
+  // 5. P1のコマンドによる攻撃エフェクト
   resolvePlayerAttackEffects(
     phase.player1Command,
     phase.player2Command,
@@ -66,7 +80,7 @@ function resolvePhaseEffects(
     effects
   );
 
-  // 5. P2のコマンドによる攻撃エフェクト
+  // 6. P2のコマンドによる攻撃エフェクト
   resolvePlayerAttackEffects(
     phase.player2Command,
     phase.player1Command,

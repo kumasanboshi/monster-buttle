@@ -179,14 +179,14 @@ describe('BattleEffectPlayer', () => {
       expect(scene.tweens.add).toHaveBeenCalled();
     });
 
-    it('SPECIAL_ATTACKでプロジェクタイルのテキストが生成される', async () => {
+    it('SPECIAL_ATTACKで光球プロジェクタイルのGraphicsが生成される', async () => {
       const sequence: BattleEffectSequence = [
         [{ type: BattleEffectType.SPECIAL_ATTACK, target: 'enemy' }],
       ];
       await player.playSequence(sequence);
 
-      // プロジェクタイル + 衝撃テキスト等
-      expect(scene.add.text).toHaveBeenCalled();
+      // 光球はGraphicsで生成される
+      expect(scene.add.graphics).toHaveBeenCalled();
     });
 
     it('SPECIAL_ATTACKでフライト+パルスの2Tween以上が呼ばれる', async () => {
