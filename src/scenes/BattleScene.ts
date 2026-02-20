@@ -651,7 +651,10 @@ export class BattleScene extends BaseScene {
       this.battleState,
       'player2',
       this.enemyMonster,
-      this.enemyAILevel
+      this.enemyAILevel,
+      Math.random,
+      this.playerMonster,
+      this.turnHistory
     );
 
     // ターン処理
