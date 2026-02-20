@@ -136,6 +136,16 @@ describe('BattleEffectPlayer', () => {
       expect(scene.tweens.add).toHaveBeenCalled();
     });
 
+    it('WEAPON_ATTACKで攻撃者ダッシュを含む複数のTweenが呼ばれる', async () => {
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.WEAPON_ATTACK, target: 'enemy' }],
+      ];
+      await player.playSequence(sequence);
+
+      // ダッシュ・シェイク・リターンの3Tween以上
+      expect(scene.tweens.add.mock.calls.length).toBeGreaterThanOrEqual(3);
+    });
+
     it('SPECIAL_ATTACKエフェクトでTweenが呼ばれる', async () => {
       const sequence: BattleEffectSequence = [
         [{ type: BattleEffectType.SPECIAL_ATTACK, target: 'enemy' }],
@@ -143,6 +153,25 @@ describe('BattleEffectPlayer', () => {
       await player.playSequence(sequence);
 
       expect(scene.tweens.add).toHaveBeenCalled();
+    });
+
+    it('SPECIAL_ATTACKでプロジェクタイルのテキストが生成される', async () => {
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.SPECIAL_ATTACK, target: 'enemy' }],
+      ];
+      await player.playSequence(sequence);
+
+      // プロジェクタイル + 衝撃テキスト等
+      expect(scene.add.text).toHaveBeenCalled();
+    });
+
+    it('SPECIAL_ATTACKでフライト+パルスの2Tween以上が呼ばれる', async () => {
+      const sequence: BattleEffectSequence = [
+        [{ type: BattleEffectType.SPECIAL_ATTACK, target: 'enemy' }],
+      ];
+      await player.playSequence(sequence);
+
+      expect(scene.tweens.add.mock.calls.length).toBeGreaterThanOrEqual(2);
     });
 
     it('EVASIONエフェクトでテキスト生成とTweenが呼ばれる', async () => {
