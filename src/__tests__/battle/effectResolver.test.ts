@@ -150,7 +150,7 @@ describe('resolveBattleEffects', () => {
   });
 
   describe('特殊攻撃エフェクト', () => {
-    it('特殊攻撃でダメージがある場合SPECIAL_ATTACKとDAMAGE_NUMBERを生成する', () => {
+    it('特殊攻撃でダメージがある場合SPECIAL_ATTACK(value付き)を生成しDAMAGE_NUMBERは生成しない', () => {
       const phase1 = makePhase({
         player1Command: CommandType.SPECIAL_ATTACK,
         player2Command: CommandType.RETREAT,
@@ -165,10 +165,11 @@ describe('resolveBattleEffects', () => {
       const specialEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_ATTACK);
       expect(specialEffects.length).toBe(1);
       expect(specialEffects[0].target).toBe('enemy');
+      // ダメージ値はSPECIAL_ATTACKエフェクト自体に埋め込み（命中タイミングで表示するため）
+      expect(specialEffects[0].value).toBe(25);
 
-      const damageEffects = findEffects(phase1Effects, BattleEffectType.DAMAGE_NUMBER);
-      expect(damageEffects.length).toBe(1);
-      expect(damageEffects[0].value).toBe(25);
+      // 別途DAMAGE_NUMBERは生成しない（命中前に表示されてしまうため）
+      expect(findEffects(phase1Effects, BattleEffectType.DAMAGE_NUMBER).length).toBe(0);
     });
 
     it('特殊攻撃が回避された場合EVASIONエフェクトを生成する', () => {

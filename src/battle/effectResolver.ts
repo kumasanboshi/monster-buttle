@@ -141,12 +141,17 @@ function resolvePlayerAttackEffects(
     effects.push({
       type: attackEffectType,
       target: defenderTarget,
+      // SPECIAL_ATTACKは命中タイミングでダメージ数値を表示するため、valueを埋め込む
+      // WEAPON_ATTACKは直後にDAMAGE_NUMBERを別エフェクトとして並行再生
+      value: attackerCmd === CommandType.SPECIAL_ATTACK ? damageToDefender.damage : undefined,
     });
-    effects.push({
-      type: BattleEffectType.DAMAGE_NUMBER,
-      target: defenderTarget,
-      value: damageToDefender.damage,
-    });
+    if (attackerCmd !== CommandType.SPECIAL_ATTACK) {
+      effects.push({
+        type: BattleEffectType.DAMAGE_NUMBER,
+        target: defenderTarget,
+        value: damageToDefender.damage,
+      });
+    }
   }
 }
 

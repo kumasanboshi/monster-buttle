@@ -257,6 +257,30 @@ export class BattleEffectPlayer {
           orb.destroy();
           targetObj.setTint(EFFECT_CONFIG.specialPulseColor);
 
+          // 光球命中と同時にダメージ数値を表示
+          if (effect.value != null) {
+            const damageText = this.scene.add.text(
+              targetObj.x,
+              targetObj.y - 30,
+              `${effect.value}`,
+              {
+                fontSize: '24px',
+                color: EFFECT_CONFIG.damageNumberColor,
+                fontFamily: 'Arial, sans-serif',
+                fontStyle: 'bold',
+              }
+            );
+            damageText.setOrigin(0.5);
+            this.scene.tweens.add({
+              targets: damageText,
+              alpha: 0,
+              y: damageText.y - 40,
+              duration: EFFECT_CONFIG.damageNumberDuration * this.speedMultiplier,
+              ease: 'Power2',
+              onComplete: () => damageText.destroy(),
+            });
+          }
+
           // Tween 2: 衝撃パルス
           this.scene.tweens.add({
             targets: targetObj,
