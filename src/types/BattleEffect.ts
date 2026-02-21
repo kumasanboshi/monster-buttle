@@ -25,6 +25,8 @@ export enum BattleEffectType {
   REFLECTOR_BLOCK = 'REFLECTOR_BLOCK',
   /** 特殊攻撃がリフレクターで反射された連続アニメーション */
   SPECIAL_REFLECT = 'SPECIAL_REFLECT',
+  /** 特殊攻撃が武器攻撃で潰された場合の溜め→崩れ演出 */
+  SPECIAL_CHARGE_FIZZLE = 'SPECIAL_CHARGE_FIZZLE',
 }
 
 /** エフェクトのターゲット */
