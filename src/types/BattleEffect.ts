@@ -23,6 +23,8 @@ export enum BattleEffectType {
   REFLECTOR_DEPLOY = 'REFLECTOR_DEPLOY',
   /** リフレクター残回数切れブロックエフェクト（特殊を無効化したが反射できなかった場合） */
   REFLECTOR_BLOCK = 'REFLECTOR_BLOCK',
+  /** 特殊攻撃がリフレクターで反射された連続アニメーション */
+  SPECIAL_REFLECT = 'SPECIAL_REFLECT',
 }
 
 /** エフェクトのターゲット */
@@ -44,6 +46,8 @@ export interface BattleEffect {
   distanceTo?: DistanceType;
   /** スタンス変更後のスタンス */
   stanceTo?: StanceType;
+  /** SPECIAL_REFLECT: 攻撃者に返る反射ダメージ量 */
+  reflectedDamage?: number;
 }
 
 /**

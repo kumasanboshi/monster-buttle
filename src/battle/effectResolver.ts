@@ -107,18 +107,13 @@ function resolvePlayerAttackEffects(
   effects: BattleEffect[]
 ): void {
   // リフレクター反射成功: 攻撃者が特殊攻撃 & 反射ダメージを受けた
+  // → 連続アニメーション（発射→盾構え→跳ね返り→被弾）で表現
   if (attackerCmd === CommandType.SPECIAL_ATTACK && damageToAttacker.isReflected) {
     effects.push({
-      type: BattleEffectType.REFLECTOR,
-      target: defenderTarget, // リフレクター側のエフェクト
+      type: BattleEffectType.SPECIAL_REFLECT,
+      target: defenderTarget,       // リフレクター保持者（盾を構える側）
+      reflectedDamage: damageToAttacker.damage,
     });
-    if (damageToAttacker.damage > 0) {
-      effects.push({
-        type: BattleEffectType.DAMAGE_NUMBER,
-        target: attackerTarget,
-        value: damageToAttacker.damage,
-      });
-    }
     return;
   }
 

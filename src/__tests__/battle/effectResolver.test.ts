@@ -190,7 +190,7 @@ describe('resolveBattleEffects', () => {
   });
 
   describe('リフレクターエフェクト', () => {
-    it('反射された場合REFLECTORとDAMAGE_NUMBERを生成する', () => {
+    it('反射された場合SPECIAL_REFLECT(target:enemy, reflectedDamage)を生成する', () => {
       const phase1 = makePhase({
         player1Command: CommandType.SPECIAL_ATTACK,
         player2Command: CommandType.REFLECTOR,
@@ -203,14 +203,14 @@ describe('resolveBattleEffects', () => {
       const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
 
       const phase1Effects = sequence[0];
-      const reflectorEffects = findEffects(phase1Effects, BattleEffectType.REFLECTOR);
-      expect(reflectorEffects.length).toBe(1);
-      expect(reflectorEffects[0].target).toBe('enemy'); // リフレクター側（P2）のエフェクト
+      const reflectEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_REFLECT);
+      expect(reflectEffects.length).toBe(1);
+      expect(reflectEffects[0].target).toBe('enemy'); // リフレクター保持者（P2）側
+      expect(reflectEffects[0].reflectedDamage).toBe(15); // 攻撃者に返るダメージ
 
-      const damageEffects = findEffects(phase1Effects, BattleEffectType.DAMAGE_NUMBER);
-      expect(damageEffects.length).toBe(1);
-      expect(damageEffects[0].target).toBe('player'); // 反射ダメージはP1に
-      expect(damageEffects[0].value).toBe(15);
+      // SPECIAL_REFLECT に一本化されるので、旧エフェクトは生成されない
+      expect(findEffects(phase1Effects, BattleEffectType.REFLECTOR).length).toBe(0);
+      expect(findEffects(phase1Effects, BattleEffectType.DAMAGE_NUMBER).length).toBe(0);
     });
 
     it('残回数0でSPECIAL_ATTACKをブロックした場合REFLECTOR_BLOCK(target:enemy)を生成する', () => {

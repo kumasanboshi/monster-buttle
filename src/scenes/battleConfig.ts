@@ -237,37 +237,37 @@ export function getCommandButtonLayout(isMobile: boolean): CommandButtonLayout {
 /** エフェクト再生用定数 */
 export const EFFECT_CONFIG = {
   /** ダメージ数値の表示時間（ms） */
-  damageNumberDuration: 1000,
+  damageNumberDuration: 1400,
   /** ダメージ数値の色 */
   damageNumberColor: '#ff4444',
   /** 武器攻撃エフェクトの時間（ms） */
-  weaponAttackDuration: 600,
+  weaponAttackDuration: 840,
   /** 武器攻撃フラッシュ色 */
   weaponFlashColor: 0xffffff,
   /** 攻撃者ダッシュの時間（ms） */
-  weaponDashDuration: 200,
+  weaponDashDuration: 280,
   /** 特殊攻撃エフェクトの時間（ms） */
-  specialAttackDuration: 800,
+  specialAttackDuration: 1120,
   /** 特殊攻撃パルス色 */
   specialPulseColor: 0xaa44ff,
   /** 特殊攻撃プロジェクタイルのフライト時間（ms） */
-  specialProjectileDuration: 350,
+  specialProjectileDuration: 490,
   /** 特殊攻撃プロジェクタイルの色 */
   specialProjectileColor: '#cc44ff',
   /** リフレクターエフェクトの時間（ms） */
-  reflectorDuration: 800,
+  reflectorDuration: 1120,
   /** リフレクターシールド色 */
   reflectorShieldColor: 0x4488ff,
   /** リフレクターテキスト色 */
   reflectorTextColor: '#4488ff',
   /** 回避エフェクトの時間（ms） */
-  evasionDuration: 700,
+  evasionDuration: 980,
   /** 回避テキスト色 */
   evasionTextColor: '#aaaaaa',
   /** 距離移動アニメーションの時間（ms） */
-  distanceMoveDuration: 600,
+  distanceMoveDuration: 840,
   /** スタンス変更エフェクトの時間（ms） */
-  stanceChangeDuration: 700,
+  stanceChangeDuration: 980,
   /** 攻勢スタンスのティント色 */
   stanceOffensiveColor: 0xff6600,
   /** 守勢スタンスのティント色 */
@@ -275,7 +275,7 @@ export const EFFECT_CONFIG = {
   /** 通常スタンスのティント色 */
   stanceNormalColor: 0xaaaaaa,
   /** リフレクター構えの表示時間（ms） */
-  reflectorDeployDuration: 600,
+  reflectorDeployDuration: 840,
   /** リフレクター構えテキスト色 */
   reflectorDeployTextColor: '#88bbff',
   /** 武器スラッシュの色 */
@@ -285,11 +285,24 @@ export const EFFECT_CONFIG = {
   /** 特殊攻撃光球の輝き色 */
   orbGlowColor: 0xff88ff,
   /** リフレクター残回数切れブロックの表示時間（ms） */
-  reflectorBlockDuration: 600,
+  reflectorBlockDuration: 840,
   /** リフレクター残回数切れブロックのテキスト色 */
   reflectorBlockTextColor: '#aabbcc',
   /** リフレクター残回数切れブロックのティント色 */
   reflectorBlockTintColor: 0x7799bb,
+  // --- SPECIAL_REFLECT 反射アニメーション ---
+  /** 反射アニメーション: 光球飛翔フェーズの時間（ms） */
+  specialReflectProjectileDuration: 490,
+  /** 反射アニメーション: 盾構えフェーズの時間（ms） */
+  specialReflectShieldDuration: 420,
+  /** 反射アニメーション: 光球跳ね返りフェーズの時間（ms） */
+  specialReflectReturnDuration: 490,
+  /** 反射アニメーション: 被弾フラッシュの時間（ms） */
+  specialReflectHitDuration: 560,
+  /** 反射光球の色（オレンジ系で通常と区別） */
+  specialReflectOrbColor: 0xff6600,
+  /** 反射光球の輝き色 */
+  specialReflectOrbGlowColor: 0xffaa44,
 } as const;
 
 /** ギブアップ確認ダイアログのメッセージ */
