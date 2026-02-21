@@ -52,7 +52,8 @@ export class CharacterSelectScene extends BaseScene {
       this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, BackgroundImageKey.CHARACTER_SELECT).setOrigin(0.5);
     }
     this.mode = data?.mode;
-    this.step = data?.step;
+    // FREE_CPUでstepが未指定の場合はプレイヤー選択ステップとして扱う
+    this.step = data?.step ?? (this.mode === GameMode.FREE_CPU ? 'player' : undefined);
     this.playerMonsterId = data?.playerMonsterId;
 
     // CHALLENGEモード：進捗からステージ番号を決定（dataに値があればそちらを優先）
