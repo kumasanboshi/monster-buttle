@@ -83,6 +83,8 @@ export class BattleEffectPlayer {
         return this.playSpecialReflect(effect);
       case BattleEffectType.SPECIAL_CHARGE_FIZZLE:
         return this.playSpecialChargeFizzle(effect);
+      case BattleEffectType.SPECIAL_EVASION:
+        return this.playSpecialEvasion(effect);
       default:
         return Promise.resolve();
     }
@@ -735,6 +737,92 @@ export class BattleEffectPlayer {
         duration: cfg.specialChargeFizzleDuration * this.speedMultiplier,
         ease: 'Power2',
         onComplete: () => resolve(),
+      });
+    });
+  }
+
+  /**
+   * 特殊攻撃が回避された演出: 溜めグロー → 光球飛翔 → 着弾瞬間に防御者ステップ回避 + MISS テキスト
+   */
+  private async playSpecialEvasion(effect: BattleEffect): Promise<void> {
+    const defenderObj = this.getTargetObject(effect.target);
+    const attackerObj = this.getAttackerObject(effect.target);
+    const originalDefenderX = defenderObj.x;
+    const cfg = EFFECT_CONFIG;
+
+    // Phase 0: 溜め（攻撃者グロー）
+    await new Promise<void>(resolve => {
+      attackerObj.setTint(cfg.specialChargeColor);
+      this.scene.tweens.add({
+        targets: attackerObj,
+        scaleX: attackerObj.scaleX * 1.15,
+        scaleY: attackerObj.scaleY * 1.15,
+        duration: cfg.specialChargeDuration * this.speedMultiplier,
+        yoyo: true,
+        onComplete: () => {
+          attackerObj.clearTint();
+          resolve();
+        },
+      });
+    });
+
+    playSe(this.scene.sound, AudioKey.SE_ATTACK);
+
+    // Phase 1: 光球飛翔 → 着弾瞬間に回避
+    await new Promise<void>(resolve => {
+      const orb = this.scene.add.graphics();
+      orb.fillStyle(cfg.orbGlowColor, 0.5);
+      orb.fillCircle(0, 0, 14);
+      orb.fillStyle(cfg.orbColor, 1);
+      orb.fillCircle(0, 0, 8);
+      orb.x = attackerObj.x;
+      orb.y = attackerObj.y;
+
+      this.scene.tweens.add({
+        targets: orb,
+        x: defenderObj.x,
+        y: defenderObj.y,
+        duration: cfg.specialProjectileDuration * this.speedMultiplier,
+        ease: 'Power2.in',
+        onComplete: () => {
+          orb.destroy();
+
+          // 着弾と同時: MISS テキスト + 防御者ステップ回避
+          const missText = this.scene.add.text(
+            defenderObj.x,
+            defenderObj.y - 30,
+            'MISS',
+            {
+              fontSize: '20px',
+              color: cfg.evasionTextColor,
+              fontFamily: 'Arial, sans-serif',
+              fontStyle: 'bold',
+            }
+          ).setOrigin(0.5);
+
+          this.scene.tweens.add({
+            targets: defenderObj,
+            x: originalDefenderX + (effect.target === 'player' ? -30 : 30),
+            duration: cfg.evasionDuration * this.speedMultiplier / 2,
+            yoyo: true,
+            ease: 'Power2',
+            onComplete: () => {
+              defenderObj.x = originalDefenderX;
+            },
+          });
+
+          this.scene.tweens.add({
+            targets: missText,
+            alpha: 0,
+            y: missText.y - 20,
+            duration: cfg.evasionDuration * this.speedMultiplier,
+            ease: 'Power2',
+            onComplete: () => {
+              missText.destroy();
+              resolve();
+            },
+          });
+        },
       });
     });
   }

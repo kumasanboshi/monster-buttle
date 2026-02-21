@@ -126,7 +126,16 @@ function resolvePlayerAttackEffects(
     return;
   }
 
-  // 回避判定
+  // 特殊攻撃が回避されたケース（溜め→光球→着弾瞬間回避演出）
+  if (attackerCmd === CommandType.SPECIAL_ATTACK && damageToDefender.isEvaded) {
+    effects.push({
+      type: BattleEffectType.SPECIAL_EVASION,
+      target: defenderTarget,
+    });
+    return;
+  }
+
+  // 回避判定（武器攻撃のみ）
   if (isAttackCommand(attackerCmd) && damageToDefender.isEvaded) {
     effects.push({
       type: BattleEffectType.EVASION,
