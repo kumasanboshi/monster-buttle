@@ -10,6 +10,7 @@ import {
   getResultButtons,
 } from './resultConfig';
 import { updateClearedStages } from '../utils/gameProgressManager';
+import { buildShareText, buildShareUrl } from '../utils/shareUtils';
 import { getChallengeStage, getNextStageNumber } from '../constants/challengeConfig';
 import { stopBgm, playSe } from '../utils/audioManager';
 import { AudioKey } from '../constants/audioKeys';
@@ -79,6 +80,7 @@ export class ResultScene extends BaseScene {
     this.createHpDisplay(battleResult);
     this.createGrowthDisplay();
     this.createButtons();
+    this.createShareButton(battleResult);
   }
 
   /** 勝敗テキストを表示 */
@@ -242,6 +244,31 @@ export class ResultScene extends BaseScene {
         clearedStages: this.clearedStages,
       });
     }
+  }
+
+  /** SNSシェアボタンを生成 */
+  private createShareButton(battleResult?: BattleResult): void {
+    const shareText = buildShareText({
+      resultType: battleResult?.resultType ?? BattleResultType.DRAW,
+      monsterId: this.monsterId,
+      turnCount: battleResult?.finalState.currentTurn ?? 0,
+    });
+    const shareUrl = buildShareUrl(shareText);
+
+    const button = this.add
+      .text(GAME_WIDTH / 2, RESULT_LAYOUT.shareButtonY, 'Xでシェア', {
+        fontSize: '22px',
+        color: '#1da1f2',
+        fontFamily: 'Arial, sans-serif',
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+
+    button.on('pointerover', () => button.setScale(1.1));
+    button.on('pointerout', () => button.setScale(1.0));
+    button.on('pointerdown', () => {
+      window.open(shareUrl, '_blank');
+    });
   }
 
   /** 結果タイプに応じた色文字列を返す */
