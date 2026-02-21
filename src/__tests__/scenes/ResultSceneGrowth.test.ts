@@ -32,16 +32,16 @@ describe('calculateStatsDiff', () => {
 
   it('成長段階1のとき before は基礎値、after は1段階成長後の値であること', () => {
     const diff = calculateStatsDiff('zaag', 1);
-    // zaagのHP基礎値は250、1段階でHP+15
-    expect(diff!.hp.before).toBe(250);
-    expect(diff!.hp.after).toBe(265);
+    // zaagのHP基礎値は375、1段階でHP+15
+    expect(diff!.hp.before).toBe(375);
+    expect(diff!.hp.after).toBe(390);
     expect(diff!.hp.gain).toBe(15);
   });
 
   it('成長段階7（最終）の差分が正しく計算されること', () => {
     const diff = calculateStatsDiff('zaag', 7);
-    expect(diff!.hp.before).toBe(340); // 250 + 15*6
-    expect(diff!.hp.after).toBe(355);  // 250 + 15*7
+    expect(diff!.hp.before).toBe(465); // 375 + 15*6
+    expect(diff!.hp.after).toBe(480);  // 375 + 15*7
     expect(diff!.hp.gain).toBe(15);
   });
 

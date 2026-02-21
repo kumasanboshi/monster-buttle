@@ -50,12 +50,12 @@ describe('MONSTER_DATABASE', () => {
 
     it('基礎パラメータが仕様通りであること', () => {
       expect(monster().name).toBe('レイン');
-      expect(monster().stats.hp).toBe(250);
+      expect(monster().stats.hp).toBe(375);
       expect(monster().stats.strength).toBe(50);
       expect(monster().stats.special).toBe(50);
       expect(monster().stats.speed).toBe(40);
       expect(monster().stats.toughness).toBe(50);
-      expect(monster().stats.specialAttackCount).toBe(5);
+      expect(monster().stats.specialAttackCount).toBe(7);
     });
 
     it('装備タイプAであること', () => {
@@ -70,12 +70,12 @@ describe('MONSTER_DATABASE', () => {
 
     it('基礎パラメータが仕様通りであること', () => {
       expect(monster().name).toBe('ドルグ');
-      expect(monster().stats.hp).toBe(280);
+      expect(monster().stats.hp).toBe(420);
       expect(monster().stats.strength).toBe(75);
       expect(monster().stats.special).toBe(25);
       expect(monster().stats.speed).toBe(15);
       expect(monster().stats.toughness).toBe(55);
-      expect(monster().stats.specialAttackCount).toBe(3);
+      expect(monster().stats.specialAttackCount).toBe(5);
     });
 
     it('装備タイプAであること', () => {
@@ -89,12 +89,12 @@ describe('MONSTER_DATABASE', () => {
 
     it('基礎パラメータが仕様通りであること', () => {
       expect(monster().name).toBe('シエル');
-      expect(monster().stats.hp).toBe(180);
+      expect(monster().stats.hp).toBe(270);
       expect(monster().stats.strength).toBe(20);
       expect(monster().stats.special).toBe(80);
       expect(monster().stats.speed).toBe(45);
       expect(monster().stats.toughness).toBe(25);
-      expect(monster().stats.specialAttackCount).toBe(7);
+      expect(monster().stats.specialAttackCount).toBe(9);
     });
 
     it('装備タイプBであること', () => {
@@ -109,12 +109,12 @@ describe('MONSTER_DATABASE', () => {
 
     it('基礎パラメータが仕様通りであること', () => {
       expect(monster().name).toBe('カイ');
-      expect(monster().stats.hp).toBe(200);
+      expect(monster().stats.hp).toBe(300);
       expect(monster().stats.strength).toBe(45);
       expect(monster().stats.special).toBe(40);
       expect(monster().stats.speed).toBe(50);
       expect(monster().stats.toughness).toBe(30);
-      expect(monster().stats.specialAttackCount).toBe(5);
+      expect(monster().stats.specialAttackCount).toBe(7);
     });
 
     it('装備タイプAであること', () => {
@@ -127,12 +127,12 @@ describe('MONSTER_DATABASE', () => {
 
     it('基礎パラメータが仕様通りであること', () => {
       expect(monster().name).toBe('ゲンブ');
-      expect(monster().stats.hp).toBe(270);
+      expect(monster().stats.hp).toBe(405);
       expect(monster().stats.strength).toBe(35);
       expect(monster().stats.special).toBe(30);
       expect(monster().stats.speed).toBe(15);
-      expect(monster().stats.toughness).toBe(80);
-      expect(monster().stats.specialAttackCount).toBe(4);
+      expect(monster().stats.toughness).toBe(65);
+      expect(monster().stats.specialAttackCount).toBe(6);
     });
 
     it('装備タイプBであること', () => {
@@ -146,12 +146,12 @@ describe('MONSTER_DATABASE', () => {
 
     it('基礎パラメータが仕様通りであること', () => {
       expect(monster().name).toBe('ユグド');
-      expect(monster().stats.hp).toBe(350);
+      expect(monster().stats.hp).toBe(525);
       expect(monster().stats.strength).toBe(30);
       expect(monster().stats.special).toBe(35);
       expect(monster().stats.speed).toBe(20);
       expect(monster().stats.toughness).toBe(55);
-      expect(monster().stats.specialAttackCount).toBe(6);
+      expect(monster().stats.specialAttackCount).toBe(8);
     });
 
     it('装備タイプBであること', () => {
@@ -165,12 +165,12 @@ describe('MONSTER_DATABASE', () => {
 
     it('基礎パラメータが仕様通りであること', () => {
       expect(monster().name).toBe('ボルグ');
-      expect(monster().stats.hp).toBe(230);
+      expect(monster().stats.hp).toBe(345);
       expect(monster().stats.strength).toBe(70);
       expect(monster().stats.special).toBe(15);
       expect(monster().stats.speed).toBe(25);
       expect(monster().stats.toughness).toBe(65);
-      expect(monster().stats.specialAttackCount).toBe(3);
+      expect(monster().stats.specialAttackCount).toBe(5);
     });
 
     it('装備タイプAであること', () => {
@@ -184,12 +184,12 @@ describe('MONSTER_DATABASE', () => {
 
     it('基礎パラメータが仕様通りであること', () => {
       expect(monster().name).toBe('アーシュ');
-      expect(monster().stats.hp).toBe(170);
+      expect(monster().stats.hp).toBe(255);
       expect(monster().stats.strength).toBe(15);
       expect(monster().stats.special).toBe(75);
       expect(monster().stats.speed).toBe(50);
       expect(monster().stats.toughness).toBe(20);
-      expect(monster().stats.specialAttackCount).toBe(8);
+      expect(monster().stats.specialAttackCount).toBe(10);
     });
 
     it('装備タイプBであること', () => {

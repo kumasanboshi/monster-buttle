@@ -55,23 +55,23 @@ describe('getMonsterWithFinalStats', () => {
   it('ザーグの最終パラメータが正しいこと', () => {
     const monster = getMonsterWithFinalStats('zaag');
     expect(monster).toBeDefined();
-    expect(monster!.stats.hp).toBe(250 + 15 * 7);         // 355
+    expect(monster!.stats.hp).toBe(375 + 15 * 7);         // 480
     expect(monster!.stats.strength).toBe(50 + 5 * 7);     // 85
     expect(monster!.stats.special).toBe(50 + 5 * 7);      // 85
     expect(monster!.stats.speed).toBe(40 + 4 * 7);        // 68
     expect(monster!.stats.toughness).toBe(50 + 5 * 7);    // 85
-    expect(monster!.stats.specialAttackCount).toBe(5);
+    expect(monster!.stats.specialAttackCount).toBe(7);
   });
 
   it('ガルダンの最終パラメータが正しいこと', () => {
     const monster = getMonsterWithFinalStats('gardan');
     expect(monster).toBeDefined();
-    expect(monster!.stats.hp).toBe(280 + 15 * 7);         // 385
+    expect(monster!.stats.hp).toBe(420 + 15 * 7);         // 525
     expect(monster!.stats.strength).toBe(75 + 8 * 7);     // 131
     expect(monster!.stats.special).toBe(25 + 2 * 7);      // 39
     expect(monster!.stats.speed).toBe(15 + 1 * 7);        // 22
     expect(monster!.stats.toughness).toBe(55 + 5 * 7);    // 90
-    expect(monster!.stats.specialAttackCount).toBe(3);
+    expect(monster!.stats.specialAttackCount).toBe(5);
   });
 
   it('存在しないIDでundefinedを返すこと', () => {
