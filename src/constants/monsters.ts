@@ -25,7 +25,7 @@ export const MONSTER_DATABASE: Monster[] = [
     id: 'zaag',
     name: 'レイン',
     species: 'ザーグ',
-    stats: { hp: 250, strength: 50, special: 50, speed: 40, toughness: 50, specialAttackCount: 5 },
+    stats: { hp: 375, strength: 50, special: 50, speed: 40, toughness: 50, specialAttackCount: 7 },
     weapon: { name: '幻銀の剣', multiplier: EQUIPMENT_PRESETS.A.weapon.multiplier },
     reflector: {
       name: '幻銀の盾',
@@ -38,12 +38,12 @@ export const MONSTER_DATABASE: Monster[] = [
     name: 'ドルグ',
     species: 'ガルダン',
     stats: {
-      hp: 280,
+      hp: 420,
       strength: 75,
       special: 25,
       speed: 15,
       toughness: 55,
-      specialAttackCount: 3,
+      specialAttackCount: 5,
     },
     weapon: { name: '岩砕の拳', multiplier: EQUIPMENT_PRESETS.A.weapon.multiplier },
     reflector: {
@@ -57,12 +57,12 @@ export const MONSTER_DATABASE: Monster[] = [
     name: 'シエル',
     species: 'ルーナ',
     stats: {
-      hp: 180,
+      hp: 270,
       strength: 20,
       special: 80,
       speed: 45,
       toughness: 25,
-      specialAttackCount: 7,
+      specialAttackCount: 9,
     },
     weapon: { name: '星霊の杖', multiplier: EQUIPMENT_PRESETS.B.weapon.multiplier },
     reflector: {
@@ -76,12 +76,12 @@ export const MONSTER_DATABASE: Monster[] = [
     name: 'カイ',
     species: 'ゼフィル',
     stats: {
-      hp: 200,
+      hp: 300,
       strength: 45,
       special: 40,
       speed: 50,
       toughness: 30,
-      specialAttackCount: 5,
+      specialAttackCount: 7,
     },
     weapon: { name: '疾風の爪', multiplier: EQUIPMENT_PRESETS.A.weapon.multiplier },
     reflector: {
@@ -95,12 +95,12 @@ export const MONSTER_DATABASE: Monster[] = [
     name: 'ゲンブ',
     species: 'バルガ',
     stats: {
-      hp: 270,
+      hp: 405,
       strength: 35,
       special: 30,
       speed: 15,
-      toughness: 80,
-      specialAttackCount: 4,
+      toughness: 65,
+      specialAttackCount: 6,
     },
     weapon: { name: '玄武の牙', multiplier: EQUIPMENT_PRESETS.B.weapon.multiplier },
     reflector: {
@@ -114,12 +114,12 @@ export const MONSTER_DATABASE: Monster[] = [
     name: 'ユグド',
     species: 'モルス',
     stats: {
-      hp: 350,
+      hp: 525,
       strength: 30,
       special: 35,
       speed: 20,
       toughness: 55,
-      specialAttackCount: 6,
+      specialAttackCount: 8,
     },
     weapon: { name: '古樹の腕', multiplier: EQUIPMENT_PRESETS.B.weapon.multiplier },
     reflector: {
@@ -133,12 +133,12 @@ export const MONSTER_DATABASE: Monster[] = [
     name: 'ボルグ',
     species: 'グラオン',
     stats: {
-      hp: 230,
+      hp: 345,
       strength: 70,
       special: 15,
       speed: 25,
       toughness: 65,
-      specialAttackCount: 3,
+      specialAttackCount: 5,
     },
     weapon: { name: '蛮族の戦斧', multiplier: EQUIPMENT_PRESETS.A.weapon.multiplier },
     reflector: {
@@ -152,12 +152,12 @@ export const MONSTER_DATABASE: Monster[] = [
     name: 'アーシュ',
     species: 'イグナ',
     stats: {
-      hp: 170,
+      hp: 255,
       strength: 15,
       special: 75,
       speed: 50,
       toughness: 20,
-      specialAttackCount: 8,
+      specialAttackCount: 10,
     },
     weapon: { name: '焔の爪', multiplier: EQUIPMENT_PRESETS.B.weapon.multiplier },
     reflector: {

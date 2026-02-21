@@ -107,16 +107,16 @@ describe('CharacterSelectScene - パラメータパネルの成長後表示', ()
       expect(hpValue).toBeGreaterThan(250); // 基礎値より大きい
     });
 
-    it('clearedStages=3のときzaagのHPが295であること', () => {
+    it('clearedStages=3のときzaagのHPが420であること', () => {
       setupScene({ mode: GameMode.CHALLENGE, clearedStages: 3 });
-      // zaag HP基礎250 + 15*3 = 295
-      const hpText = addTextCalls.find(c => c.text === 'HP: 295');
+      // zaag HP基礎375 + 15*3 = 420
+      const hpText = addTextCalls.find(c => c.text === 'HP: 420');
       expect(hpText).toBeDefined();
     });
 
     it('clearedStages=0のときは基礎値が表示されること', () => {
       setupScene({ mode: GameMode.CHALLENGE, clearedStages: 0 });
-      const hpText = addTextCalls.find(c => c.text === 'HP: 250');
+      const hpText = addTextCalls.find(c => c.text === 'HP: 375');
       expect(hpText).toBeDefined();
     });
   });
@@ -134,7 +134,7 @@ describe('CharacterSelectScene - パラメータパネルの成長後表示', ()
   describe('モード未指定 - 基礎値表示', () => {
     it('モード未指定時はzaagの基礎HPが表示されること', () => {
       setupScene(undefined);
-      const hpText = addTextCalls.find(c => c.text === 'HP: 250');
+      const hpText = addTextCalls.find(c => c.text === 'HP: 375');
       expect(hpText).toBeDefined();
     });
   });

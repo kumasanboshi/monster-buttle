@@ -13,7 +13,7 @@ describe('getMonsterWithGrownStats', () => {
     const monster = getMonsterWithGrownStats('zaag', 3);
     expect(monster).toBeDefined();
     const abilityUp = ABILITY_UP_VALUES['zaag'];
-    expect(monster!.stats.hp).toBe(250 + abilityUp.hp * 3);
+    expect(monster!.stats.hp).toBe(375 + abilityUp.hp * 3);
     expect(monster!.stats.strength).toBe(50 + abilityUp.strength * 3);
     expect(monster!.stats.special).toBe(50 + abilityUp.special * 3);
     expect(monster!.stats.speed).toBe(40 + abilityUp.speed * 3);
@@ -24,13 +24,13 @@ describe('getMonsterWithGrownStats', () => {
     const monster = getMonsterWithGrownStats('zaag', 7);
     expect(monster).toBeDefined();
     const abilityUp = ABILITY_UP_VALUES['zaag'];
-    expect(monster!.stats.hp).toBe(250 + abilityUp.hp * 7);
+    expect(monster!.stats.hp).toBe(375 + abilityUp.hp * 7);
     expect(monster!.stats.strength).toBe(50 + abilityUp.strength * 7);
   });
 
   it('specialAttackCountは成長しないこと', () => {
     const monster = getMonsterWithGrownStats('zaag', 5);
-    expect(monster!.stats.specialAttackCount).toBe(5);
+    expect(monster!.stats.specialAttackCount).toBe(7);
   });
 
   it('装備情報は変化しないこと', () => {
@@ -56,7 +56,7 @@ describe('getMonsterWithGrownStats', () => {
     const monster = getMonsterWithGrownStats('gardan', 5);
     expect(monster).toBeDefined();
     const abilityUp = ABILITY_UP_VALUES['gardan'];
-    expect(monster!.stats.hp).toBe(280 + abilityUp.hp * 5);
+    expect(monster!.stats.hp).toBe(420 + abilityUp.hp * 5);
     expect(monster!.stats.strength).toBe(75 + abilityUp.strength * 5);
     expect(monster!.stats.toughness).toBe(55 + abilityUp.toughness * 5);
   });
