@@ -81,6 +81,8 @@ export class BattleEffectPlayer {
         return this.playReflectorBlock(effect);
       case BattleEffectType.SPECIAL_REFLECT:
         return this.playSpecialReflect(effect);
+      case BattleEffectType.SPECIAL_CHARGE_FIZZLE:
+        return this.playSpecialChargeFizzle(effect);
       default:
         return Promise.resolve();
     }
@@ -226,13 +228,29 @@ export class BattleEffectPlayer {
   }
 
   /**
-   * 特殊攻撃エフェクト: 光球プロジェクタイル飛翔 → 衝撃パルス
+   * 特殊攻撃エフェクト: 溜めグロー → 光球プロジェクタイル飛翔 → 衝撃パルス
    */
-  private playSpecialAttack(effect: BattleEffect): Promise<void> {
+  private async playSpecialAttack(effect: BattleEffect): Promise<void> {
     const targetObj = this.getTargetObject(effect.target);
     const attackerObj = this.getAttackerObject(effect.target);
     const originalScaleX = targetObj.scaleX;
     const originalScaleY = targetObj.scaleY;
+
+    // Phase 0: 溜め（攻撃者がグロー）
+    await new Promise<void>(resolve => {
+      attackerObj.setTint(EFFECT_CONFIG.specialChargeColor);
+      this.scene.tweens.add({
+        targets: attackerObj,
+        scaleX: attackerObj.scaleX * 1.15,
+        scaleY: attackerObj.scaleY * 1.15,
+        duration: EFFECT_CONFIG.specialChargeDuration * this.speedMultiplier,
+        yoyo: true,
+        onComplete: () => {
+          attackerObj.clearTint();
+          resolve();
+        },
+      });
+    });
 
     playSe(this.scene.sound, AudioKey.SE_ATTACK);
 
@@ -681,6 +699,42 @@ export class BattleEffectPlayer {
           attackerObj.scaleY = originalScaleY;
           resolve();
         },
+      });
+    });
+  }
+
+  /**
+   * 特殊攻撃が武器攻撃で潰された演出: 溜めグロー → エネルギー散逸（fizzle）
+   */
+  private async playSpecialChargeFizzle(effect: BattleEffect): Promise<void> {
+    const attackerObj = this.getTargetObject(effect.target);
+    const cfg = EFFECT_CONFIG;
+    const originalScaleX = attackerObj.scaleX;
+    const originalScaleY = attackerObj.scaleY;
+
+    // Phase 1: 溜め（グロー）
+    await new Promise<void>(resolve => {
+      attackerObj.setTint(cfg.specialChargeColor);
+      this.scene.tweens.add({
+        targets: attackerObj,
+        scaleX: originalScaleX * 1.15,
+        scaleY: originalScaleY * 1.15,
+        duration: cfg.specialChargeDuration * this.speedMultiplier,
+        yoyo: true,
+        onComplete: () => resolve(),
+      });
+    });
+
+    // Phase 2: 崩れ（ティントをクリアしてスケール元に戻す）
+    await new Promise<void>(resolve => {
+      attackerObj.clearTint();
+      this.scene.tweens.add({
+        targets: attackerObj,
+        scaleX: originalScaleX,
+        scaleY: originalScaleY,
+        duration: cfg.specialChargeFizzleDuration * this.speedMultiplier,
+        ease: 'Power2',
+        onComplete: () => resolve(),
       });
     });
   }
