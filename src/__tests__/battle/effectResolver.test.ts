@@ -172,7 +172,7 @@ describe('resolveBattleEffects', () => {
       expect(findEffects(phase1Effects, BattleEffectType.DAMAGE_NUMBER).length).toBe(0);
     });
 
-    it('特殊攻撃が回避された場合EVASIONエフェクトを生成する', () => {
+    it('特殊攻撃が回避された場合SPECIAL_EVASIONエフェクトを生成する', () => {
       const phase1 = makePhase({
         player1Command: CommandType.SPECIAL_ATTACK,
         player2Command: CommandType.RETREAT,
@@ -184,9 +184,9 @@ describe('resolveBattleEffects', () => {
       const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
 
       const phase1Effects = sequence[0];
-      const evasionEffects = findEffects(phase1Effects, BattleEffectType.EVASION);
-      expect(evasionEffects.length).toBe(1);
-      expect(evasionEffects[0].target).toBe('enemy');
+      const specialEvasionEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_EVASION);
+      expect(specialEvasionEffects.length).toBe(1);
+      expect(specialEvasionEffects[0].target).toBe('enemy');
     });
   });
 
@@ -566,6 +566,78 @@ describe('resolveBattleEffects', () => {
       const phase1Effects = sequence[0];
       const deployEffects = findEffects(phase1Effects, BattleEffectType.REFLECTOR_DEPLOY);
       expect(deployEffects.length).toBe(0);
+    });
+  });
+
+  describe('SPECIAL_EVASION（特殊攻撃が回避された）', () => {
+    it('SPECIAL_ATTACKが回避された場合SPECIAL_EVASIONを生成する', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.SPECIAL_ATTACK,
+        player2Command: CommandType.RETREAT,
+        distanceAfter: DistanceType.MID,
+        player2Damage: makeDamageInfo({ isEvaded: true }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const specialEvasionEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_EVASION);
+      expect(specialEvasionEffects.length).toBe(1);
+    });
+
+    it('SPECIAL_EVASIONのターゲットは防御側（P1特殊→target:enemy）', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.SPECIAL_ATTACK,
+        player2Command: CommandType.RETREAT,
+        distanceAfter: DistanceType.MID,
+        player2Damage: makeDamageInfo({ isEvaded: true }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const specialEvasionEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_EVASION);
+      expect(specialEvasionEffects[0].target).toBe('enemy');
+    });
+
+    it('P2がSPECIAL_ATTACKを使いP1が回避した場合SPECIAL_EVASION(target:player)を生成する', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.RETREAT,
+        player2Command: CommandType.SPECIAL_ATTACK,
+        distanceAfter: DistanceType.MID,
+        player1Damage: makeDamageInfo({ isEvaded: true }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const specialEvasionEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_EVASION);
+      expect(specialEvasionEffects.length).toBe(1);
+      expect(specialEvasionEffects[0].target).toBe('player');
+    });
+
+    it('WEAPON_ATTACKが回避された場合は引き続きEVASIONを生成する（影響なし）', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.WEAPON_ATTACK,
+        player2Command: CommandType.RETREAT,
+        distanceAfter: DistanceType.MID,
+        player2Damage: makeDamageInfo({ isEvaded: true }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const evasionEffects = findEffects(phase1Effects, BattleEffectType.EVASION);
+      expect(evasionEffects.length).toBe(1);
+      expect(evasionEffects[0].target).toBe('enemy');
+
+      // SPECIAL_EVASIONは生成しない
+      const specialEvasionEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_EVASION);
+      expect(specialEvasionEffects.length).toBe(0);
     });
   });
 
