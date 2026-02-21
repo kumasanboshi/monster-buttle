@@ -135,8 +135,8 @@ function resolvePlayerAttackEffects(
     return;
   }
 
-  // 回避判定（武器攻撃のみ）
-  if (isAttackCommand(attackerCmd) && damageToDefender.isEvaded) {
+  // 回避判定（武器攻撃のみ: 特殊攻撃はSPECIAL_EVASIONで上の分岐にて処理済み）
+  if (attackerCmd === CommandType.WEAPON_ATTACK && damageToDefender.isEvaded) {
     effects.push({
       type: BattleEffectType.EVASION,
       target: defenderTarget,
