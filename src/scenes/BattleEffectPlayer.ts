@@ -79,6 +79,8 @@ export class BattleEffectPlayer {
         return this.playReflectorDeploy(effect);
       case BattleEffectType.REFLECTOR_BLOCK:
         return this.playReflectorBlock(effect);
+      case BattleEffectType.SPECIAL_REFLECT:
+        return this.playSpecialReflect(effect);
       default:
         return Promise.resolve();
     }
@@ -503,6 +505,156 @@ export class BattleEffectPlayer {
         onComplete: () => {
           targetObj.clearTint();
           stanceLabel.destroy();
+          resolve();
+        },
+      });
+    });
+  }
+
+  /**
+   * SPECIAL×REFLECTOR 反射アニメーション（4ステップ連続）
+   *
+   * ① 攻撃者から光球が防御者へ飛翔
+   * ② 防御者が盾を構える（青ティント + 🛡）
+   * ③ 光球が反転して攻撃者へ跳ね返る
+   * ④ 攻撃者が被弾（フラッシュ + ダメージ数値）
+   *
+   * effect.target = 防御者（リフレクター保持者）
+   * effect.reflectedDamage = 跳ね返り後のダメージ
+   */
+  private async playSpecialReflect(effect: BattleEffect): Promise<void> {
+    const defenderObj = this.getTargetObject(effect.target);
+    const attackerTarget: EffectTarget = effect.target === 'player' ? 'enemy' : 'player';
+    const attackerObj = this.getTargetObject(attackerTarget);
+    const cfg = EFFECT_CONFIG;
+
+    playSe(this.scene.sound, AudioKey.SE_ATTACK);
+
+    // ① 光球: 攻撃者 → 防御者
+    await new Promise<void>(resolve => {
+      const orb = this.scene.add.graphics();
+      orb.fillStyle(cfg.orbGlowColor, 0.5);
+      orb.fillCircle(0, 0, 14);
+      orb.fillStyle(cfg.orbColor, 1);
+      orb.fillCircle(0, 0, 8);
+      orb.x = attackerObj.x;
+      orb.y = attackerObj.y;
+
+      this.scene.tweens.add({
+        targets: orb,
+        x: defenderObj.x,
+        y: defenderObj.y,
+        duration: cfg.specialReflectProjectileDuration * this.speedMultiplier,
+        ease: 'Power2.in',
+        onComplete: () => { orb.destroy(); resolve(); },
+      });
+    });
+
+    // ② 防御者が盾を構える
+    await new Promise<void>(resolve => {
+      const shieldText = this.scene.add.text(
+        defenderObj.x,
+        defenderObj.y - 45,
+        '🛡️',
+        { fontSize: '30px', fontFamily: 'Arial, sans-serif' },
+      ).setOrigin(0.5);
+
+      defenderObj.setTint(cfg.reflectorShieldColor);
+
+      this.scene.tweens.add({
+        targets: shieldText,
+        y: shieldText.y - 12,
+        duration: cfg.specialReflectShieldDuration * this.speedMultiplier,
+        ease: 'Power2.out',
+        onComplete: () => {
+          defenderObj.clearTint();
+          shieldText.destroy();
+          resolve();
+        },
+      });
+    });
+
+    // ③ 反射光球: 防御者 → 攻撃者（色を変えて跳ね返り感を演出）
+    await new Promise<void>(resolve => {
+      const reflectOrb = this.scene.add.graphics();
+      reflectOrb.fillStyle(cfg.specialReflectOrbGlowColor, 0.5);
+      reflectOrb.fillCircle(0, 0, 12);
+      reflectOrb.fillStyle(cfg.specialReflectOrbColor, 1);
+      reflectOrb.fillCircle(0, 0, 7);
+      reflectOrb.x = defenderObj.x;
+      reflectOrb.y = defenderObj.y;
+
+      const reflectLabel = this.scene.add.text(
+        defenderObj.x,
+        defenderObj.y - 30,
+        'REFLECT!',
+        {
+          fontSize: '18px',
+          color: '#ff8844',
+          fontFamily: 'Arial, sans-serif',
+          fontStyle: 'bold',
+        },
+      ).setOrigin(0.5);
+
+      this.scene.tweens.add({
+        targets: reflectOrb,
+        x: attackerObj.x,
+        y: attackerObj.y,
+        duration: cfg.specialReflectReturnDuration * this.speedMultiplier,
+        ease: 'Power2.in',
+        onComplete: () => { reflectOrb.destroy(); resolve(); },
+      });
+
+      this.scene.tweens.add({
+        targets: reflectLabel,
+        alpha: 0,
+        duration: cfg.specialReflectReturnDuration * this.speedMultiplier,
+        ease: 'Power2',
+        onComplete: () => { reflectLabel.destroy(); },
+      });
+    });
+
+    // ④ 攻撃者が被弾（フラッシュ + ダメージ数値）
+    const originalScaleX = attackerObj.scaleX;
+    const originalScaleY = attackerObj.scaleY;
+    attackerObj.setTint(cfg.specialPulseColor);
+
+    const damage = effect.reflectedDamage ?? 0;
+    if (damage > 0) {
+      const damageText = this.scene.add.text(
+        attackerObj.x,
+        attackerObj.y - 30,
+        `${damage}`,
+        {
+          fontSize: '24px',
+          color: cfg.damageNumberColor,
+          fontFamily: 'Arial, sans-serif',
+          fontStyle: 'bold',
+        },
+      ).setOrigin(0.5);
+
+      this.scene.tweens.add({
+        targets: damageText,
+        y: damageText.y - 40,
+        alpha: 0,
+        duration: cfg.damageNumberDuration * this.speedMultiplier,
+        ease: 'Power2',
+        onComplete: () => { damageText.destroy(); },
+      });
+    }
+
+    await new Promise<void>(resolve => {
+      this.scene.tweens.add({
+        targets: attackerObj,
+        scaleX: originalScaleX * 1.25,
+        scaleY: originalScaleY * 1.25,
+        duration: cfg.specialReflectHitDuration * this.speedMultiplier / 2,
+        yoyo: true,
+        ease: 'Sine.inOut',
+        onComplete: () => {
+          attackerObj.clearTint();
+          attackerObj.scaleX = originalScaleX;
+          attackerObj.scaleY = originalScaleY;
           resolve();
         },
       });
