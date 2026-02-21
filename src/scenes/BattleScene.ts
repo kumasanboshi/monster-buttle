@@ -33,7 +33,7 @@ import { processTurn } from '../battle/turnProcessor';
 import { resolveBattleEffects } from '../battle/effectResolver';
 import { BattleEffectPlayer } from './BattleEffectPlayer';
 import { selectCommands, AILevel } from '../ai';
-import { checkVictoryAfterTurn, checkVictoryOnGiveUp } from '../battle/victoryCondition';
+import { checkVictoryAfterTurn, checkVictoryOnGiveUp, checkVictoryOnTimeout } from '../battle/victoryCondition';
 import { GameMode } from '../types/GameMode';
 import { TutorialManager } from '../battle/TutorialManager';
 import { GAME_HEIGHT } from './gameConfig';
@@ -250,6 +250,34 @@ export class BattleScene extends BaseScene {
 
     // バトルBGM再生
     playBgm(this.sound, AudioKey.BGM_BATTLE);
+  }
+
+  /**
+   * Phaserのゲームループ。エフェクト再生中のみタイマーを減算する。
+   * コマンド入力中（isPlayingEffects === false）は制限時間に含まない仕様。
+   * ネットワークモードではサーバー側が時間管理するのでスキップ。
+   */
+  update(_time: number, delta: number): void {
+    if (this.isNetworkMode) return;
+    if (!this.battleState || this.battleState.isFinished) return;
+    if (!this.isPlayingEffects) return;
+
+    this.remainingTime = Math.max(0, this.remainingTime - delta / 1000);
+    this.updateTimeDisplay();
+
+    if (this.remainingTime <= 0) {
+      this.isPlayingEffects = false;
+      const battleResult = checkVictoryOnTimeout(this.battleState);
+      battleResult.turnHistory = this.turnHistory;
+      this.setCommandUIEnabled(false);
+      this.transitionTo(SceneKey.RESULT, {
+        battleResult,
+        mode: this.gameMode,
+        stageNumber: this.stageNumber,
+        clearedStages: this.clearedStages,
+        monsterId: this.playerMonster.id,
+      });
+    }
   }
 
   private setupChallengeMode(data?: BattleSceneData): void {
