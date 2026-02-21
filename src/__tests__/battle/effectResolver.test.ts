@@ -254,6 +254,25 @@ describe('resolveBattleEffects', () => {
       expect(blockEffects[0].target).toBe('player'); // ブロックしたのはP1
     });
 
+    it('P2がSPECIAL_ATTACKでP1がREFLECTOR残回数ありで反射される場合SPECIAL_REFLECT(target:player)を生成する', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.REFLECTOR,
+        player2Command: CommandType.SPECIAL_ATTACK,
+        distanceAfter: DistanceType.MID,
+        // P2が反射ダメージを受ける
+        player2Damage: makeDamageInfo({ damage: 20, isReflected: true }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const reflectEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_REFLECT);
+      expect(reflectEffects.length).toBe(1);
+      expect(reflectEffects[0].target).toBe('player'); // リフレクター保持者（P1）側
+      expect(reflectEffects[0].reflectedDamage).toBe(20); // P2（攻撃者）に返るダメージ
+    });
+
     it('反射成功の場合はREFLECTOR_BLOCKを生成しない', () => {
       const phase1 = makePhase({
         player1Command: CommandType.SPECIAL_ATTACK,
