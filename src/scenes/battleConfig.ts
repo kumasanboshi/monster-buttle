@@ -303,6 +303,13 @@ export const EFFECT_CONFIG = {
   specialReflectOrbColor: 0xff6600,
   /** 反射光球の輝き色 */
   specialReflectOrbGlowColor: 0xffaa44,
+  // --- SPECIAL_CHARGE_FIZZLE 溜め→崩れ演出 ---
+  /** 溜め演出の時間（ms） */
+  specialChargeDuration: 350,
+  /** 溜め時のティント色 */
+  specialChargeColor: 0xcc44ff,
+  /** 崩れ演出の時間（ms） */
+  specialChargeFizzleDuration: 350,
 } as const;
 
 /** ギブアップ確認ダイアログのメッセージ */

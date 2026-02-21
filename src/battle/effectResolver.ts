@@ -135,6 +135,15 @@ function resolvePlayerAttackEffects(
     return;
   }
 
+  // 武器攻撃で特殊攻撃が潰されたケース（溜め→fizzle演出）
+  if (attackerCmd === CommandType.SPECIAL_ATTACK && damageToDefender.damage === 0) {
+    effects.push({
+      type: BattleEffectType.SPECIAL_CHARGE_FIZZLE,
+      target: attackerTarget, // 溜めていたのは攻撃側
+    });
+    return;
+  }
+
   // 通常攻撃エフェクト
   const attackEffectType = getAttackEffectType(attackerCmd);
   if (attackEffectType && damageToDefender.damage > 0) {

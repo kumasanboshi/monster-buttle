@@ -569,6 +569,111 @@ describe('resolveBattleEffects', () => {
     });
   });
 
+  describe('SPECIAL_CHARGE_FIZZLE（特殊攻撃が武器で潰された）', () => {
+    it('SPECIAL_ATTACKでdamageToDefender.damage === 0の場合SPECIAL_CHARGE_FIZZLEを生成する', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.SPECIAL_ATTACK,
+        player2Command: CommandType.WEAPON_ATTACK,
+        distanceAfter: DistanceType.NEAR,
+        // 武器攻撃で特殊攻撃が潰された → P2へのダメージ0
+        player2Damage: makeDamageInfo({ damage: 0 }),
+        player1Damage: makeDamageInfo({ damage: 15 }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.NEAR);
+
+      const phase1Effects = sequence[0];
+      const fizzleEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_CHARGE_FIZZLE);
+      expect(fizzleEffects.length).toBe(1);
+    });
+
+    it('SPECIAL_CHARGE_FIZZLEのターゲットはP1が特殊攻撃した場合player（攻撃側）', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.SPECIAL_ATTACK,
+        player2Command: CommandType.WEAPON_ATTACK,
+        distanceAfter: DistanceType.NEAR,
+        player2Damage: makeDamageInfo({ damage: 0 }),
+        player1Damage: makeDamageInfo({ damage: 15 }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.NEAR);
+
+      const phase1Effects = sequence[0];
+      const fizzleEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_CHARGE_FIZZLE);
+      expect(fizzleEffects[0].target).toBe('player');
+    });
+
+    it('P2がSPECIAL_ATTACKでP1がWEAPON_ATTACKの場合、SPECIAL_CHARGE_FIZZLE(target:enemy)を生成する', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.WEAPON_ATTACK,
+        player2Command: CommandType.SPECIAL_ATTACK,
+        distanceAfter: DistanceType.NEAR,
+        // P2の特殊攻撃が潰された → P1へのダメージ0
+        player1Damage: makeDamageInfo({ damage: 0 }),
+        player2Damage: makeDamageInfo({ damage: 20 }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.NEAR);
+
+      const phase1Effects = sequence[0];
+      const fizzleEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_CHARGE_FIZZLE);
+      expect(fizzleEffects.length).toBe(1);
+      expect(fizzleEffects[0].target).toBe('enemy');
+    });
+
+    it('SPECIAL_ATTACKでdamageToDefender.damage > 0の場合SPECIAL_CHARGE_FIZZLEは生成しない', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.SPECIAL_ATTACK,
+        player2Command: CommandType.RETREAT,
+        distanceAfter: DistanceType.MID,
+        player2Damage: makeDamageInfo({ damage: 25 }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const fizzleEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_CHARGE_FIZZLE);
+      expect(fizzleEffects.length).toBe(0);
+    });
+
+    it('SPECIAL_ATTACKがリフレクターで反射された場合SPECIAL_CHARGE_FIZZLEは生成しない', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.SPECIAL_ATTACK,
+        player2Command: CommandType.REFLECTOR,
+        distanceAfter: DistanceType.MID,
+        player1Damage: makeDamageInfo({ damage: 15, isReflected: true }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const fizzleEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_CHARGE_FIZZLE);
+      expect(fizzleEffects.length).toBe(0);
+    });
+
+    it('SPECIAL_ATTACKがリフレクターでブロックされた場合SPECIAL_CHARGE_FIZZLEは生成しない', () => {
+      const phase1 = makePhase({
+        player1Command: CommandType.SPECIAL_ATTACK,
+        player2Command: CommandType.REFLECTOR,
+        distanceAfter: DistanceType.MID,
+        player1Damage: makeDamageInfo({ damage: 0, isReflected: false }),
+        player2Damage: makeDamageInfo({ damage: 0 }),
+      });
+      const phase2 = makePhase();
+      const turnResult = makeTurnResult(phase1, phase2);
+      const sequence = resolveBattleEffects(turnResult, DistanceType.MID);
+
+      const phase1Effects = sequence[0];
+      const fizzleEffects = findEffects(phase1Effects, BattleEffectType.SPECIAL_CHARGE_FIZZLE);
+      expect(fizzleEffects.length).toBe(0);
+    });
+  });
+
   describe('敵攻撃エフェクト', () => {
     it('P2の武器攻撃でプレイヤーにダメージ → targetはplayer', () => {
       const phase1 = makePhase({
