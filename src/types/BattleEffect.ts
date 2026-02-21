@@ -27,6 +27,8 @@ export enum BattleEffectType {
   SPECIAL_REFLECT = 'SPECIAL_REFLECT',
   /** 特殊攻撃が武器攻撃で潰された場合の溜め→崩れ演出 */
   SPECIAL_CHARGE_FIZZLE = 'SPECIAL_CHARGE_FIZZLE',
+  /** 特殊攻撃が回避された連続アニメーション（溜め→光球飛翔→着弾瞬間回避） */
+  SPECIAL_EVASION = 'SPECIAL_EVASION',
 }
 
 /** エフェクトのターゲット */
