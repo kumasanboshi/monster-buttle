@@ -344,4 +344,62 @@ describe('ResultScene - create', () => {
       expect((scene as any).transitionTo).toHaveBeenCalledWith(SceneKey.TITLE);
     });
   });
+
+  describe('シェアボタン', () => {
+    beforeEach(() => {
+      // node テスト環境では window が未定義なので global に window を設定する
+      (global as any).window = global;
+      (global as any).open = jest.fn();
+    });
+
+    it('シェアボタンが表示されること', () => {
+      const battleResult = createTestBattleResult(BattleResultType.PLAYER1_WIN);
+      setupScene({ battleResult, monsterId: 'zaag' });
+
+      const shareButton = addTextCalls.find((call) => call.text === 'Xでシェア');
+      expect(shareButton).toBeDefined();
+    });
+
+    it('シェアボタンがインタラクティブに設定されること', () => {
+      const battleResult = createTestBattleResult(BattleResultType.PLAYER1_WIN);
+      setupScene({ battleResult, monsterId: 'zaag' });
+
+      const shareButton = addTextCalls.find((call) => call.text === 'Xでシェア');
+      expect(shareButton.setInteractive).toHaveBeenCalled();
+    });
+
+    it('シェアボタンクリックで window.open が呼ばれること', () => {
+      const battleResult = createTestBattleResult(BattleResultType.PLAYER1_WIN);
+      setupScene({ battleResult, monsterId: 'zaag' });
+
+      const shareButton = addTextCalls.find((call) => call.text === 'Xでシェア');
+      const pointerdownCall = shareButton.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown',
+      );
+      pointerdownCall[1]();
+
+      expect(window.open).toHaveBeenCalled();
+    });
+
+    it('window.open の引数が x.com/intent/tweet で始まること', () => {
+      const battleResult = createTestBattleResult(BattleResultType.PLAYER1_WIN);
+      setupScene({ battleResult, monsterId: 'zaag' });
+
+      const shareButton = addTextCalls.find((call) => call.text === 'Xでシェア');
+      const pointerdownCall = shareButton.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown',
+      );
+      pointerdownCall[1]();
+
+      const openArg = (window.open as jest.Mock).mock.calls[0][0];
+      expect(openArg).toMatch(/^https:\/\/x\.com\/intent\/tweet/);
+    });
+
+    it('battleResultがない場合もシェアボタンが表示されること', () => {
+      setupScene({});
+
+      const shareButton = addTextCalls.find((call) => call.text === 'Xでシェア');
+      expect(shareButton).toBeDefined();
+    });
+  });
 });

@@ -14,6 +14,8 @@ export interface ResultLayoutConfig {
   buttonStartY: number;
   /** ボタン間隔 */
   buttonSpacing: number;
+  /** シェアボタンのY座標 */
+  shareButtonY: number;
 }
 
 /** リザルト画面レイアウト */
@@ -23,6 +25,7 @@ export const RESULT_LAYOUT: ResultLayoutConfig = {
   growthDisplayY: 310,
   buttonStartY: 470,
   buttonSpacing: 50,
+  shareButtonY: 650,
 };
 
 /** リザルト画面の色設定 */
